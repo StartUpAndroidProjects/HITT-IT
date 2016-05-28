@@ -18,6 +18,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".AddTrackActivity"
+            android:label="@string/add_track"
+            android:parentActivityName="com.wolffincdevelopment.hiit_it.BaseActivity">
+        </activity>
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.wolffincdevelopment.hiit_it.BaseActivity" />
     </application>
 
 </manifest>

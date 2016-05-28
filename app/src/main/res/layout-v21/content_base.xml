@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.wolffincdevelopment.hiit_it.BaseActivity"
+    tools:showIn="@layout/base_activity">
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/view2" />
+
+    <Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary"
+        android:id="@+id/view2"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/playPreviousButton"
+            android:src="@drawable/ic_skip_previous_white_48dp"
+            android:background="?android:selectableItemBackground"
+            android:contentDescription="@string/playPreviousButton"
+            android:layout_marginLeft="100dp"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/playButton"
+            android:src="@drawable/ic_play_circle_outline_white"
+            android:background="?android:selectableItemBackground"
+            android:contentDescription="@string/playbutton"
+            android:layout_gravity="center"/>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/playNextButton"
+            android:src="@drawable/ic_skip_next_white_48dp"
+            android:background="?android:selectableItemBackground"
+            android:contentDescription="@string/playNextButton"
+            android:layout_gravity="end"
+            android:layout_marginRight="100dp"
+            />
+
+    </Toolbar>
+
+</RelativeLayout>

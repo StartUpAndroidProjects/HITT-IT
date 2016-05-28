@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">HIIT IT!</string>
+    <string name="action_settings">Settings</string>
+    <string name="playbutton">playButton</string>
+    <string name="playPreviousButton">playPreviousButton</string>
+    <string name="playNextButton">playNextButton</string>
+</resources>

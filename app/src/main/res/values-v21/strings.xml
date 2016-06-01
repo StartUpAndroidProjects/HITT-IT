@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="playbutton">playButton</string>
-    <string name="tap_to_browse">Tap to Browse...</string>
-    <string name="start_text">Start:</string>
-    <string name="stop_text">Stop:</string>
-    <string name="zero_time">00:00</string>
-</resources>

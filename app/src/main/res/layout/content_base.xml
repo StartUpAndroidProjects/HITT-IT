@@ -6,19 +6,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.wolffincdevelopment.hiit_it.BaseActivity"
-    >
+    tools:context="com.wolffincdevelopment.hiit_it.BaseActivity">
 
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/listView"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_above="@+id/view" />
 
 
-    <android.support.v7.widgetToolbar
+    <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
@@ -56,7 +54,7 @@
             android:layout_marginRight="100dp"
             />
 
-    </android.support.v7.widgetToolbar>
+    </android.support.v7.widget.Toolbar>
 
 
 </RelativeLayout>

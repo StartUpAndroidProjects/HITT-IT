@@ -7,6 +7,10 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.wolffincdevelopment.hiit_it.AddTrackActivity">
+    tools:context="com.wolffincdevelopment.hiit_it.AddTrackActivity"
+    android:focusable="true">
+
+    <!-- I used an include just in case we need to create multiple version layouts-->
+    <include layout="@layout/add_track_view" />
 
 </RelativeLayout>

@@ -13,5 +13,4 @@
     <!-- I used an include just in case we need to create multiple version layouts-->
     <include layout="@layout/add_track_view" />
 
-
 </RelativeLayout>

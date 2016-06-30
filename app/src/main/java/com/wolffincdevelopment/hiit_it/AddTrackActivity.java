@@ -1,14 +1,28 @@
 package com.wolffincdevelopment.hiit_it;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
+
+import util.ConvertTime;
 
 /*
  * Add Track Activity Created by Kyle Wolff
@@ -18,10 +32,15 @@ import android.widget.RadioButton;
 public class AddTrackActivity extends AppCompatActivity {
 
     private InputMethodManager inputManager;
+    private TrackDBAdapter trackDBAdapter;
+    private Intent i;
+    private TrackData item;
+    private ConvertTime convertTime;
 
     public EditText browseTextField, startTime, stopTime;
     public RadioButton radioButton;
     public TextWatcher textWatcher;
+    public Button addTrackButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +52,11 @@ public class AddTrackActivity extends AppCompatActivity {
         startTime = (EditText) findViewById(R.id.start_time);
         stopTime = (EditText) findViewById(R.id.stop_time);
         radioButton = (RadioButton) findViewById(R.id.radioSongButton);
+        addTrackButton = (Button) findViewById(R.id.add_track_button);
+
+        trackDBAdapter = new TrackDBAdapter(getBaseContext());
+
+        convertTime = new ConvertTime();
 
         /*
          * This textWatcher is what handles the logic for the colon
@@ -44,7 +68,6 @@ public class AddTrackActivity extends AppCompatActivity {
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
 
             }
 
@@ -103,9 +126,83 @@ public class AddTrackActivity extends AppCompatActivity {
                     // Hides the keyboard
                     inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
+                    startNextActivity();
                 }
 
             }
         });
+    }
+
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
+        browseTextField.clearFocus();
+
+        if(!addTrackButton.isEnabled()) {
+            addTrackButton.setBackgroundColor(Color.GRAY);
+        }
+
+        addTrackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                    trackDBAdapter.open();
+
+                    trackDBAdapter.creatTrackData(item.getArtistName(), item.getSongName(),
+                            stopTime.getText().toString(), startTime.getText().toString(),
+                            item.getStream(), item.getMediaId());
+
+                    trackDBAdapter.close();
+
+                    finish();
+            }
+        });
+
+
+    }
+
+    public void checkFields(boolean checked) {
+
+        boolean verified = checked;
+
+        if(browseTextField.getText().toString().isEmpty() && startTime.getText().toString().isEmpty()
+                && stopTime.getText().toString().isEmpty()) {
+
+            verified = false;
+            addTrackButton.setEnabled(verified);
+            addTrackButton.setBackgroundColor(Color.GRAY);
+
+        }else {
+
+            verified = true;
+            addTrackButton.setEnabled(verified);
+            addTrackButton.setBackground(getResources().getDrawable(R.color.colorAccent));
+        }
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+
+            if(resultCode == RESULT_OK){
+
+                boolean checked = data.getBooleanExtra("enabled", true);
+                item = (TrackData) data.getSerializableExtra("listItem");
+
+                browseTextField.setText("Track: " + item.getSongName() + " - " + item.getArtistName());
+                stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
+                startTime.setText("00:00");
+
+                checkFields(checked);
+            }
+        }
+    }
+
+    private void startNextActivity() {
+
+        Intent browseActivity = new Intent(AddTrackActivity.this,BrowseActivity.class);
+        AddTrackActivity.this.startActivityForResult(browseActivity,1);
     }
 }

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="90dp"
+    android:orientation="horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="Track: "
+        android:id="@+id/trackTextView"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="60dp"/>
+
+    <TextView
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="Bodies - Drowning Pool"
+        android:id="@+id/trackSongTextView"
+        android:layout_alignTop="@+id/trackTextView"
+        android:layout_marginLeft="110dp"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="Start:"
+        android:layout_marginTop="50dp"
+        android:layout_marginRight="50dp"
+        android:layout_alignStart="@+id/trackTextView" />
+
+    <TextView
+        android:id="@+id/startTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="00:30"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="105dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="Stop:"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="140dp"
+        android:layout_alignStart="@+id/trackTextView"
+        android:id="@+id/textView" />
+
+    <TextView
+        android:id="@+id/stopTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/base_activity_textSize"
+        android:textColor="@android:color/black"
+        android:text="00:60"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="245dp" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/soundIconImageView"
+        android:visibility="invisible"
+        android:src="@drawable/ic_volume_up_deep_orange_48dp"
+        android:layout_alignTop="@+id/trackTextView"
+        android:background="?android:selectableItemBackground"/>
+
+    <ImageButton
+        android:background="?android:selectableItemBackground"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/optionsIcon"
+        android:src="@drawable/ic_more_vert_black_48dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="20dp"
+        android:onClick="showPopUp"/>
+
+
+</RelativeLayout>

@@ -29,6 +29,8 @@ import static com.wolffincdevelopment.hiit_it.R.id.next;
 
 public class BaseActivity extends AppCompatActivity {
 
+	public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
+
     private Intent playIntent;
 
     private RecyclerView.LayoutManager mLayoutManager;
@@ -77,8 +79,8 @@ public class BaseActivity extends AppCompatActivity {
     {
         prefFirstTime.runCheckFirstTime( getString(R.string.firstTimeFabPressed) );
 
-        Intent addTrackIntent = new Intent(BaseActivity.this,AddTrackActivity.class);
-        startActivity(addTrackIntent);
+        Intent addTrackIntent = new Intent(BaseActivity.this, AddTrackActivity.class);
+        startActivityForResult(addTrackIntent, BROWSE_ACTIVITY_RESULT_CODE);
     }
 
     @OnClick(R.id.play)
@@ -117,9 +119,21 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
+	@Override
+	protected void onActivityResult( int requestCode, int resultCode, Intent data )
+	{
+		super.onActivityResult( requestCode, resultCode, data );
+
+		if (requestCode == BROWSE_ACTIVITY_RESULT_CODE )
+		{
+			checkForAddedTracks();
+			refreshSongList();
+		}
 
 
-    @Override
+	}
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -135,11 +149,21 @@ public class BaseActivity extends AppCompatActivity {
 		prefFirstTime = new FirstTimePreference(this);
 		trackDBAdapter = new TrackDBAdapter(this);
 		mLayoutManager = new LinearLayoutManager(this);
+		trackDataList = new ArrayList<>(  );
+
+    }
+
+	@Override
+	protected void onResume() {
+		super.onResume();
 
 		init();
 
+		if(musicService != null && musicConnected == true) {
+			progress.dismiss();
+		}
+	}
 
-    }
 
     private void init()
     {
@@ -148,47 +172,15 @@ public class BaseActivity extends AppCompatActivity {
 		progress.setMessage("Loading...");
 		progress.show();
 
+		checkFirstTimePreference();
+
 		initRecyclerView();
 
-        checkFirstTimePreference();
+		initMusicService();
 
-        //checkForAddedTracks();
-
-        musicConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected( ComponentName name, IBinder service) {
-
-                binder = (MusicService.MusicBinder)service;
-                //get service
-                musicService = binder.getService();
-                //pass list
-                musicService.setList(songList);
-                musicBound = true;
-
-                baseAdapter.setMusicService(musicService);
-
-                musicService.getBaseAcitivty(BaseActivity.this);
-
-                progress.dismiss();
-                musicConnected = true;
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                musicBound = false;
-                musicConnected = false;
-            }
-        };
-
-        if(playIntent == null){
-
-            playIntent = new Intent(this, MusicService.class);
-            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(playIntent);
-        }
+		refreshSongList();
 
 
-        refreshSongList();
     }
 
 
@@ -203,6 +195,42 @@ public class BaseActivity extends AppCompatActivity {
 
 		// Recycler View Adapter, passing the arrayList
 		baseAdapter = new BaseAdapter(trackDataList);
+	}
+
+	private void initMusicService()
+	{
+		musicConnection = new ServiceConnection() {
+			@Override
+			public void onServiceConnected( ComponentName name, IBinder service) {
+
+				binder = (MusicService.MusicBinder)service;
+				//get service
+				musicService = binder.getService();
+				//pass list
+				musicService.setList(songList);
+				musicBound = true;
+
+				baseAdapter.setMusicService(musicService);
+
+				musicService.getBaseAcitivty(BaseActivity.this);
+
+				progress.dismiss();
+				musicConnected = true;
+			}
+
+			@Override
+			public void onServiceDisconnected(ComponentName name) {
+				musicBound = false;
+				musicConnected = false;
+			}
+		};
+
+		if(playIntent == null){
+
+			playIntent = new Intent(this, MusicService.class);
+			bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+			startService(playIntent);
+		}
 	}
 
     public void checkForAddedTracks() {
@@ -258,14 +286,7 @@ public class BaseActivity extends AppCompatActivity {
 
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
 
-        if(musicService != null && musicConnected == true) {
-            progress.dismiss();
-        }
-    }
 
 }
 

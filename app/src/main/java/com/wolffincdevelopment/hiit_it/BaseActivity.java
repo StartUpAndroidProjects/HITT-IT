@@ -15,20 +15,23 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static com.wolffincdevelopment.hiit_it.R.id.next;
+
 public class BaseActivity extends AppCompatActivity {
 
-    private Intent addTrackIntent;
     private Intent playIntent;
 
     private RecyclerView.LayoutManager mLayoutManager;
-    private RecyclerView recyclerView;
     private BaseAdapter baseAdapter;
 
     private TrackDBAdapter trackDBAdapter;
@@ -43,98 +46,117 @@ public class BaseActivity extends AppCompatActivity {
 
     private MusicService.MusicBinder binder;
 
-    private FloatingActionButton fab;
-    private ImageView firstTimeUserImageSwitcher;
-    private ImageButton playButton, nextButton, prevButton;
+
     private ProgressDialog progress;
 
     private boolean musicBound;
     private boolean musicConnected = false;
 
+    @BindView( R.id.recycler_view )
+    RecyclerView recyclerView;
+
+    @BindView( R.id.first_time_user_add_image )
+    ImageView firstTimeUserImageSwitcher;
+
+    @BindView( R.id.play )
+    ImageButton playButton;
+
+    @BindView( next )
+    ImageButton nextButton;
+
+    @BindView( R.id.prev )
+    ImageButton prevButton;
+
+    @BindView( R.id.fab )
+    FloatingActionButton fab;
+
+    ///Click Handlers
+
+    @OnClick(R.id.fab)
+    protected void onFabPressed()
+    {
+        prefFirstTime.runCheckFirstTime( getString(R.string.firstTimeFabPressed) );
+
+        Intent addTrackIntent = new Intent(BaseActivity.this,AddTrackActivity.class);
+        startActivity(addTrackIntent);
+    }
+
+    @OnClick(R.id.play)
+    protected void onPlayPressed()
+    {
+        if (musicService != null) {
+
+            if (musicService.getSongs().isEmpty()) {
+
+            } else {
+
+                TrackData currentSong = musicService.getCurrentSong();
+
+                if(!musicService.isPlaying()) {
+                    musicService.playSong(currentSong.getStartTime2(), currentSong.getStopTime3());
+                } else {
+                    pauseResume();
+                }
+
+            }
+        }
+    }
+
+    @OnClick(R.id.next)
+    protected void onNextPressed()
+    {
+        TrackData song = musicService.getNextSong();
+        musicService.playNext(song.getStartTime2(), song.getStopTime3());
+    }
+
+    @OnClick(R.id.prev)
+    protected void onPrevPressed()
+    {
+        TrackData song = musicService.getPreviousSong();
+        musicService.playPrev(song.getStartTime2(), song.getStopTime3());
+    }
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        progress = new ProgressDialog(this);
-        progress.setMessage("Loading...");
-
         setContentView(R.layout.base_activity);
+        ButterKnife.bind(this);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Hides the default title for the actity so we can use our custom one
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        firstTimeUserImageSwitcher = (ImageView) findViewById(R.id.first_time_user_add_image);
-        playButton = (ImageButton) findViewById(R.id.play);
-        nextButton = (ImageButton) findViewById(R.id.next);
-        prevButton = (ImageButton) findViewById(R.id.prev);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+		prefFirstTime = new FirstTimePreference(this);
+		trackDBAdapter = new TrackDBAdapter(this);
+		mLayoutManager = new LinearLayoutManager(this);
 
-        addTrackIntent = new Intent(BaseActivity.this,AddTrackActivity.class);
-        prefFirstTime = new FirstTimePreference(getApplicationContext());
+		init();
 
 
-        trackDBAdapter = new TrackDBAdapter(getBaseContext());
-
-        mLayoutManager = new LinearLayoutManager(getApplicationContext());
-
-        checkFirstTimePreference();
     }
 
-    public void checkForAddedTracks() {
-
-        trackDBAdapter.open();
-        trackDataList = trackDBAdapter.getAllTracks();
-        songList = trackDBAdapter.getAllStreams();
-        trackDBAdapter.close();
-        baseAdapter.refresh(trackDataList);
-    }
-
-    public void refreshSongList(){
-        trackDBAdapter.open();
-        songList = trackDBAdapter.getAllStreams();
-        trackDBAdapter.close();
-
-        if(musicService != null) {
-            musicService.setList(songList);
-        }
-    }
-
-    @Override
-    protected void onStart()
+    private void init()
     {
-        super.onStart();
 
-        progress.show();
+		progress = new ProgressDialog(this);
+		progress.setMessage("Loading...");
+		progress.show();
+
+		initRecyclerView();
 
         checkFirstTimePreference();
 
-        // Recycler View Adapter, passing the arrayList
-        baseAdapter = new BaseAdapter(trackDataList);
-
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(baseAdapter);
-
-        // Adding the divider lines to the recycler view
-        recyclerView.addItemDecoration(new DividerItemDecoration(this));
-
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                prefFirstTime.runCheckFirstTime(getBaseContext().getString(R.string.firstTimeFabPressed));
-                BaseActivity.this.startActivity(addTrackIntent);
-            }
-        });
-
-        checkForAddedTracks();
+        //checkForAddedTracks();
 
         musicConnection = new ServiceConnection() {
             @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
+            public void onServiceConnected( ComponentName name, IBinder service) {
 
                 binder = (MusicService.MusicBinder)service;
                 //get service
@@ -165,52 +187,43 @@ public class BaseActivity extends AppCompatActivity {
             startService(playIntent);
         }
 
-        playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (musicService != null) {
-
-                    if (musicService.getSongs().isEmpty()) {
-
-                    } else {
-
-                        TrackData currentSong = musicService.getCurrentSong();
-
-                        if(!musicService.isPlaying()) {
-                            musicService.playSong(currentSong.getStartTime2(), currentSong.getStopTime3());
-                        } else {
-                            pauseResume();
-                        }
-
-                    }
-                }
-            }
-        });
-
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                TrackData song = musicService.getNextSong();
-                musicService.playNext(song.getStartTime2(), song.getStopTime3());
-
-            }
-        });
-
-        prevButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                TrackData song = musicService.getPreviousSong();
-                musicService.playPrev(song.getStartTime2(), song.getStopTime3());
-            }
-        });
-
 
         refreshSongList();
-
     }
+
+
+	private void initRecyclerView()
+	{
+		recyclerView.setLayoutManager(mLayoutManager);
+		recyclerView.setItemAnimator(new DefaultItemAnimator());
+		recyclerView.setAdapter(baseAdapter);
+
+		// Adding the divider lines to the recycler view
+		recyclerView.addItemDecoration(new DividerItemDecoration(this));
+
+		// Recycler View Adapter, passing the arrayList
+		baseAdapter = new BaseAdapter(trackDataList);
+	}
+
+    public void checkForAddedTracks() {
+
+        trackDBAdapter.open();
+        trackDataList = trackDBAdapter.getAllTracks();
+        songList = trackDBAdapter.getAllStreams();
+        trackDBAdapter.close();
+        baseAdapter.refresh(trackDataList);
+    }
+
+    public void refreshSongList(){
+        trackDBAdapter.open();
+        songList = trackDBAdapter.getAllStreams();
+        trackDBAdapter.close();
+
+        if(musicService != null) {
+            musicService.setList(songList);
+        }
+    }
+
 
     private void checkFirstTimePreference() {
 
@@ -243,10 +256,7 @@ public class BaseActivity extends AppCompatActivity {
             }
     }
 
-    @Override
-    public void onRestart() {
-        super.onRestart();
-    }
+
 
     @Override
     protected void onResume() {
@@ -255,16 +265,6 @@ public class BaseActivity extends AppCompatActivity {
         if(musicService != null && musicConnected == true) {
             progress.dismiss();
         }
-    }
-
-    @Override
-    protected  void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
 }

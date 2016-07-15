@@ -1,11 +1,13 @@
 package com.wolffincdevelopment.hiit_it;
 
+import android.content.Context;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.Snackbar;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,17 +19,30 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import util.SharedPreferencesUtil;
+
 /**
  * Created by kylewolff on 6/2/2016.
  */
-public class BaseAdapter extends RecyclerView.Adapter<BaseAdapter.MyViewHolder> {
+public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int FOOTER_VIEW = 1;
 
     private TrackDBAdapter trackDBAdapter;
-    private MusicService musicService;
-    private BaseActivity baseActivity;
+    private SharedPreferencesUtil sharedPreferencesUtil = SharedPreferencesUtil.getInstance();
     private MyViewHolder myViewHolder;
+    private MessageHandler handler;
+    private What whatInteger;
+    private Message refreshMsg, setInvisible;
     public List<TrackData> trackData;
     public ArrayList<TrackData> trackDataPositions;
+    public boolean deleteRefresh = false;
+    public boolean setSoundIconVisible = false;
+    public boolean firstUpdateSound = false;
+    public int currentTrackPlaying, previousTrackPlayed = -1, position;
+    public Bundle data;
 
     /*
      * A ViewHolder describes an item view and metadata about its place within the RecyclerView.
@@ -35,19 +50,27 @@ public class BaseAdapter extends RecyclerView.Adapter<BaseAdapter.MyViewHolder> 
      */
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView song_Artist, startTime, stopTime;
-        public ImageButton options;
-        public ImageView sound;
+        @BindView(R.id.track_song_textview)
+        TextView trackSongTextView;
+
+        @BindView(R.id.start_time_textview)
+        TextView startTime;
+
+        @BindView(R.id.stop_time_text_view)
+        TextView stopTime;
+
+        @BindView(R.id.options_icon)
+        ImageButton options;
+
+        @BindView(R.id.sound_icon_imageview)
+        ImageView sound;
+
         public String trackId;
 
         public MyViewHolder(View view) {
 
             super(view);
-            song_Artist = (TextView) view.findViewById(R.id.trackSongTextView);
-            startTime = (TextView) view.findViewById(R.id.startTimeTextView);
-            stopTime = (TextView) view.findViewById(R.id.stopTimeTextView);
-            options = (ImageButton) view.findViewById(R.id.optionsIcon);
-            sound = (ImageView) view.findViewById(R.id.soundIconImageView);
+            ButterKnife.bind(this, view);
 
             trackDBAdapter = new TrackDBAdapter(view.getContext());
 
@@ -55,10 +78,49 @@ public class BaseAdapter extends RecyclerView.Adapter<BaseAdapter.MyViewHolder> 
                 @Override
                 public boolean onLongClick(View v) {
 
-                    Snackbar snackbar = Snackbar.make(v, song_Artist.getText().toString(), Snackbar.LENGTH_LONG);
+                    Snackbar snackbar = Snackbar.make(v, trackSongTextView.getText().toString(), Snackbar.LENGTH_LONG);
                     snackbar.show();
 
                     return false;
+                }
+            });
+
+        }
+    }
+
+    public class FooterViewHolder extends RecyclerView.ViewHolder {
+
+        @BindView(R.id.off_or_on)
+        TextView oNorOffTextView;
+
+        @BindView(R.id.replay_icon)
+        ImageView replayIcon;
+
+        public FooterViewHolder(View view) {
+
+            super(view);
+            ButterKnife.bind(this, view);
+
+            if(sharedPreferencesUtil.getRepeat(view.getContext()) == false) {
+                oNorOffTextView.setText("OFF");
+            } else {
+                oNorOffTextView.setText("ON");
+                replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+            }
+
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    if(sharedPreferencesUtil.getRepeat(v.getContext()) == false) {
+                        sharedPreferencesUtil.setRepeat(v.getContext(), true);
+                        oNorOffTextView.setText("ON");
+                        replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+                    } else {
+                        sharedPreferencesUtil.setRepeat(v.getContext(), false);
+                        oNorOffTextView.setText("OFF");
+                        replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
+                    }
                 }
             });
         }
@@ -89,12 +151,12 @@ public class BaseAdapter extends RecyclerView.Adapter<BaseAdapter.MyViewHolder> 
                         break;
 
                     case "Delete":
+                        deleteRefresh = true;
                         trackDBAdapter.open();
                         trackDBAdapter.deleteTrack(itemId);
                         trackData = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
                         refresh(trackData);
-                        musicService.stop();
                         break;
                 }
 
@@ -107,56 +169,161 @@ public class BaseAdapter extends RecyclerView.Adapter<BaseAdapter.MyViewHolder> 
     public BaseAdapter(List<TrackData> trackData) {
 
         this.trackData = trackData;
+
+        whatInteger = new What();
+        data = new Bundle();
     }
 
     public void refresh(List<TrackData> trackData) {
+
         this.trackData = trackData;
         notifyDataSetChanged();
+
+        if(deleteRefresh == true) {
+            refreshMsg = handler.createMessage(refreshMsg,whatInteger.getRefreshSongList());
+            handler.sendMessage(refreshMsg);
+            deleteRefresh = false;
+        }
+
     }
 
-    public void setBaseActivity(BaseActivity baseActivity) {
-        this.baseActivity = baseActivity;
+    public void updateSoundIcon(final long id)
+    {
+        if(previousTrackPlayed != -1){
+            notifyItemChanged(previousTrackPlayed);
+        }
+
+        for(TrackData td: trackData) {
+
+            if(td.getMediaId() == id) {
+
+                position = trackData.indexOf(td);
+                currentTrackPlaying = position;
+
+                setSoundIconVisible = true;
+                firstUpdateSound = true;
+
+            }
+        }
+
+        notifyItemChanged(position);
+
     }
 
-    public void setMusicService(MusicService musicService) {
-        this.musicService = musicService;
+    public void setSoundIconInvisible(long id)
+    {
+        for(TrackData td: trackData) {
+
+            if(td.getMediaId() == id) {
+
+                position = trackData.indexOf(td);
+
+                setSoundIconVisible = false;
+                firstUpdateSound = false;
+
+            }
+        }
+
+        notifyItemChanged(position);
+    }
+
+    public void setHandler(MessageHandler handler)
+    {
+        this.handler = handler;
     }
 
     @Override
-    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.base_activity_row, parent, false);
+        View view;
+        FooterViewHolder footerViewHolder;
+        MyViewHolder myViewHolder;
 
-        // The class above that has our components
-        return new MyViewHolder(itemView);
+        if (viewType == FOOTER_VIEW) {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.base_activity_foot_row, parent, false);
+
+            footerViewHolder = new FooterViewHolder(view);
+
+            return footerViewHolder;
+
+        } else {
+
+            view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.base_activity_row, parent, false);
+
+            myViewHolder = new MyViewHolder(view);
+
+            return myViewHolder;
+
+        }
     }
 
     // Updates the Recycler View with the data we pass it.
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position)
+    {
+        if(holder instanceof MyViewHolder) {
 
-        trackDataPositions = new ArrayList<>();
-        trackDataPositions.add(trackData.get(position));
+            trackDataPositions = new ArrayList<>();
+            trackDataPositions.add(trackData.get(position));
 
-        final TrackData trackDataList = trackData.get(position);
-        holder.song_Artist.setText(trackDataList.getSongAndArtist());
-        holder.startTime.setText(trackDataList.getStartTime());
-        holder.stopTime.setText(trackDataList.getStopTime());
+            final TrackData trackDataList = trackData.get(position);
 
-        // Sets onClick for all option buttons
-        holder.options.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            ((MyViewHolder) holder).trackSongTextView.setText(trackDataList.getSongAndArtist());
+            ((MyViewHolder) holder).startTime.setText(trackDataList.getStartTime());
+            ((MyViewHolder) holder).stopTime.setText(trackDataList.getStopTime());
 
-                showMenu(v, trackDataList.getId());
+            // Sets onClick for all option buttons
+            ((MyViewHolder) holder).options.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    showMenu(v, trackDataList.getId());
+                }
+            });
+
+            if(firstUpdateSound) {
+
+                if (position == currentTrackPlaying) {
+                    setSoundIconVisible = true;
+                } else {
+                    setSoundIconVisible = false;
+                }
+
             }
-        });
+
+                if(setSoundIconVisible) {
+
+                    ((MyViewHolder) holder).sound.setVisibility(View.VISIBLE);
+                    previousTrackPlayed = position;
+
+                } else {
+                    ((MyViewHolder) holder).sound.setVisibility(View.INVISIBLE);
+                }
+            }
+        }
+
+    @Override
+    public int getItemViewType(int position) {
+
+        if (position == trackData.size()) {
+            // This is where we'll add footer.
+            return FOOTER_VIEW;
+        }
+
+        return super.getItemViewType(position);
     }
 
     @Override
     public int getItemCount() {
 
-        return trackData.size();
+        int items = 0;
+
+        if(!trackData.isEmpty()) {
+            items = trackData.size() + 1;
+        }
+
+        return items;
     }
+
 }

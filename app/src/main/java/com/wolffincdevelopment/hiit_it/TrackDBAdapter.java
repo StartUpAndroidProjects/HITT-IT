@@ -101,9 +101,6 @@ public class TrackDBAdapter {
 
                 break;
         }
-
-
-
     }
 
     public ArrayList<TrackData> getAllTracks() {

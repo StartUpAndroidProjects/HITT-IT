@@ -20,10 +20,15 @@ import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnItemClick;
+
 /**
  * Created by kylewolff on 6/4/2016.
  */
-public class BrowseActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+public class BrowseActivity extends AppCompatActivity {
 
     private ContentResolver cr;
     private Cursor cur;
@@ -31,26 +36,42 @@ public class BrowseActivity extends AppCompatActivity implements AdapterView.OnI
     private TrackData item;
 
     public ArrayList<TrackData> items;
-    public ListView listView;
 
     public String artist, title, stream;
     public long mediaId, duration;
+
+    @BindView(R.id.browse_list_view)
+    ListView listView;
+
+    @OnItemClick(R.id.browse_list_view)
+    protected void onItemClick(int position)
+    {
+        item = (TrackData) items.get(position);
+
+        Intent intent = new Intent();
+
+        if(!item.getSongName().isEmpty() && !item.getArtistName().isEmpty())
+        {
+            intent.putExtra("listItem", item);
+            intent.putExtra("enabled", true);
+            setResult(RESULT_OK, intent);
+            finish();
+
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstances)
     {
         super.onCreate(savedInstances);
-        setContentView(R.layout.browse_layout);
 
-        listView = (ListView) findViewById(R.id.browse_list_view);
-        listView.setOnItemClickListener(this);
-        //listView.setDivider(null);
+        setContentView(R.layout.browse_layout);
+        ButterKnife.bind(this);
+
         cr = getContentResolver();
         items = new ArrayList<>();
 
         getPermission();
-
-
     }
 
     private void getPermission()
@@ -77,31 +98,8 @@ public class BrowseActivity extends AppCompatActivity implements AdapterView.OnI
         }, android.Manifest.permission.READ_EXTERNAL_STORAGE );
     }
 
-
-
-
-    @Override
-    public void onItemClick(AdapterView arg0, View arg1, int position, long arg3)
-    {
-        item = (TrackData) items.get(position);
-
-        Intent intent = new Intent();
-
-        if(!item.getSongName().isEmpty() && !item.getArtistName().isEmpty())
-        {
-            intent.putExtra("listItem", item);
-            intent.putExtra("enabled", true);
-            setResult(RESULT_OK, intent);
-            finish();
-
-        }
-
-    }
-
     public void findMusicFiles()
     {
-
-
 
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";

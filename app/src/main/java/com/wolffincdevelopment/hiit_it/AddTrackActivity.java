@@ -22,6 +22,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import butterknife.BindView;
+import butterknife.BindViews;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnFocusChange;
 import util.ConvertTime;
 
 /*
@@ -31,32 +36,110 @@ import util.ConvertTime;
  */
 public class AddTrackActivity extends AppCompatActivity {
 
+    public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
+
     private InputMethodManager inputManager;
     private TrackDBAdapter trackDBAdapter;
     private Intent i;
     private TrackData item;
     private ConvertTime convertTime;
-
-    public EditText browseTextField, startTime, stopTime;
-    public RadioButton radioButton;
     public TextWatcher textWatcher;
-    public Button addTrackButton;
+
+    @BindView(R.id.browse_text_field)
+    EditText browseTextField;
+
+    @BindView(R.id.start_time)
+    EditText startTime;
+
+    @BindView(R.id.stop_time)
+    EditText stopTime;
+
+    @BindView(R.id.add_track_button)
+    Button addTrackButton;
+
+    @BindView(R.id.radio_song_button)
+    RadioButton radioButton;
+
+    // Added a focusChangeListener so when this field as focus the keyboard does not display
+    @OnFocusChange(R.id.browse_text_field)
+    protected void onFocusChanged(boolean focused)
+    {
+        if(focused)
+        {
+            // Hides the keyboard
+            inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
+            startNextActivity();
+        }
+    }
+
+    @OnClick(R.id.add_track_button)
+    protected void onClick()
+    {
+        trackDBAdapter.open();
+
+        trackDBAdapter.creatTrackData(item.getArtistName(), item.getSongName(),
+                stopTime.getText().toString(), startTime.getText().toString(),
+                item.getStream(), item.getMediaId());
+
+        trackDBAdapter.close();
+
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_add_track);
-
-        // Instantiating the objects for the Activity UI
-        browseTextField = (EditText) findViewById(R.id.browsTextField);
-        startTime = (EditText) findViewById(R.id.start_time);
-        stopTime = (EditText) findViewById(R.id.stop_time);
-        radioButton = (RadioButton) findViewById(R.id.radioSongButton);
-        addTrackButton = (Button) findViewById(R.id.add_track_button);
-
-        trackDBAdapter = new TrackDBAdapter(getBaseContext());
+        ButterKnife.bind(this);
 
         convertTime = new ConvertTime();
+
+        trackDBAdapter = new TrackDBAdapter(getBaseContext());
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        browseTextField.clearFocus();
+
+        init();
+
+        if(!addTrackButton.isEnabled()) {
+            addTrackButton.setBackgroundColor(Color.GRAY);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == BROWSE_ACTIVITY_RESULT_CODE) {
+
+            if(resultCode == RESULT_OK){
+
+                boolean checked = data.getBooleanExtra("enabled", true);
+                item = (TrackData) data.getSerializableExtra("listItem");
+
+                browseTextField.setText("Track: " + item.getSongName() + " - " + item.getArtistName());
+                stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
+                startTime.setText("00:00");
+
+                checkFields(checked);
+            }
+        }
+    }
+
+    private void startNextActivity() {
+
+        Intent browseActivity = new Intent(AddTrackActivity.this,BrowseActivity.class);
+        AddTrackActivity.this.startActivityForResult(browseActivity,BROWSE_ACTIVITY_RESULT_CODE);
+    }
+
+    public void init() {
 
         /*
          * This textWatcher is what handles the logic for the colon
@@ -116,54 +199,10 @@ public class AddTrackActivity extends AppCompatActivity {
         startTime.addTextChangedListener(textWatcher);
         stopTime.addTextChangedListener(textWatcher);
 
-        // Added a focusChangeListener so when this field as focus the keyboard does not display
-        browseTextField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-
-                if(hasFocus)
-                {
-                    // Hides the keyboard
-                    inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
-                    startNextActivity();
-                }
-
-            }
-        });
     }
 
-    @Override
-    protected void onStart()
+    public void checkFields(boolean checked)
     {
-        super.onStart();
-        browseTextField.clearFocus();
-
-        if(!addTrackButton.isEnabled()) {
-            addTrackButton.setBackgroundColor(Color.GRAY);
-        }
-
-        addTrackButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                    trackDBAdapter.open();
-
-                    trackDBAdapter.creatTrackData(item.getArtistName(), item.getSongName(),
-                            stopTime.getText().toString(), startTime.getText().toString(),
-                            item.getStream(), item.getMediaId());
-
-                    trackDBAdapter.close();
-
-                    finish();
-            }
-        });
-
-
-    }
-
-    public void checkFields(boolean checked) {
-
         boolean verified = checked;
 
         if(browseTextField.getText().toString().isEmpty() && startTime.getText().toString().isEmpty()
@@ -179,30 +218,5 @@ public class AddTrackActivity extends AppCompatActivity {
             addTrackButton.setEnabled(verified);
             addTrackButton.setBackground(getResources().getDrawable(R.color.colorAccent));
         }
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == 1) {
-
-            if(resultCode == RESULT_OK){
-
-                boolean checked = data.getBooleanExtra("enabled", true);
-                item = (TrackData) data.getSerializableExtra("listItem");
-
-                browseTextField.setText("Track: " + item.getSongName() + " - " + item.getArtistName());
-                stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
-                startTime.setText("00:00");
-
-                checkFields(checked);
-            }
-        }
-    }
-
-    private void startNextActivity() {
-
-        Intent browseActivity = new Intent(AddTrackActivity.this,BrowseActivity.class);
-        AddTrackActivity.this.startActivityForResult(browseActivity,1);
     }
 }

@@ -41,10 +41,11 @@ public class ConvertTime {
 
     public double toMinutes(long milliseconds) {
 
-        double seconds = milliseconds / 1000;
-        double minutes = seconds / 60;
+        double seconds =  ((milliseconds / 1000) % 60) * .01;
+        double minutes = ((milliseconds / (1000 * 60)) % 60);
+        double time = minutes + seconds;
 
-        return minutes;
+        return time;
     }
 
     public String addColonFormat(double time, String unitOfMeasure) {

@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -25,16 +27,18 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-import static com.wolffincdevelopment.hiit_it.R.id.next;
-
 public class BaseActivity extends AppCompatActivity {
 
-	public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
+	public static final int ADD_ACTIVITY_RESULT_CODE = 232;
 
     private Intent playIntent;
 
     private RecyclerView.LayoutManager mLayoutManager;
     private BaseAdapter baseAdapter;
+    private Handler handler;
+    private What whatIntegers;
+    private MessageHandler messageHandler;
+
 
     private TrackDBAdapter trackDBAdapter;
 
@@ -47,7 +51,6 @@ public class BaseActivity extends AppCompatActivity {
     private ServiceConnection musicConnection;
 
     private MusicService.MusicBinder binder;
-
 
     private ProgressDialog progress;
 
@@ -63,7 +66,7 @@ public class BaseActivity extends AppCompatActivity {
     @BindView( R.id.play )
     ImageButton playButton;
 
-    @BindView( next )
+    @BindView( R.id.next )
     ImageButton nextButton;
 
     @BindView( R.id.prev )
@@ -80,7 +83,7 @@ public class BaseActivity extends AppCompatActivity {
         prefFirstTime.runCheckFirstTime( getString(R.string.firstTimeFabPressed) );
 
         Intent addTrackIntent = new Intent(BaseActivity.this, AddTrackActivity.class);
-        startActivityForResult(addTrackIntent, BROWSE_ACTIVITY_RESULT_CODE);
+        startActivityForResult(addTrackIntent, ADD_ACTIVITY_RESULT_CODE);
     }
 
     @OnClick(R.id.play)
@@ -94,12 +97,11 @@ public class BaseActivity extends AppCompatActivity {
 
                 TrackData currentSong = musicService.getCurrentSong();
 
-                if(!musicService.isPlaying()) {
+                if(!musicService.isPlaying() && !musicService.isPaused()) {
                     musicService.playSong(currentSong.getStartTime2(), currentSong.getStopTime3());
                 } else {
                     pauseResume();
                 }
-
             }
         }
     }
@@ -107,15 +109,19 @@ public class BaseActivity extends AppCompatActivity {
     @OnClick(R.id.next)
     protected void onNextPressed()
     {
-        TrackData song = musicService.getNextSong();
-        musicService.playNext(song.getStartTime2(), song.getStopTime3());
+        if(musicService != null) {
+            TrackData song = musicService.getNextSong();
+            musicService.playNext(song.getStartTime2(), song.getStopTime3());
+        }
     }
 
     @OnClick(R.id.prev)
     protected void onPrevPressed()
     {
-        TrackData song = musicService.getPreviousSong();
-        musicService.playPrev(song.getStartTime2(), song.getStopTime3());
+        if(musicService != null) {
+            TrackData song = musicService.getPreviousSong();
+            musicService.playPrev(song.getStartTime2(), song.getStopTime3());
+        }
     }
 
 
@@ -124,13 +130,10 @@ public class BaseActivity extends AppCompatActivity {
 	{
 		super.onActivityResult( requestCode, resultCode, data );
 
-		if (requestCode == BROWSE_ACTIVITY_RESULT_CODE )
+		if (requestCode == ADD_ACTIVITY_RESULT_CODE )
 		{
-			checkForAddedTracks();
 			refreshSongList();
 		}
-
-
 	}
 
 	@Override
@@ -149,12 +152,36 @@ public class BaseActivity extends AppCompatActivity {
 		prefFirstTime = new FirstTimePreference(this);
 		trackDBAdapter = new TrackDBAdapter(this);
 		mLayoutManager = new LinearLayoutManager(this);
-		trackDataList = new ArrayList<>(  );
+		trackDataList = new ArrayList<>();
+        whatIntegers = new What();
+
+        setSongList();
+
+        handler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+
+                if(msg.what == whatIntegers.getRefreshSongList()) {
+                    refreshSongList();
+                } else if(msg.what == whatIntegers.getUpdatePlayControls()) {
+                    updatePlayPauseButtons();
+                } else if(msg.what == whatIntegers.getSetSoundIconVisible()) {
+                    baseAdapter.updateSoundIcon((long) msg.getData().get("id"));
+                } else if(msg.what == whatIntegers.getSetSoundIconNonVisible()) {
+                    baseAdapter.setSoundIconInvisible((long) msg.getData().get("id"));
+                }
+
+                return false;
+            }
+        });
+
+        messageHandler = new MessageHandler(handler);
 
     }
 
 	@Override
-	protected void onResume() {
+	protected void onResume()
+    {
 		super.onResume();
 
 		init();
@@ -164,10 +191,21 @@ public class BaseActivity extends AppCompatActivity {
 		}
 	}
 
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+
+    }
 
     private void init()
     {
-
 		progress = new ProgressDialog(this);
 		progress.setMessage("Loading...");
 		progress.show();
@@ -178,27 +216,28 @@ public class BaseActivity extends AppCompatActivity {
 
 		initMusicService();
 
-		refreshSongList();
-
+        setSongList();
 
     }
 
 
 	private void initRecyclerView()
 	{
+        // Recycler View Adapter, passing the arrayList
+        baseAdapter = new BaseAdapter(trackDataList);
+        baseAdapter.setHandler(messageHandler);
+
 		recyclerView.setLayoutManager(mLayoutManager);
 		recyclerView.setItemAnimator(new DefaultItemAnimator());
 		recyclerView.setAdapter(baseAdapter);
 
 		// Adding the divider lines to the recycler view
 		recyclerView.addItemDecoration(new DividerItemDecoration(this));
-
-		// Recycler View Adapter, passing the arrayList
-		baseAdapter = new BaseAdapter(trackDataList);
 	}
 
 	private void initMusicService()
-	{
+    {
+
 		musicConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected( ComponentName name, IBinder service) {
@@ -207,15 +246,14 @@ public class BaseActivity extends AppCompatActivity {
 				//get service
 				musicService = binder.getService();
 				//pass list
-				musicService.setList(songList);
+                musicService.setList(songList);
 				musicBound = true;
 
-				baseAdapter.setMusicService(musicService);
-
-				musicService.getBaseAcitivty(BaseActivity.this);
+                musicService.setHandler(messageHandler);
 
 				progress.dismiss();
 				musicConnected = true;
+
 			}
 
 			@Override
@@ -229,21 +267,29 @@ public class BaseActivity extends AppCompatActivity {
 
 			playIntent = new Intent(this, MusicService.class);
 			bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-			startService(playIntent);
+            startService(playIntent);
 		}
 	}
 
-    public void checkForAddedTracks() {
+    public void refreshSongList()
+    {
 
         trackDBAdapter.open();
         trackDataList = trackDBAdapter.getAllTracks();
         songList = trackDBAdapter.getAllStreams();
         trackDBAdapter.close();
+
         baseAdapter.refresh(trackDataList);
+
+        if(musicService != null) {
+            musicService.setList(songList);
+        }
     }
 
-    public void refreshSongList(){
+    public void setSongList()
+    {
         trackDBAdapter.open();
+        trackDataList = trackDBAdapter.getAllTracks();
         songList = trackDBAdapter.getAllStreams();
         trackDBAdapter.close();
 
@@ -251,7 +297,6 @@ public class BaseActivity extends AppCompatActivity {
             musicService.setList(songList);
         }
     }
-
 
     private void checkFirstTimePreference() {
 
@@ -266,7 +311,7 @@ public class BaseActivity extends AppCompatActivity {
 
     public void updatePlayPauseButtons() {
 
-        if(musicService.isPlaying()) {
+        if (musicService.isPlaying()) {
             playButton.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);
         } else {
             playButton.setImageResource(R.drawable.ic_play_circle_outline_white);

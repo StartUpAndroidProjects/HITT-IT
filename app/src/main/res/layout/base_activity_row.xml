@@ -10,7 +10,7 @@
         android:textSize="@dimen/base_activity_textSize"
         android:textColor="@android:color/black"
         android:text="Track: "
-        android:id="@+id/trackTextView"
+        android:id="@+id/track_text_view"
         android:layout_marginTop="20dp"
         android:layout_marginStart="60dp"/>
 
@@ -20,8 +20,8 @@
         android:textSize="@dimen/base_activity_textSize"
         android:textColor="@android:color/black"
         android:text="Bodies - Drowning Pool"
-        android:id="@+id/trackSongTextView"
-        android:layout_alignTop="@+id/trackTextView"
+        android:id="@+id/track_song_textview"
+        android:layout_alignTop="@+id/track_text_view"
         android:layout_marginLeft="110dp"
         android:singleLine="true"
         android:ellipsize="end" />
@@ -34,10 +34,10 @@
         android:text="Start:"
         android:layout_marginTop="50dp"
         android:layout_marginRight="50dp"
-        android:layout_alignStart="@+id/trackTextView" />
+        android:layout_alignStart="@+id/track_text_view" />
 
     <TextView
-        android:id="@+id/startTimeTextView"
+        android:id="@+id/start_time_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/base_activity_textSize"
@@ -54,11 +54,11 @@
         android:text="Stop:"
         android:layout_marginTop="50dp"
         android:layout_marginLeft="140dp"
-        android:layout_alignStart="@+id/trackTextView"
-        android:id="@+id/textView" />
+        android:layout_alignStart="@+id/track_text_view"
+        android:id="@+id/text_view" />
 
     <TextView
-        android:id="@+id/stopTimeTextView"
+        android:id="@+id/stop_time_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="@dimen/base_activity_textSize"
@@ -70,17 +70,17 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/soundIconImageView"
+        android:id="@+id/sound_icon_imageview"
         android:visibility="invisible"
         android:src="@drawable/ic_volume_up_deep_orange_48dp"
-        android:layout_alignTop="@+id/trackTextView"
+        android:layout_alignTop="@+id/track_text_view"
         android:background="?android:selectableItemBackground"/>
 
     <ImageButton
         android:background="?android:selectableItemBackground"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/optionsIcon"
+        android:id="@+id/options_icon"
         android:src="@drawable/ic_more_vert_black_48dp"
         android:layout_alignParentEnd="true"
         android:layout_marginRight="5dp"

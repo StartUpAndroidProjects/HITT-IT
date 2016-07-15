@@ -1,7 +1,6 @@
 package com.wolffincdevelopment.hiit_it;
 
 import android.app.Service;
-import android.content.ContentUris;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -11,29 +10,27 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.PowerManager;
-import android.os.ResultReceiver;
-import android.provider.MediaStore;
-import android.provider.Telephony;
 import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
 import android.util.Log;
-import android.widget.ImageButton;
-import android.widget.MediaController;
 
 import java.util.ArrayList;
+
+import util.SharedPreferencesUtil;
 
 /**
  * Created by kylewolff on 6/5/2016.
  */
-public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
-        MediaPlayer.OnCompletionListener, MediaPlayer.OnSeekCompleteListener {
+public class MusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
 
     private final IBinder musicBind = new MusicBinder();
-    private BaseActivity baseActivity;
+    private Message updateControlsMsg, sendSoundIconVisible, sendSoundIconNonVisible;
+    private MessageHandler handler;
+    private What whatInteger;
+    private Bundle data, nonVisibleIconData;
     private int startTime, stopTime;
     private boolean paused = false;
+    private boolean mPlayerReleased = true;
 
     //media player
     private MediaPlayer player;
@@ -45,39 +42,38 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     private TrackData playSong;
 
-    public void onCreate() {
-
+    public void onCreate()
+    {
         //create the service
         super.onCreate();
         //initialize position
         songPosn=0;
         //create player
         player = new MediaPlayer();
+        whatInteger = new What();
+        data = new Bundle();
+        nonVisibleIconData = new Bundle();
 
         initMusicPlayer();
-
     }
 
     public void onDestroy() {
-
+        super.onDestroy();
         player.release();
     }
 
-    public void getBaseAcitivty(BaseActivity activity) {
-
-        baseActivity = activity;
-    }
-
     public void initMusicPlayer(){
+
         //set player properties
         player.setWakeMode(getApplicationContext(),
                 PowerManager.PARTIAL_WAKE_LOCK);
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
         player.setOnPreparedListener(this);
-        player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
         player.setOnSeekCompleteListener(this);
+        player.setOnCompletionListener(this);
     }
+
 
     public void setList(ArrayList<TrackData> songs){
         this.songs = songs;
@@ -97,8 +93,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             this.startTime = startTime;
             this.stopTime = stopTime;
 
-            //play a song
-            player.reset();
+           player.reset();
+
             playSong = songs.get(songPosn);
             //get id
             long currSong = playSong.getMediaId();
@@ -107,11 +103,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
             try {
                 player.setDataSource(getApplicationContext(), trackUri);
+                data.clear();
+                data.putSerializable("id", playSong.getMediaId());
+                sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
+                handler.sendMessage(sendSoundIconVisible);
             } catch (Exception e) {
                 Log.e("MUSIC SERVICE", "Error setting data source", e);
             }
 
             player.prepareAsync();
+
         }
     }
 
@@ -126,10 +127,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public boolean isPlaying(){
         return player.isPlaying();
     }
+
+    public boolean isReleased()
+    {
+        return mPlayerReleased;
+    }
+
     public boolean isPaused() {
         return paused;
     }
-
 
     public void pausePlayer(){
         player.pause();
@@ -143,8 +149,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         player.start();
     }
 
-    public void stop() {
+    public void stop(long mediaId) {
+        nonVisibleIconData.putSerializable("id", mediaId);
         player.stop();
+        sendSoundIconNonVisible = handler.createMessage(sendSoundIconNonVisible,whatInteger.getSetSoundIconNonVisible(), nonVisibleIconData);
+        handler.sendMessage(sendSoundIconNonVisible);
     }
 
     public void seek(int posn){
@@ -205,15 +214,22 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 playSong = songs.get(songPosn);
             }
         }
+
         return playSong;
     }
 
     public void checkForNextSongDuringPlay() {
 
-        if(!(songPosn >= songs.size()) && !(songPosn < 0)) {
+        if(!(songPosn > songs.size()) && !(songPosn < 0)) {
+
             TrackData song = getNextSong();
-            playNext(song.getStartTime2(), song.getStopTime3());
-            baseActivity.updatePlayPauseButtons();
+
+            if(songPosn != 0) {
+                playNext(song.getStartTime2(), song.getStopTime3());
+            } else {
+                playSong(song.getStartTime2(), song.getStopTime3());
+            }
+
         }
     }
 
@@ -229,46 +245,72 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        mp.start();
+        player.start();
         player.seekTo(startTime);
-        baseActivity.updatePlayPauseButtons();
+
     }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
 
+        updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
+        handler.sendMessage(updateControlsMsg);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
+
                 int currentPosition = 0;
-                while (player.isPlaying()) {
-                    try {
-                        Thread.sleep(1000);
-                        currentPosition = getPosn();
-                    } catch (InterruptedException e) {
-                        return;
-                    } catch (Exception e) {
-                        return;
-                    }
-                    final int total = getDur();
 
-                    if(currentPosition >= stopTime) {
-                        player.stop();
-                        baseActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
+                    while (player.isPlaying()) {
+
+                        try {
+                            Thread.sleep(1000);
+                            currentPosition = getPosn();
+                        } catch (InterruptedException e) {
+                            return;
+                        } catch (Exception e) {
+                            return;
+                        }
+
+                        final int total = getDur();
+
+                        if (currentPosition >= stopTime) {
+                            player.seekTo(total);
+
+                            if(songPosn <= songs.size() - 1 && SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
                                 checkForNextSongDuringPlay();
-                            }
-                        });
-                    }
+                            } else if(!SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
 
+                                if(songPosn == songs.size() - 1 ) {
+                                    stop(playSong.getMediaId());
+                                } else {
+                                    checkForNextSongDuringPlay();
+                                }
+
+                            } else {
+                                stop(playSong.getMediaId());
+                            }
+                        }
+                    }
                 }
-            }
+
         }).start();
 
     }
 
+    public void setHandler(MessageHandler handler)
+    {
+        this.handler = handler;
+    }
+
+    public void completeAudio()
+    {
+        player.release();
+    }
+
     public ArrayList<TrackData> getSongs() {
+
         return songs;
     }
 

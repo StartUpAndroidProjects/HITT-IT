@@ -1,12 +1,9 @@
 package com.wolffincdevelopment.hiit_it;
 
-import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -105,7 +102,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 oNorOffTextView.setText("OFF");
             } else {
                 oNorOffTextView.setText("ON");
-                replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+                //replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
             }
 
             view.setOnClickListener(new View.OnClickListener() {
@@ -115,11 +112,11 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     if(sharedPreferencesUtil.getRepeat(v.getContext()) == false) {
                         sharedPreferencesUtil.setRepeat(v.getContext(), true);
                         oNorOffTextView.setText("ON");
-                        replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+                     //   replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
                     } else {
                         sharedPreferencesUtil.setRepeat(v.getContext(), false);
                         oNorOffTextView.setText("OFF");
-                        replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
+                     //   replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
                     }
                 }
             });

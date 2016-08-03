@@ -105,6 +105,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 player.setDataSource(getApplicationContext(), trackUri);
                 data.clear();
                 data.putSerializable("id", playSong.getMediaId());
+                data.putSerializable("boolean", true);
                 sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                 handler.sendMessage(sendSoundIconVisible);
             } catch (Exception e) {
@@ -147,6 +148,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         paused = false;
         player.seekTo(getPosn());
         player.start();
+    }
+
+    public void stopPlayer()
+    {
+        player.stop();
     }
 
     public void stop(long mediaId) {

@@ -21,6 +21,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import butterknife.BindView;
@@ -38,7 +40,8 @@ public class BaseActivity extends AppCompatActivity {
     private Handler handler;
     private What whatIntegers;
     private MessageHandler messageHandler;
-
+    private Message setSoundIcon;
+    private Bundle data;
 
     private TrackDBAdapter trackDBAdapter;
 
@@ -111,7 +114,10 @@ public class BaseActivity extends AppCompatActivity {
     {
         if(musicService != null) {
             TrackData song = musicService.getNextSong();
-            musicService.playNext(song.getStartTime2(), song.getStopTime3());
+
+            if(song != null) {
+                musicService.playNext(song.getStartTime2(), song.getStopTime3());
+            }
         }
     }
 
@@ -120,7 +126,10 @@ public class BaseActivity extends AppCompatActivity {
     {
         if(musicService != null) {
             TrackData song = musicService.getPreviousSong();
-            musicService.playPrev(song.getStartTime2(), song.getStopTime3());
+
+            if(song != null) {
+                musicService.playPrev(song.getStartTime2(), song.getStopTime3());
+            }
         }
     }
 
@@ -132,7 +141,7 @@ public class BaseActivity extends AppCompatActivity {
 
 		if (requestCode == ADD_ACTIVITY_RESULT_CODE )
 		{
-			refreshSongList();
+			setSongList();
 		}
 	}
 
@@ -154,19 +163,18 @@ public class BaseActivity extends AppCompatActivity {
 		mLayoutManager = new LinearLayoutManager(this);
 		trackDataList = new ArrayList<>();
         whatIntegers = new What();
-
-        setSongList();
+        data = new Bundle();
 
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
 
                 if(msg.what == whatIntegers.getRefreshSongList()) {
-                    refreshSongList();
+                    setSongList();
                 } else if(msg.what == whatIntegers.getUpdatePlayControls()) {
                     updatePlayPauseButtons();
                 } else if(msg.what == whatIntegers.getSetSoundIconVisible()) {
-                    baseAdapter.updateSoundIcon((long) msg.getData().get("id"));
+                    baseAdapter.updateSoundIcon((long) msg.getData().get("id"), msg.getData().getBoolean("boolean"));
                 } else if(msg.what == whatIntegers.getSetSoundIconNonVisible()) {
                     baseAdapter.setSoundIconInvisible((long) msg.getData().get("id"));
                 }
@@ -186,6 +194,22 @@ public class BaseActivity extends AppCompatActivity {
 
 		init();
 
+        if(musicService != null) {
+
+            setSoundIconData();
+
+            if (musicService.isPlaying()) {
+                data.putSerializable("boolean", true);
+                createSoundIconMessage();
+            } else if(musicService.isPaused()) {
+                data.putSerializable("boolean", false);
+                createSoundIconMessage();
+            }
+
+            sendSoundIconMessage();
+        }
+
+
 		if(musicService != null && musicConnected == true) {
 			progress.dismiss();
 		}
@@ -201,6 +225,15 @@ public class BaseActivity extends AppCompatActivity {
     protected void onDestroy()
     {
         super.onDestroy();
+
+        if(playIntent != null) {
+            musicService.stopPlayer();
+            stopService(playIntent);
+
+            if(musicConnected) {
+                unbindService(musicConnection);
+            }
+        }
 
     }
 
@@ -266,25 +299,10 @@ public class BaseActivity extends AppCompatActivity {
 		if(playIntent == null){
 
 			playIntent = new Intent(this, MusicService.class);
-//			bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-//            startService(playIntent);
+			bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
 		}
 	}
-
-    public void refreshSongList()
-    {
-
-        trackDBAdapter.open();
-        trackDataList = trackDBAdapter.getAllTracks();
-        songList = trackDBAdapter.getAllStreams();
-        trackDBAdapter.close();
-
-        baseAdapter.refresh(trackDataList);
-
-        if(musicService != null) {
-            musicService.setList(songList);
-        }
-    }
 
     public void setSongList()
     {
@@ -296,6 +314,8 @@ public class BaseActivity extends AppCompatActivity {
         if(musicService != null) {
             musicService.setList(songList);
         }
+
+        baseAdapter.refresh(trackDataList);
     }
 
     private void checkFirstTimePreference() {
@@ -318,15 +338,44 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void pauseResume() {
+    public void pauseResume()
+    {
+        setSoundIconData();
 
-            if (musicService.isPaused() && !musicService.isPlaying()) {
-                musicService.resume();
-                updatePlayPauseButtons();
-            } else {
-                musicService.pausePlayer();
-                updatePlayPauseButtons();
-            }
+        if (musicService.isPaused() && !musicService.isPlaying()) {
+
+            data.putSerializable("boolean", true);
+            musicService.resume();
+            updatePlayPauseButtons();
+        } else {
+
+            data.putSerializable("boolean", false);
+            musicService.pausePlayer();
+            updatePlayPauseButtons();
+        }
+
+        createSoundIconMessage();
+        sendSoundIconMessage();
+    }
+
+    public void createSoundIconMessage()
+    {
+        setSoundIcon = messageHandler.createMessage(setSoundIcon,
+                whatIntegers.getSetSoundIconVisible(),data);
+    }
+
+    public void sendSoundIconMessage()
+    {
+        if(setSoundIcon != null) {
+            messageHandler.sendMessage(setSoundIcon);
+        }
+    }
+
+    public void setSoundIconData()
+    {
+        data.clear();
+
+        data.putSerializable("id", musicService.getCurrentSong().getMediaId());
     }
 
 

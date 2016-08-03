@@ -9,16 +9,22 @@ public class TrackData implements Serializable{
 
     public String song, artist, startTime, stopTime, id, stream;
     public long mediaId, duration;
+    public String orderId;
 
-    public TrackData(String stream, long mediaId, String startTime, String stopTime) {
+    public TrackData(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public TrackData(String stream, long mediaId, String startTime, String stopTime, String orderId) {
 
         this.stream = stream;
         this.mediaId = mediaId;
         this.startTime = startTime;
         this.stopTime = stopTime;
+        this.orderId = orderId;
     }
 
-    public TrackData(String artist, String song, String stream, String startTime, String stopTime, long mediaId, String id)
+    public TrackData(String artist, String song, String stream, String startTime, String stopTime, long mediaId, String id, String orderId)
     {
         this.song = song;
         this.artist = artist;
@@ -27,6 +33,7 @@ public class TrackData implements Serializable{
         this.stream = stream;
         this.mediaId = mediaId;
         this.id = id;
+        this.orderId = orderId;
     }
 
     public TrackData(String artist, String song, String stream, long duration, long mediaId)
@@ -70,6 +77,8 @@ public class TrackData implements Serializable{
     public String getStream() { return stream;}
 
     public long getMediaId() { return  mediaId; }
+
+    public String getOrderId() { return  orderId; }
 
     public long getDuration() {
         return duration;

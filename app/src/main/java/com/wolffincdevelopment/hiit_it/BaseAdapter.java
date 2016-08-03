@@ -38,6 +38,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public boolean deleteRefresh = false;
     public boolean setSoundIconVisible = false;
     public boolean firstUpdateSound = false;
+    public boolean activeIcon = false;
     public int currentTrackPlaying, previousTrackPlayed = -1, position;
     public Bundle data;
 
@@ -102,7 +103,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 oNorOffTextView.setText("OFF");
             } else {
                 oNorOffTextView.setText("ON");
-                //replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+                replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
             }
 
             view.setOnClickListener(new View.OnClickListener() {
@@ -112,11 +113,11 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     if(sharedPreferencesUtil.getRepeat(v.getContext()) == false) {
                         sharedPreferencesUtil.setRepeat(v.getContext(), true);
                         oNorOffTextView.setText("ON");
-                     //   replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
+                        replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
                     } else {
                         sharedPreferencesUtil.setRepeat(v.getContext(), false);
                         oNorOffTextView.setText("OFF");
-                     //   replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
+                        replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
                     }
                 }
             });
@@ -124,9 +125,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // The method to display the popUp menu
-    private void showMenu(View v, String id) {
-
-        final long itemId = Long.parseLong(id);
+    private void showMenu(View v, final TrackData data) {
 
         IconizedMenu popup = new IconizedMenu(v.getContext(), v);
         MenuInflater inflater = popup.getMenuInflater();
@@ -141,7 +140,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                     case "Move Up":
                         trackDBAdapter.open();
-                        trackDBAdapter.reorderItem(itemId, "Move Up");
+                        trackDBAdapter.reorderItem(data, "Move Up");
                         trackData = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
                         refresh(trackData);
@@ -150,7 +149,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     case "Delete":
                         deleteRefresh = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.deleteTrack(itemId);
+                        trackDBAdapter.deleteTrack(data);
                         trackData = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
                         refresh(trackData);
@@ -184,7 +183,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     }
 
-    public void updateSoundIcon(final long id)
+    public void updateSoundIcon(final long id, boolean active)
     {
         if(previousTrackPlayed != -1){
             notifyItemChanged(previousTrackPlayed);
@@ -199,6 +198,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                 setSoundIconVisible = true;
                 firstUpdateSound = true;
+                activeIcon = active;
 
             }
         }
@@ -264,18 +264,18 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             trackDataPositions = new ArrayList<>();
             trackDataPositions.add(trackData.get(position));
 
-            final TrackData trackDataList = trackData.get(position);
+            final TrackData trackData = this.trackData.get(position);
 
-            ((MyViewHolder) holder).trackSongTextView.setText(trackDataList.getSongAndArtist());
-            ((MyViewHolder) holder).startTime.setText(trackDataList.getStartTime());
-            ((MyViewHolder) holder).stopTime.setText(trackDataList.getStopTime());
+            ((MyViewHolder) holder).trackSongTextView.setText(trackData.getSongAndArtist() + String.valueOf(trackData.getOrderId()));
+            ((MyViewHolder) holder).startTime.setText(trackData.getStartTime());
+            ((MyViewHolder) holder).stopTime.setText(trackData.getStopTime());
 
             // Sets onClick for all option buttons
             ((MyViewHolder) holder).options.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    showMenu(v, trackDataList.getId());
+                    showMenu(v, trackData);
                 }
             });
 
@@ -293,6 +293,12 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                     ((MyViewHolder) holder).sound.setVisibility(View.VISIBLE);
                     previousTrackPlayed = position;
+
+                    if(!activeIcon) {
+                        ((MyViewHolder) holder).sound.setImageResource(R.drawable.ic_volume_up_black_48dp);
+                    } else {
+                        ((MyViewHolder) holder).sound.setImageResource(R.drawable.ic_volume_up_deep_orange_48dp);
+                    }
 
                 } else {
                     ((MyViewHolder) holder).sound.setVisibility(View.INVISIBLE);

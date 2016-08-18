@@ -38,7 +38,8 @@
         android:background="@color/colorPrimary"
         android:id="@+id/view"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:elevation="5dp">
 
       <include layout="@layout/media_controller"> </include>
 

@@ -28,8 +28,8 @@ public class ConvertTime {
         dfNoPlaces = new DecimalFormat("##");
     }
 
-    public String convertMilliSecToStringWithColon(long milliseconds) {
-
+    public String convertMilliSecToStringWithColon(long milliseconds)
+    {
         if(milliseconds < 60000) {
             timeWithColon = addColonFormat( (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds), "seconds");
         } else if(milliseconds >= 60000 && milliseconds < 3600000) {

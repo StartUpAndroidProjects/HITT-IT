@@ -1,29 +1,19 @@
 package com.wolffincdevelopment.hiit_it;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Environment;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
 import butterknife.BindView;
-import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnFocusChange;
@@ -43,7 +33,9 @@ public class AddTrackActivity extends AppCompatActivity {
     private Intent i;
     private TrackData item;
     private ConvertTime convertTime;
-    public TextWatcher textWatcher;
+    public  TextWatcher textWatcher;
+
+    private String STOP_TIME_MAX;
 
     @BindView(R.id.browse_text_field)
     EditText browseTextField;
@@ -59,6 +51,24 @@ public class AddTrackActivity extends AppCompatActivity {
 
     @BindView(R.id.radio_song_button)
     RadioButton radioButton;
+
+    @OnFocusChange(R.id.start_time)
+    protected void onStartTimeFocuseChange(boolean focused)
+    {
+        if(focused)
+            startTime.getText().clear();
+        else
+            checkTimeField(startTime);
+    }
+
+    @OnFocusChange(R.id.stop_time)
+    protected void onStopTimeFocuseChange(boolean focused)
+    {
+        if(focused)
+            stopTime.getText().clear();
+        else
+            checkTimeField(stopTime);
+    }
 
     // Added a focusChangeListener so when this field as focus the keyboard does not display
     @OnFocusChange(R.id.browse_text_field)
@@ -76,11 +86,25 @@ public class AddTrackActivity extends AppCompatActivity {
     @OnClick(R.id.add_track_button)
     protected void onClick()
     {
+        if(STOP_TIME_MAX != null) {
+
+            if (!checkTimeFields(startTime)) {
+                startTime.setText("00:00");
+            }
+
+            if (!checkTimeFields(stopTime)) {
+                stopTime.setText(STOP_TIME_MAX);
+
+                STOP_TIME_MAX = null;
+
+            }
+        }
+
         trackDBAdapter.open();
 
-        trackDBAdapter.creatTrackData(item.getArtistName(), item.getSongName(),
+        trackDBAdapter.createTrackData(item.getArtistName(), item.getSongName(),
                 stopTime.getText().toString(), startTime.getText().toString(),
-                item.getStream(), item.getMediaId());
+                item.getStream(), item.getMediaId(), trackDBAdapter.getNextOrderId());
 
         trackDBAdapter.close();
 
@@ -97,6 +121,7 @@ public class AddTrackActivity extends AppCompatActivity {
         convertTime = new ConvertTime();
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
+
     }
 
     @Override
@@ -124,11 +149,13 @@ public class AddTrackActivity extends AppCompatActivity {
                 boolean checked = data.getBooleanExtra("enabled", true);
                 item = (TrackData) data.getSerializableExtra("listItem");
 
-                browseTextField.setText("Track: " + item.getSongName() + " - " + item.getArtistName());
+                browseTextField.setText(item.getSongName() + " - " + item.getArtistName());
                 stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
                 startTime.setText("00:00");
 
-                checkFields(checked);
+                STOP_TIME_MAX = convertTime.convertMilliSecToStringWithColon(item.getDuration());
+
+                checkFields();
             }
         }
     }
@@ -163,17 +190,27 @@ public class AddTrackActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
 
+                checkFields();
+
                 if(s.length() == 2 && delete != 0 && s.subSequence(1,2).toString().compareTo(":") != 0)
                 {
                     s.append(":");
                 }
 
-                if(delete == 0 && s.length() > 2 && s.subSequence(1,2).toString().compareTo(":") == 0)
+                if(s.toString().matches("^([0-9]{3})$"))
                 {
-                    s.delete(1,2);
+                    CharSequence added = s.subSequence(0,2);
+                    CharSequence added2 = s.subSequence(2,3);
+
+                    s.clear();
+
+                    s.append(added + ":" + added2);
+
+
+
                 }
 
-                if(s.toString().startsWith(":"))
+                if(s.toString().startsWith(":") && s.toString().endsWith(":"))
                 {
                     s.clear();
                 }
@@ -201,22 +238,62 @@ public class AddTrackActivity extends AppCompatActivity {
 
     }
 
-    public void checkFields(boolean checked)
+    private void checkTimeField(EditText textField)
     {
-        boolean verified = checked;
+        if(textField.getText().toString().matches("^:([0-9]{2})$"))
+        {
+            CharSequence add =  textField.getText().subSequence(0,3);
+            textField.getText().clear();
+            textField.getText().append("00" + add);
+        } else if(textField.getText().toString().matches("^([0-9]{2}):$"))
+        {
+            CharSequence add =  textField.getText().subSequence(0,3);
+            textField.getText().clear();
+            textField.getText().append(add + "00");
+        } else if(textField.getText().toString().matches("^([0-9]{2}):([0-9]{1})$"))
+        {
+            CharSequence add =  textField.getText().subSequence(0,4);
+            textField.getText().clear();
+            textField.getText().append(add + "0");
+        } else if(textField.getText().toString().matches("^([0-9]{1}):([0-9]{2})$"))
+        {
+            CharSequence add =  textField.getText().subSequence(0,4);
+            textField.getText().clear();
+            textField.getText().append("0" + add);
+        }
+    }
 
-        if(browseTextField.getText().toString().isEmpty() && startTime.getText().toString().isEmpty()
-                && stopTime.getText().toString().isEmpty()) {
+    public void checkFields()
+    {
+        boolean verified;
+
+        if(browseTextField.getText().toString().isEmpty() || startTime.getText().toString().isEmpty()
+                || stopTime.getText().toString().isEmpty() || !startTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")
+                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$") ) {
 
             verified = false;
             addTrackButton.setEnabled(verified);
             addTrackButton.setBackgroundColor(Color.GRAY);
 
-        }else {
+        } else {
 
             verified = true;
             addTrackButton.setEnabled(verified);
             addTrackButton.setBackground(getResources().getDrawable(R.color.colorAccent));
+        }
+    }
+
+    public boolean checkTimeFields(EditText timeField)
+    {
+        if(Integer.valueOf(timeField.getText().toString().substring(0, 2)) > Integer.valueOf(STOP_TIME_MAX.substring(0, 2)) ||
+                (Integer.valueOf(timeField.getText().toString().substring(0, 2)).compareTo(Integer.valueOf(STOP_TIME_MAX.substring(0, 2))) == 0 && Integer.valueOf(timeField.getText().toString().substring(3, 5)) > Integer.valueOf(STOP_TIME_MAX.substring(3, 5)))
+                            || (Integer.valueOf(timeField.getText().toString().substring(0, 2)) < Integer.valueOf(STOP_TIME_MAX.substring(0, 2)) &&
+                        Integer.valueOf(timeField.getText().toString().substring(3, 5)) > Integer.valueOf(STOP_TIME_MAX.substring(3, 5)))
+                ||  Integer.valueOf(timeField.getText().toString().substring(3, 5)) >= 60
+        ){
+            return false;
+        }else {
+            return  true;
         }
     }
 }

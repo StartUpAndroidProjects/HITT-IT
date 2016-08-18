@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimary">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/trackName"
+        android:text="Track: Song Name"
+        android:layout_centerHorizontal="true"
+       />
+
+    <ImageButton android:id="@+id/notPrev"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_skip_previous_white_48dp"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="130dp"
+        android:layout_marginTop="20dp"
+
+        />
+
+    <ImageButton android:id="@+id/notPlayPause"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_play_circle_outline_white"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="170dp"
+        android:layout_marginTop="20dp"
+        />
+
+    <ImageButton android:id="@+id/notNext"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_skip_next_white_48dp"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="210dp"
+        android:layout_marginTop="20dp"
+
+        />
+
+
+
+
+</RelativeLayout>

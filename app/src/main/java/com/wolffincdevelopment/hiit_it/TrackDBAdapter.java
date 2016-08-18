@@ -5,10 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by kylewolff on 6/6/2016.
@@ -42,7 +40,7 @@ public class TrackDBAdapter {
             COLUMN_START_TIME + " TEXT NOT NULL, " +
             COLUMN_STOP_TIME + " TEXT NOT NULL, " +
             COLUMN_MEDIA_ID + " INTEGER NOT NULL, " +
-            COLUMN_ORDER_ID + " INTEGER NULL" +
+            COLUMN_ORDER_ID + " INTEGER NOT NULL" +
             ");";
 
     private SQLiteDatabase sqLiteDatabase;
@@ -64,9 +62,31 @@ public class TrackDBAdapter {
 
     public void close() {
         trackDBHelper.close();
+        sqLiteDatabase.close();
     }
 
-    public TrackData creatTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId) {
+    public int getNextOrderId() {
+
+        int orderId;
+
+        String[] orderIdStringArray = {COLUMN_ORDER_ID};
+
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, orderIdStringArray, null, null, null, null, COLUMN_ORDER_ID + " ASC");
+
+        cursor.moveToLast();
+
+        if(cursor.getPosition() == -1) {
+            orderId = 1;
+        } else {
+            orderId = cursor.getInt(0) + 1;
+        }
+
+        cursor.close();
+
+        return orderId;
+    }
+
+    public TrackData createTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId, int orderId) {
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(COLUMN_ARTIST_NAME, aristName);
@@ -75,7 +95,7 @@ public class TrackDBAdapter {
         contentValues.put(COLUMN_START_TIME, startTime);
         contentValues.put(COLUMN_STOP_TIME, stopTime);
         contentValues.put(COLUMN_MEDIA_ID, mediaId);
-        contentValues.put(COLUMN_ORDER_ID, 1);
+        contentValues.put(COLUMN_ORDER_ID, orderId);
 
         long insertId = sqLiteDatabase.insert(TRACK_TABLE, null, contentValues);
 
@@ -89,27 +109,106 @@ public class TrackDBAdapter {
         return trackData;
     }
 
-    public long deleteTrack(TrackData trackData) {
-        return sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+    public void deleteTrack(TrackData trackData) {
+
+        ContentValues updateOrderId = new ContentValues();
+
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, COLUMN_ORDER_ID + " >= " + String.valueOf(trackData.getOrderId()),
+                null, null, null, COLUMN_ORDER_ID + " ASC ");
+
+        cursor.moveToFirst();
+        if(trackData.getOrderId() == cursor.getInt(7))
+        {
+            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+        }
+
+        cursor.moveToLast();
+
+        if(trackData.getOrderId() == cursor.getInt(7))
+        {
+            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+        }
+        else
+        {
+            int lastOrderId = cursor.getInt(7);
+
+            for (int count = trackData.getOrderId(); count < lastOrderId; count++)
+            {
+                updateOrderId.put(COLUMN_ORDER_ID, count);
+
+                if(count == trackData.getOrderId()) {
+                    sqLiteDatabase.update(TRACK_TABLE,updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(trackData.getOrderId() + 1), null);
+                }else {
+                    sqLiteDatabase.update(TRACK_TABLE,updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(count + 1), null);
+                }
+                updateOrderId.clear();
+            }
+        }
+
+        cursor.close();
+        sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
     }
 
-    // Does not work yet
     public void reorderItem(TrackData trackData, String upOrdown) {
 
         ContentValues contentValues = new ContentValues();
+
+        int previousId;
 
         switch(upOrdown) {
 
             case "Move Up":
 
-                if(Integer.valueOf(trackData.getOrderId()) != 1) {
+                if(trackData.getOrderId() != 1) {
 
-                    String sql = "UPDATE " + TRACK_TABLE + " SET " + COLUMN_ORDER_ID + " = " + String.valueOf(Integer.valueOf(trackData.getOrderId()) - 1)
-                            + " WHERE " + COLUMN_ID + " = " + trackData.getId();
+                    String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
 
-                    sqLiteDatabase.execSQL(sql);
+                    Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
+                        String.valueOf(trackData.getOrderId() - 1), null, null, null, null);
+
+                    cursor.moveToLast();
+
+                        previousId = cursor.getInt(1);
+                        contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                        sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackData.getId(), null);
+
+                    cursor.close();
+
+                    contentValues.clear();
+
+                    contentValues.put(COLUMN_ORDER_ID, trackData.getOrderId());
+
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId) , null);
 
                 }
+
+                break;
+
+            case "Move Down":
+
+                   String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
+
+                    Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
+                        String.valueOf(trackData.getOrderId() + 1), null, null, null, null);
+
+                    cursor.moveToLast();
+
+                        if(cursor.getCount() != 0) {
+
+                            previousId = cursor.getInt(1);
+                            contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                            sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackData.getId(), null);
+
+                            cursor.close();
+
+                            contentValues.clear();
+
+                            contentValues.put(COLUMN_ORDER_ID, trackData.getOrderId());
+
+                            sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId), null);
+                        } else {
+                            cursor.close();
+                        }
 
                 break;
         }
@@ -161,7 +260,7 @@ public class TrackDBAdapter {
         order_id_counter++;
 
         trackData = new TrackData(cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
-                    cursor.getString(5), cursor.getLong(6), cursor.getString(0), cursor.getString(0));
+                    cursor.getString(5), cursor.getLong(6), cursor.getString(0), cursor.getInt(7));
 
         return trackData;
     }
@@ -170,7 +269,7 @@ public class TrackDBAdapter {
 
         TrackData song = null;
 
-        song = new TrackData(cursor.getString(0), cursor.getLong(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
+        song = new TrackData(cursor.getString(0), cursor.getLong(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4));
 
         return song;
     }

@@ -17,4 +17,6 @@
     <string name="replay">Replay:</string>
     <string name="tap_to_toggle_on_off">Tap to Toggle ON/OFF</string>
     <string name="updatePlayControls">updatePlayControls</string>
+    <string name="no_media_found">NO MEDIA FOUND</string>
+    <string name="please_verify_your_permissions">Tap here to verify your permissions</string>
 </resources>

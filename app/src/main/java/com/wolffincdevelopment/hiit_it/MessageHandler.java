@@ -3,13 +3,42 @@ package com.wolffincdevelopment.hiit_it;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import java.io.Serializable;
 
 /**
  * Created by kylewolff on 7/10/2016.
  */
-public class MessageHandler
+public class MessageHandler implements Parcelable
 {
     private Handler handler;
+
+    private int mData;
+
+    public int describeContents() {
+        return 0;
+    }
+
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeInt(mData);
+    }
+
+    public static final Parcelable.Creator<MessageHandler> CREATOR = new Parcelable.Creator<MessageHandler>()
+    {
+        public MessageHandler createFromParcel(Parcel in) {
+            return new MessageHandler(in);
+        }
+
+        public MessageHandler[] newArray(int size) {
+            return new MessageHandler[size];
+        }
+    };
+
+    private MessageHandler(Parcel in) {
+        mData = in.readInt();
+    }
 
     public MessageHandler(Handler handler)
     {

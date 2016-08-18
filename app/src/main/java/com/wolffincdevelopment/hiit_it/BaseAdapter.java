@@ -28,17 +28,18 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int FOOTER_VIEW = 1;
 
     private TrackDBAdapter trackDBAdapter;
+    private TrackData currentSong;
     private SharedPreferencesUtil sharedPreferencesUtil = SharedPreferencesUtil.getInstance();
     private MyViewHolder myViewHolder;
     private MessageHandler handler;
     private What whatInteger;
-    private Message refreshMsg, setInvisible;
+    private Message refreshMsg, playThisSong, pauseResumeSong, setCurrentSong;
     public List<TrackData> trackData;
     public ArrayList<TrackData> trackDataPositions;
-    public boolean deleteRefresh = false;
     public boolean setSoundIconVisible = false;
     public boolean firstUpdateSound = false;
     public boolean activeIcon = false;
+    public boolean menuItemClicked = false;
     public int currentTrackPlaying, previousTrackPlayed = -1, position;
     public Bundle data;
 
@@ -83,7 +84,37 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             });
 
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    if(currentSong == null) {
+
+                        data.clear();
+                        data.putSerializable("id", trackId);
+                        playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
+                        handler.sendMessage(playThisSong);
+
+                    } else if(currentSong.getId().compareTo(trackId) != 0) {
+
+                        data.clear();
+                        data.putSerializable("id", trackId);
+                        playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
+                        handler.sendMessage(playThisSong);
+
+                    } else {
+
+                        Bundle data = new Bundle();
+                        data.clear();
+                        data.putSerializable("id", trackId);
+                        pauseResumeSong = handler.createMessage(playThisSong, whatInteger.pauseResumeCurrentSong(), data);
+                        handler.sendMessage(pauseResumeSong);
+                    }
+                }
+            });
+
         }
+
     }
 
     public class FooterViewHolder extends RecyclerView.ViewHolder {
@@ -121,13 +152,19 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     }
                 }
             });
+
+
         }
     }
 
-    // The method to display the popUp menu
-    private void showMenu(View v, final TrackData data) {
+    public void setCurrentSong(TrackData currentSong) {
+        this.currentSong = currentSong;
+    }
 
-        IconizedMenu popup = new IconizedMenu(v.getContext(), v);
+    // The method to display the popUp menu
+    private void showMenu(View v, final TrackData trackData1) {
+
+        final IconizedMenu popup = new IconizedMenu(v.getContext(), v);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.pop_up_menu, popup.getMenu());
         popup.show();
@@ -139,21 +176,51 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 switch(item.getTitle().toString()) {
 
                     case "Move Up":
+
+                        data.putSerializable("action", item.getTitle().toString());
+                        data.putSerializable("TrackData", trackData1);
+
+                        menuItemClicked = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.reorderItem(data, "Move Up");
+                        trackDBAdapter.reorderItem(trackData1, "Move Up");
                         trackData = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
                         refresh(trackData);
+
+                        popup.dismiss();
+
+                        break;
+
+                    case "Move Down":
+
+                        data.putSerializable("action", item.getTitle().toString());
+                        data.putSerializable("TrackData", trackData1);
+
+                        menuItemClicked = true;
+                        trackDBAdapter.open();
+                        trackDBAdapter.reorderItem(trackData1, "Move Down");
+                        trackData = trackDBAdapter.getAllTracks();
+                        trackDBAdapter.close();
+                        refresh(trackData);
+
+                        popup.dismiss();
+
                         break;
 
                     case "Delete":
-                        deleteRefresh = true;
+
+                        data.putSerializable("action", item.getTitle().toString());
+                        data.putSerializable("TrackData", trackData1);
+
+                        menuItemClicked = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.deleteTrack(data);
+                        trackDBAdapter.deleteTrack(trackData1);
                         trackData = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
                         refresh(trackData);
+
                         break;
+
                 }
 
                 return false;
@@ -175,23 +242,26 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.trackData = trackData;
         notifyDataSetChanged();
 
-        if(deleteRefresh == true) {
-            refreshMsg = handler.createMessage(refreshMsg,whatInteger.getRefreshSongList());
+        if(menuItemClicked) {
+
+            refreshMsg = handler.createMessage(refreshMsg, whatInteger.getRefreshSongList());
+            refreshMsg.setData(data);
             handler.sendMessage(refreshMsg);
-            deleteRefresh = false;
+            menuItemClicked = false;
         }
 
     }
 
-    public void updateSoundIcon(final long id, boolean active)
+    public void updateSoundIcon(final String id, boolean active)
     {
         if(previousTrackPlayed != -1){
             notifyItemChanged(previousTrackPlayed);
         }
 
+
         for(TrackData td: trackData) {
 
-            if(td.getMediaId() == id) {
+            if(td.getId() == id) {
 
                 position = trackData.indexOf(td);
                 currentTrackPlaying = position;
@@ -207,11 +277,11 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     }
 
-    public void setSoundIconInvisible(long id)
+    public void setSoundIconInvisible(String id)
     {
         for(TrackData td: trackData) {
 
-            if(td.getMediaId() == id) {
+            if(td.getId() == id) {
 
                 position = trackData.indexOf(td);
 
@@ -266,7 +336,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             final TrackData trackData = this.trackData.get(position);
 
-            ((MyViewHolder) holder).trackSongTextView.setText(trackData.getSongAndArtist() + String.valueOf(trackData.getOrderId()));
+            ((MyViewHolder) holder).trackSongTextView.setText(trackData.getSongAndArtist());
             ((MyViewHolder) holder).startTime.setText(trackData.getStartTime());
             ((MyViewHolder) holder).stopTime.setText(trackData.getStopTime());
 
@@ -278,6 +348,8 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     showMenu(v, trackData);
                 }
             });
+
+            ((MyViewHolder) holder).trackId = trackData.getId();
 
             if(firstUpdateSound) {
 

@@ -2,14 +2,23 @@ package com.wolffincdevelopment.hiit_it;
 
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
@@ -40,8 +49,29 @@ public class BrowseActivity extends AppCompatActivity {
     public String artist, title, stream;
     public long mediaId, duration;
 
+    Intent applicationSettingsIntent;
+
+    AlertDialog.Builder dialogBuilder;
+
+    @BindView(R.id.title_no_media)
+    TextView titleNoMedia;
+
+    @BindView(R.id.desc_no_permissions)
+    TextView descNoPermissions;
+
     @BindView(R.id.browse_list_view)
     ListView listView;
+
+    @OnClick(R.id.desc_no_permissions)
+    protected void onDescPressed(){
+
+        applicationSettingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", this.getPackageName(), null);
+        applicationSettingsIntent.setData(uri);
+        applicationSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getBaseContext().startActivity(applicationSettingsIntent);
+
+    }
 
     @OnItemClick(R.id.browse_list_view)
     protected void onItemClick(int position)
@@ -71,7 +101,31 @@ public class BrowseActivity extends AppCompatActivity {
         cr = getContentResolver();
         items = new ArrayList<>();
 
+        dialogBuilder = new AlertDialog.Builder(this);
+
         getPermission();
+
+        applicationSettingsIntent = new Intent();
+    }
+
+    private void showDialog()
+    {
+        Button changePermissions = (Button) findViewById(R.id.permissionsChange);
+        Button changeDismiss = (Button) findViewById(R.id.permissionDismiss);
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.permission_dialog, null);
+        dialogBuilder.setView(dialogView);
+
+
+
+        dialogBuilder.show();
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
     }
 
     private void getPermission()
@@ -87,19 +141,23 @@ public class BrowseActivity extends AppCompatActivity {
             @Override
             public void onPermissionDenied( PermissionDeniedResponse response )
             {
-
+                titleNoMedia.setVisibility(View.VISIBLE);
+                descNoPermissions.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onPermissionRationaleShouldBeShown( PermissionRequest permission, PermissionToken token )
             {
-
+                token.continuePermissionRequest();
             }
         }, android.Manifest.permission.READ_EXTERNAL_STORAGE );
     }
 
     public void findMusicFiles()
     {
+
+        titleNoMedia.setVisibility(View.INVISIBLE);
+        descNoPermissions.setVisibility(View.INVISIBLE);
 
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
@@ -130,11 +188,16 @@ public class BrowseActivity extends AppCompatActivity {
 
                     items.add(new TrackData(artist, title, stream, duration, mediaId));
                 }
-
             }
         }
 
         cur.close();
+
+        if(items.isEmpty()) {
+            titleNoMedia.setVisibility(View.VISIBLE);
+        }else {
+            titleNoMedia.setVisibility(View.INVISIBLE);
+        }
 
         adapter = new BrowseListAdapter(this, items);
         listView.setAdapter(adapter);

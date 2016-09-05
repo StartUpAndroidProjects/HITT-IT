@@ -37,19 +37,21 @@
             android:text="@string/song"
             android:clickable="true"
             android:checked="true"
-            android:id="@+id/radioSongButton"
+            android:id="@+id/radio_song_button"
             android:focusable="true"/>
 
         <EditText
             android:textColor="@android:color/black"
             android:textColorHint="@color/greyText"
             android:clickable="true"
-            android:layout_width="250dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="64dp"
-            android:layout_marginStart="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="45dp"
+            android:layout_marginRight="45dp"
             android:hint="@string/tap_to_browse"
-            android:id="@+id/browsTextField"
+            android:id="@+id/browse_text_field"
             android:inputType="none"
             android:editable="false"
             android:singleLine="true" />

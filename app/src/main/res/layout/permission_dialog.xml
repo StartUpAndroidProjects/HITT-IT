@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="NO MEDIA FOUND"
+        android:id="@+id/permissionTitle"
+        android:layout_marginStart="100dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Please verify your permissions and try again."
+        android:id="@+id/permissionDesc"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="15dp"
+        android:textAlignment="center"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:text="Dismiss"
+        android:layout_marginTop="35dp"
+        android:layout_marginStart="100dp"
+        android:textColor="@color/greyText"
+        android:id="@+id/permissionDismiss"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:text="Change Permissions"
+        android:layout_marginTop="35dp"
+        android:layout_marginStart="200dp"
+        android:id="@+id/permissionsChange"/>
+
+</RelativeLayout>

@@ -1,27 +1,27 @@
 package com.wolffincdevelopment.hiit_it;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.os.Environment;
-import android.os.Parcel;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import java.util.concurrent.TimeUnit;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnFocusChange;
 import util.ConvertTime;
 
 /*
@@ -31,38 +31,161 @@ import util.ConvertTime;
  */
 public class AddTrackActivity extends AppCompatActivity {
 
+    public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
+
     private InputMethodManager inputManager;
     private TrackDBAdapter trackDBAdapter;
     private Intent i;
     private TrackData item;
     private ConvertTime convertTime;
-
-    public EditText browseTextField, startTime, stopTime;
-    public RadioButton radioButton;
     public TextWatcher textWatcher;
-    public Button addTrackButton;
+
+    private String minutes, maxMin;
+    private String seconds, maxSec;
+    private long timeLong, maxMilliSec, maxMillMin, secMilli, minMilli, minutesLong, secondsLong, maxMinLong, maxSecLong;
+
+    private long startTimeStaticSec,startTimeStaticMin, stopTimeStaticSec, stopTimeStaticMin;
+
+    private String STOP_TIME_MAX;
+
+    @BindView(R.id.browse_text_field)
+    EditText browseTextField;
+
+    @BindView(R.id.start_time)
+    EditText startTime;
+
+    @BindView(R.id.stop_time)
+    EditText stopTime;
+
+    @BindView(R.id.add_track_button)
+    Button addTrackButton;
+
+    @BindView(R.id.radio_song_button)
+    RadioButton radioButton;
+
+    @OnFocusChange(R.id.start_time)
+    protected void onStartTimeFocuseChange(boolean focused) {
+        if (focused)
+            startTime.getText().clear();
+        else
+            checkTimeField(startTime);
+    }
+
+    @OnFocusChange(R.id.stop_time)
+    protected void onStopTimeFocuseChange(boolean focused) {
+        if (focused)
+            stopTime.getText().clear();
+        else
+            checkTimeField(stopTime);
+
+    }
+
+    // Added a focusChangeListener so when this field as focus the keyboard does not display
+    @OnFocusChange(R.id.browse_text_field)
+    protected void onFocusChanged(boolean focused) {
+        if (focused) {
+            // Hides the keyboard
+            inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
+            startNextActivity();
+        }
+    }
+
+    @OnClick(R.id.add_track_button)
+    protected void onClick() {
+        if (STOP_TIME_MAX != null) {
+
+            if (!checkTimeFields(startTime)) {
+                startTime.setText("00:00");
+            }
+
+            if (!checkTimeFields(stopTime)) {
+                stopTime.setText(STOP_TIME_MAX);
+
+                STOP_TIME_MAX = null;
+
+            }
+        }
+
+        trackDBAdapter.open();
+
+        trackDBAdapter.createTrackData(item.getArtistName(), item.getSongName(),
+                stopTime.getText().toString(), startTime.getText().toString(),
+                item.getStream(), item.getMediaId(), trackDBAdapter.getNextOrderId());
+
+        trackDBAdapter.close();
+
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_track);
 
-        // Instantiating the objects for the Activity UI
-        browseTextField = (EditText) findViewById(R.id.browsTextField);
-        startTime = (EditText) findViewById(R.id.start_time);
-        stopTime = (EditText) findViewById(R.id.stop_time);
-        radioButton = (RadioButton) findViewById(R.id.radioSongButton);
-        addTrackButton = (Button) findViewById(R.id.add_track_button);
+        setContentView(R.layout.activity_add_track);
+        ButterKnife.bind(this);
+
+        convertTime = new ConvertTime();
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
 
-        convertTime = new ConvertTime();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        browseTextField.clearFocus();
+
+        init();
+
+        if (!addTrackButton.isEnabled()) {
+            addTrackButton.setBackgroundColor(Color.GRAY);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == BROWSE_ACTIVITY_RESULT_CODE) {
+
+            if (resultCode == RESULT_OK) {
+
+                boolean checked = data.getBooleanExtra("enabled", true);
+                item = (TrackData) data.getSerializableExtra("listItem");
+
+                /*
+                 * Greater than 1 hour in milliseconds
+                 */
+                if(item.getDuration() >= 3600000) {
+
+                }else {
+
+                    browseTextField.setText(item.getSongName() + " - " + item.getArtistName());
+                    stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
+                    startTime.setText("00:00");
+
+                    STOP_TIME_MAX = convertTime.convertMilliSecToStringWithColon(item.getDuration());
+
+                    checkFields();
+                }
+            }
+        }
+    }
+
+    private void startNextActivity() {
+
+        Intent browseActivity = new Intent(AddTrackActivity.this, BrowseActivity.class);
+        AddTrackActivity.this.startActivityForResult(browseActivity, BROWSE_ACTIVITY_RESULT_CODE);
+    }
+
+    public void init() {
 
         /*
          * This textWatcher is what handles the logic for the colon
          * We do not want the user to be able to select the colon so we will auto populate for them
          */
-        textWatcher= new TextWatcher() {
+        textWatcher = new TextWatcher() {
 
             private int delete;
 
@@ -80,34 +203,37 @@ public class AddTrackActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
 
-                if(s.length() == 2 && delete != 0 && s.subSequence(1,2).toString().compareTo(":") != 0)
-                {
+                checkFields();
+
+                if (s.length() == 2 && delete != 0 && s.subSequence(1, 2).toString().compareTo(":") != 0) {
                     s.append(":");
                 }
 
-                if(delete == 0 && s.length() > 2 && s.subSequence(1,2).toString().compareTo(":") == 0)
-                {
-                    s.delete(1,2);
+                if (s.toString().matches("^([0-9]{3})$")) {
+                    CharSequence added = s.subSequence(0, 2);
+                    CharSequence added2 = s.subSequence(2, 3);
+
+                    s.clear();
+
+                    s.append(added + ":" + added2);
+
+
                 }
 
-                if(s.toString().startsWith(":"))
-                {
+                if (s.toString().startsWith(":") && s.toString().endsWith(":")) {
                     s.clear();
                 }
 
-                if(s.toString().matches("^([0-9]{1}):$"))
-                {
-                    s.delete(1,2);
+                if (s.toString().matches("^([0-9]{1}):$")) {
+                    s.delete(1, 2);
                 }
 
-                if(s.toString().matches("^([0-9]{2})::$"))
-                {
-                    s.delete(2,3);
+                if (s.toString().matches("^([0-9]{2})::$")) {
+                    s.delete(2, 3);
                 }
 
-                if(s.toString().matches("^([0-9]{2}):([0-9]{1}):$"))
-                {
-                    s.delete(4,5);
+                if (s.toString().matches("^([0-9]{2}):([0-9]{1}):$")) {
+                    s.delete(4, 5);
                 }
             }
         };
@@ -116,64 +242,40 @@ public class AddTrackActivity extends AppCompatActivity {
         startTime.addTextChangedListener(textWatcher);
         stopTime.addTextChangedListener(textWatcher);
 
-        // Added a focusChangeListener so when this field as focus the keyboard does not display
-        browseTextField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-
-                if(hasFocus)
-                {
-                    // Hides the keyboard
-                    inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
-                    startNextActivity();
-                }
-
-            }
-        });
     }
 
-    @Override
-    protected void onStart()
-    {
-        super.onStart();
-        browseTextField.clearFocus();
-
-        if(!addTrackButton.isEnabled()) {
-            addTrackButton.setBackgroundColor(Color.GRAY);
+    private void checkTimeField(EditText textField) {
+        if (textField.getText().toString().matches("^:([0-9]{2})$")) {
+            CharSequence add = textField.getText().subSequence(0, 3);
+            textField.getText().clear();
+            textField.getText().append("00" + add);
+        } else if (textField.getText().toString().matches("^([0-9]{2}):$")) {
+            CharSequence add = textField.getText().subSequence(0, 3);
+            textField.getText().clear();
+            textField.getText().append(add + "00");
+        } else if (textField.getText().toString().matches("^([0-9]{2}):([0-9]{1})$")) {
+            CharSequence add = textField.getText().subSequence(0, 4);
+            textField.getText().clear();
+            textField.getText().append(add + "0");
+        } else if (textField.getText().toString().matches("^([0-9]{1}):([0-9]{2})$")) {
+            CharSequence add = textField.getText().subSequence(0, 4);
+            textField.getText().clear();
+            textField.getText().append("0" + add);
         }
-
-        addTrackButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                    trackDBAdapter.open();
-
-                    trackDBAdapter.creatTrackData(item.getArtistName(), item.getSongName(),
-                            stopTime.getText().toString(), startTime.getText().toString(),
-                            item.getStream(), item.getMediaId());
-
-                    trackDBAdapter.close();
-
-                    finish();
-            }
-        });
-
-
     }
 
-    public void checkFields(boolean checked) {
+    public void checkFields() {
+        boolean verified;
 
-        boolean verified = checked;
-
-        if(browseTextField.getText().toString().isEmpty() && startTime.getText().toString().isEmpty()
-                && stopTime.getText().toString().isEmpty()) {
+        if (browseTextField.getText().toString().isEmpty() || startTime.getText().toString().isEmpty()
+                || stopTime.getText().toString().isEmpty() || !startTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")
+                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")) {
 
             verified = false;
             addTrackButton.setEnabled(verified);
             addTrackButton.setBackgroundColor(Color.GRAY);
 
-        }else {
+        } else {
 
             verified = true;
             addTrackButton.setEnabled(verified);
@@ -181,28 +283,113 @@ public class AddTrackActivity extends AppCompatActivity {
         }
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public boolean checkTimeFields(EditText timeField)
+    {
+        boolean checked = false;
 
-        if (requestCode == 1) {
+        maxSec = STOP_TIME_MAX.substring(3,5);
+        maxSecLong = Long.parseLong(maxSec);
+        maxMilliSec = TimeUnit.SECONDS.toMillis(maxSecLong);
 
-            if(resultCode == RESULT_OK){
+        maxMin =  STOP_TIME_MAX.substring(0,2);
+        maxMinLong = Long.parseLong(maxMin);
+        maxMillMin = TimeUnit.MINUTES.toMillis(maxMinLong);
 
-                boolean checked = data.getBooleanExtra("enabled", true);
-                item = (TrackData) data.getSerializableExtra("listItem");
+        seconds = timeField.getText().toString().substring(3,5);
+        secondsLong = Long.parseLong(seconds);
+        secMilli = TimeUnit.SECONDS.toMillis(secondsLong);
 
-                browseTextField.setText("Track: " + item.getSongName() + " - " + item.getArtistName());
-                stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
-                startTime.setText("00:00");
+        minutes =  timeField.getText().toString().substring(0,2);
+        minutesLong = Long.parseLong(minutes);
+        minMilli = TimeUnit.MINUTES.toMillis(minutesLong);
 
-                checkFields(checked);
+        if(timeField == startTime) {
+
+            if (minMilli <= maxMillMin)
+            {
+                if(minMilli == maxMillMin)
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+
+                }
+                else
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else if(secMilli >= maxMilliSec && secMilli < 59000)
+                    {
+                        checked = true;
+                    }
+                }
+
             }
+            else
+            {
+                checked = false;
+            }
+
+            if(checked)
+            {
+
+                startTimeStaticSec = secMilli;
+                startTimeStaticMin = minMilli;
+            }
+
         }
-    }
+        else
+        {
+           if(minMilli >= startTimeStaticMin && minMilli <= maxMillMin)
+            {
+                if(minMilli == maxMillMin)
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+                }
+                else if(minMilli == startTimeStaticMin)
+                {
+                    if(secMilli >= startTimeStaticSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+                }
+                else if(minMilli < maxMillMin && minMilli > startTimeStaticMin)
+                {
+                    if(secMilli < 59000)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked= false;
+                    }
+                }
+            }
+            else
+           {
+               checked = false;
+           }
+        }
 
-    private void startNextActivity() {
+        return checked;
 
-        Intent browseActivity = new Intent(AddTrackActivity.this,BrowseActivity.class);
-        AddTrackActivity.this.startActivityForResult(browseActivity,1);
     }
 }

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -13,6 +12,8 @@ import java.util.ArrayList;
  * Created by kylewolff on 6/6/2016.
  */
 public class TrackDBAdapter {
+
+    private static int order_id_counter = 0;
 
     private static final String DATABASE_NAME = "tracks.db";
     private static final String DATABASE_VERSION = "2";
@@ -26,9 +27,10 @@ public class TrackDBAdapter {
     public static final String COLUMN_START_TIME = "start_time";
     public static final String COLUMN_STOP_TIME = "stop_time";
     public static final String COLUMN_MEDIA_ID = "mediaId";
+    public static final String COLUMN_ORDER_ID = "order_id";
 
     private String[] item_columns = {COLUMN_ID, COLUMN_ARTIST_NAME, COLUMN_SONG_NAME, COLUMN_STREAM_PATH,
-            COLUMN_START_TIME, COLUMN_STOP_TIME, COLUMN_MEDIA_ID};
+            COLUMN_START_TIME, COLUMN_STOP_TIME, COLUMN_MEDIA_ID, COLUMN_ORDER_ID};
 
     private static final String DATABASE_CREATE = "CREATE TABLE " + TRACK_TABLE + " ( " +
             COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -37,7 +39,8 @@ public class TrackDBAdapter {
             COLUMN_STREAM_PATH + " TEXT NOT NULL, " +
             COLUMN_START_TIME + " TEXT NOT NULL, " +
             COLUMN_STOP_TIME + " TEXT NOT NULL, " +
-            COLUMN_MEDIA_ID + " INTEGER NOT NULL " +
+            COLUMN_MEDIA_ID + " INTEGER NOT NULL, " +
+            COLUMN_ORDER_ID + " INTEGER NOT NULL" +
             ");";
 
     private SQLiteDatabase sqLiteDatabase;
@@ -59,9 +62,31 @@ public class TrackDBAdapter {
 
     public void close() {
         trackDBHelper.close();
+        sqLiteDatabase.close();
     }
 
-    public TrackData creatTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId) {
+    public int getNextOrderId() {
+
+        int orderId;
+
+        String[] orderIdStringArray = {COLUMN_ORDER_ID};
+
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, orderIdStringArray, null, null, null, null, COLUMN_ORDER_ID + " ASC");
+
+        cursor.moveToLast();
+
+        if(cursor.getPosition() == -1) {
+            orderId = 1;
+        } else {
+            orderId = cursor.getInt(0) + 1;
+        }
+
+        cursor.close();
+
+        return orderId;
+    }
+
+    public TrackData createTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId, int orderId) {
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(COLUMN_ARTIST_NAME, aristName);
@@ -70,6 +95,7 @@ public class TrackDBAdapter {
         contentValues.put(COLUMN_START_TIME, startTime);
         contentValues.put(COLUMN_STOP_TIME, stopTime);
         contentValues.put(COLUMN_MEDIA_ID, mediaId);
+        contentValues.put(COLUMN_ORDER_ID, orderId);
 
         long insertId = sqLiteDatabase.insert(TRACK_TABLE, null, contentValues);
 
@@ -83,39 +109,122 @@ public class TrackDBAdapter {
         return trackData;
     }
 
-    public long deleteTrack(long trackId) {
-        return sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackId, null);
+    public void deleteTrack(TrackData trackData) {
+
+        ContentValues updateOrderId = new ContentValues();
+
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, COLUMN_ORDER_ID + " >= " + String.valueOf(trackData.getOrderId()),
+                null, null, null, COLUMN_ORDER_ID + " ASC ");
+
+        cursor.moveToFirst();
+
+        if(cursor.getColumnCount() != 0) {
+
+            if (trackData.getOrderId() == cursor.getInt(7)) {
+                sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+            }
+
+            cursor.moveToLast();
+
+            if (trackData.getOrderId() == cursor.getInt(7)) {
+                sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+            } else {
+                int lastOrderId = cursor.getInt(7);
+
+                for (int count = trackData.getOrderId(); count < lastOrderId; count++) {
+                    updateOrderId.put(COLUMN_ORDER_ID, count);
+
+                    if (count == trackData.getOrderId()) {
+                        sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(trackData.getOrderId() + 1), null);
+                    } else {
+                        sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(count + 1), null);
+                    }
+                    updateOrderId.clear();
+                }
+            }
+
+            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+        }
+        cursor.close();
     }
 
-    // Does not work yet
-    public void reorderItem(long oldTrackId, String upOrdown) {
+    public void reorderItem(TrackData trackData, String upOrdown) {
 
-        ContentValues updateNewItem = new ContentValues();
-        ContentValues updateOldItem = new ContentValues();
+        ContentValues contentValues = new ContentValues();
+
+        int previousId;
 
         switch(upOrdown) {
 
             case "Move Up":
-                updateNewItem.put(COLUMN_ID, 2);
-                sqLiteDatabase.update(TRACK_TABLE, updateNewItem, COLUMN_ID + " = " + oldTrackId, null);
+
+                if(trackData.getOrderId() != 1) {
+
+                    String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
+
+                    Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
+                        String.valueOf(trackData.getOrderId() - 1), null, null, null, null);
+
+                    cursor.moveToLast();
+
+                        previousId = cursor.getInt(1);
+                        contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                        sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackData.getId(), null);
+
+                    cursor.close();
+
+                    contentValues.clear();
+
+                    contentValues.put(COLUMN_ORDER_ID, trackData.getOrderId());
+
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId) , null);
+
+                }
+
+                break;
+
+            case "Move Down":
+
+                   String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
+
+                    Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
+                        String.valueOf(trackData.getOrderId() + 1), null, null, null, null);
+
+                    cursor.moveToLast();
+
+                        if(cursor.getCount() != 0) {
+
+                            previousId = cursor.getInt(1);
+                            contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                            sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackData.getId(), null);
+
+                            cursor.close();
+
+                            contentValues.clear();
+
+                            contentValues.put(COLUMN_ORDER_ID, trackData.getOrderId());
+
+                            sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId), null);
+                        } else {
+                            cursor.close();
+                        }
 
                 break;
         }
-
-
-
     }
 
     public ArrayList<TrackData> getAllTracks() {
 
         ArrayList<TrackData> userTracks = new ArrayList<>();
 
-        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, null, null, null, null, null);
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, null, null, null, null, COLUMN_ORDER_ID + " ASC");
 
-        for(cursor.moveToLast(); !cursor.isBeforeFirst(); cursor.moveToPrevious()) {
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()) {
 
             TrackData trackData = cursorToTrack(cursor);
             userTracks.add(trackData);
+            cursor.moveToNext();
         }
 
         cursor.close();
@@ -126,14 +235,16 @@ public class TrackDBAdapter {
     public ArrayList<TrackData> getAllStreams() {
 
         ArrayList<TrackData> streams = new ArrayList<>();
-        String[] streamStringArray = {COLUMN_STREAM_PATH, COLUMN_MEDIA_ID, COLUMN_START_TIME, COLUMN_STOP_TIME};
+        String[] streamStringArray = {COLUMN_STREAM_PATH, COLUMN_MEDIA_ID, COLUMN_START_TIME, COLUMN_STOP_TIME, COLUMN_ORDER_ID};
 
-        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, streamStringArray, null, null, null, null, null);
+        Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, streamStringArray, null, null, null, null, COLUMN_ORDER_ID + " ASC");
 
-        for(cursor.moveToLast(); !cursor.isBeforeFirst(); cursor.moveToPrevious()) {
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()) {
 
             TrackData trackData = streamToTrack(cursor);
             streams.add(trackData);
+            cursor.moveToNext();
         }
 
         cursor.close();
@@ -145,8 +256,10 @@ public class TrackDBAdapter {
 
         TrackData trackData = null;
 
+        order_id_counter++;
+
         trackData = new TrackData(cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
-                    cursor.getString(5), cursor.getLong(6), cursor.getString(0));
+                    cursor.getString(5), cursor.getLong(6), cursor.getString(0), cursor.getInt(7));
 
         return trackData;
     }
@@ -155,12 +268,12 @@ public class TrackDBAdapter {
 
         TrackData song = null;
 
-        song = new TrackData(cursor.getString(0), cursor.getLong(1), cursor.getString(2), cursor.getString(3));
+        song = new TrackData(cursor.getString(0), cursor.getLong(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4));
 
         return song;
     }
 
-    private static class TrackDBHelper extends SQLiteOpenHelper{
+    private static class TrackDBHelper extends SQLiteOpenHelper {
 
         TrackDBHelper(Context context) {
 

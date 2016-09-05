@@ -3,11 +3,37 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="150dp"
+        android:text="@string/no_media_found"
+        android:textStyle="bold"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/title_no_media"
+        android:visibility="invisible"></TextView>
+
+
     <ListView
         android:id="@+id/browse_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+     ></ListView>
 
-        ></ListView>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="180dp"
+        android:text="@string/please_verify_your_permissions"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/desc_no_permissions"
+        android:visibility="invisible"
+        android:clickable="true">
+    </TextView>
+
 
 </RelativeLayout>

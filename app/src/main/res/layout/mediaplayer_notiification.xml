@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimary">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/track_static"
+        android:text="Track:"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:maxLength="10"
+        android:maxLines="1"
+        android:ellipsize="marquee"
+        android:layout_marginStart="70dp"
+        android:layout_marginTop="@dimen/notification_margin_top"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:scrollHorizontally="true"
+        />
+
+    <ImageButton android:id="@+id/notPrev"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_skip_previous_white_48dp"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="200dp"
+        android:layout_marginTop= "@dimen/notification_margin_top"
+
+        />
+
+    <ImageButton android:id="@+id/notPlayPause"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_play_circle_outline_white"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="240dp"
+        android:layout_marginTop = "@dimen/notification_margin_top"
+        />
+
+    <ImageButton android:id="@+id/notNext"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:src="@drawable/ic_skip_next_white_48dp"
+        android:background="?android:selectableItemBackground"
+        android:layout_marginLeft="280dp"
+        android:layout_marginTop = "@dimen/notification_margin_top"
+
+        />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="15dp"
+        android:src="@drawable/headphones"/>
+
+
+</RelativeLayout>

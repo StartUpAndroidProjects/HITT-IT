@@ -33,6 +33,9 @@
         android:layout_marginLeft="150dp"
         android:layout_marginTop="37dp"
         android:textStyle="bold"
+        android:textColor="#969696"
         android:text="@string/tap_to_toggle_on_off"/>
+
+
 
 </RelativeLayout>

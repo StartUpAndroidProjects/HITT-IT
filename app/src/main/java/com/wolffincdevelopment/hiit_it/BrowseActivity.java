@@ -186,7 +186,10 @@ public class BrowseActivity extends AppCompatActivity {
                         artist = "Unknown";
                     }
 
-                    items.add(new TrackData(artist, title, stream, duration, mediaId));
+                    if(duration <= 3540000)
+                    {
+                        items.add(new TrackData(artist, title, stream, duration, mediaId));
+                    }
                 }
             }
         }

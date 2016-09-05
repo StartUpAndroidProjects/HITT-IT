@@ -18,11 +18,13 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.MediaController;
 import android.widget.RemoteViews;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import util.SharedPreferencesUtil;
@@ -34,7 +36,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private final IBinder musicBind = new MusicBinder();
 
-    private Message updateControlsMsg, sendSoundIconVisible, sendSoundIconNonVisible, setCurrentSong;
+    private Intent playPauseIntent, prevIntent, nextIntent, notificationIntent;
+    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent, pendingSwitchIntent;
+    private RemoteViews contentView, bigView;
+
+    private NotificationManager notificationManager;
+    private Notification notification;
+
+    private Message updateControlsMsg, sendSoundIconVisible, sendSoundIconNonVisible, setCurrentSong, pauseResumeMessage;
     private MessageHandler handler;
     private What whatInteger;
     private Bundle data, nonVisibleIconData, updateMediaControlsData;
@@ -42,12 +51,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private int startTime, stopTime;
 
     private boolean paused = false;
+    private boolean stopThread = false;
     private boolean mPlayerReleased = true;
 
     //media player
     private MediaPlayer player;
-    private NotificationManager notificationManager;
-    private Notification notification = null;
     private final int NOTIFICATION_ID = 1;
     private MediaSessionManager mediaSessionManager;
     private MediaSession mediaSession;
@@ -56,9 +64,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     //song list
     private ArrayList<TrackData> songs;
     //current position
-    private int songPosn;
+    private int songPosn, previousSongPosn;
 
     private TrackData playSong;
+
+    private Thread playerWatcher;
 
     public void onCreate()
     {
@@ -75,13 +85,65 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         nonVisibleIconData = new Bundle();
 
         initMusicPlayer();
+        initNotification();
     }
 
     public void onDestroy() {
         super.onDestroy();
         player.release();
-        stopForeground(true);
-        stopForeground(true);
+        if(notification != null) {
+            notificationManager.cancelAll();
+        }
+    }
+
+    private void initNotification()
+    {
+
+        playPauseIntent = new Intent(this, MusicService.class);
+        playPauseIntent.setAction(Constant.ACTION_PLAY_PAUSE);
+
+        prevIntent = new Intent(this, MusicService.class);
+        prevIntent.setAction(Constant.ACTION_PREVIOUS);
+
+        nextIntent = new Intent(this, MusicService.class);
+        nextIntent.setAction(Constant.ACTION_NEXT);
+
+        playPausePenIntent = PendingIntent.getService(this, 99, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        prevPenIntent = PendingIntent.getService(this, 99, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        nextPenIntent = PendingIntent.getService(this, 99, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notificationManager =  (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        notificationIntent = new Intent(this, BaseActivity.class);
+
+        contentView = new RemoteViews(getPackageName(), R.layout.mediaplayer_notiification);
+
+        pendingNotificationIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        contentView.setOnClickPendingIntent(R.id.notPlayPause, playPausePenIntent);
+        contentView.setOnClickPendingIntent(R.id.notPrev, prevPenIntent);
+        contentView.setOnClickPendingIntent(R.id.notNext, nextPenIntent);
+
+    }
+
+    public void setNotification(){
+
+        contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+
+        if(isPlaying()) {
+            contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
+        }
+
+        notification = new Notification(R.mipmap.ic_launcher, null, System.currentTimeMillis());
+
+        notification.contentView = contentView;
+        notification.bigContentView = contentView;
+        notification.contentIntent = pendingNotificationIntent;
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+
+
+
+        notificationManager.notify(1, notification);
     }
 
     public void initMusicPlayer(){
@@ -99,6 +161,55 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0) {
+
+            contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+
+            pauseResumeMessage = handler.createMessage(pauseResumeMessage, whatInteger.pauseResumeCurrentSong());
+            handler.sendMessage(pauseResumeMessage);
+
+            updateMediaPlayerUIControls();
+
+
+        }else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0) {
+
+            TrackData song = getNextSong();
+
+            if(song != null) {
+                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+                contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+            }
+
+        }else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0) {
+
+            TrackData song = getPreviousSong();
+
+            if(song != null) {
+                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+                contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+            }
+
+        }
+
+        return super.onStartCommand(intent, flags, startId);
+
+    }
+
+    public void updateNotificationView()
+    {
+        if(isPlaying()) {
+            contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
+        }else {
+            contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
+        }
+
+        if(notification != null) {
+            notificationManager.notify(1, notification);
+        }
+    }
 
     public void setList(ArrayList<TrackData> songs, String action, TrackData trackData){
 
@@ -231,9 +342,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             case "Delete":
 
-                if(!songs.isEmpty()) {
+                if(!songs.isEmpty())
+                {
 
                     if(currentSong) {
+
+                        if(songPosn == songs.size() && !songs.isEmpty()) {
+                            songPosn--;
+                        }
 
                         if (playSong != null && isPlaying()) {
 
@@ -279,8 +395,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
                     }
 
-                }else if(songs.isEmpty() && isPlaying() || isPaused()) {
-
+                }
+                else if(isPlaying() || isPaused())
+                {
                     stopPlayer();
 
                     updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
@@ -319,12 +436,15 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             }
 
+            previousSongPosn = songPosn;
+
             this.startTime = startTime;
             this.stopTime = stopTime;
 
-           player.reset();
+            player.reset();
 
             playSong = songs.get(songPosn);
+
             //get id
             long currSong = playSong.getMediaId();
             //set uri
@@ -346,14 +466,17 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 Log.e("MUSIC SERVICE", "Error setting data source", e);
             }
 
-            try {
-
-                try {
+            try
+            {
+                try
+                {
                     player.prepare();
-                }catch (IllegalStateException e) {
+                }
+                catch (IllegalStateException e) {
                     playSong(startTime,stopTime,id);
                 }
-            }catch (IOException e) {
+            }
+            catch (IOException e) {
                 Log.e("Logged Issue: ", e.getMessage());
             }
 
@@ -396,14 +519,27 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void stopPlayer()
     {
         player.stop();
+
+        paused = false;
     }
 
-    public void stop(String id) {
+    public void stop(String id)
+    {
+        paused = false;
+
         nonVisibleIconData.clear();
         nonVisibleIconData.putSerializable("id", id);
         player.stop();
         sendSoundIconNonVisible = handler.createMessage(sendSoundIconNonVisible,whatInteger.getSetSoundIconNonVisible(), nonVisibleIconData);
         handler.sendMessage(sendSoundIconNonVisible);
+
+        data.clear();
+        data.putString("NULL", "NULL");
+        setCurrentSong = handler.createMessage(setCurrentSong, whatInteger.getCurrentSong(), data);
+        handler.sendMessage(setCurrentSong);
+
+        stopThread = true;
+
     }
 
     public void seek(int posn){
@@ -474,16 +610,34 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void checkForNextSongDuringPlay() {
 
-        if(!(songPosn > songs.size()) && !(songPosn < 0)) {
+        if(previousSongPosn != songs.size() - 1)
+        {
+            if(!(songPosn > songs.size()) && !(songPosn < 0)) {
 
-            TrackData song = getNextSong();
+                TrackData song = getNextSong();
 
-            if(songPosn != 0) {
-                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
-            } else {
-                playSong(song.getStartTime2(), song.getStopTime3(), song.getId());
+                if(songPosn != 0)
+                {
+                        playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+                }
+                else
+                {
+                    playSong(song.getStartTime2(), song.getStopTime3(), song.getId());
+                }
             }
+        }
+        else
+        {
+            if(SharedPreferencesUtil.getInstance().getRepeat(this))
+            {
+                TrackData song = getNextSong();
 
+                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+            }
+            else
+            {
+                resetSongs();
+            }
         }
     }
 
@@ -502,22 +656,22 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         player.start();
         player.seekTo(startTime);
+        stopThread = false;
 
     }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
 
-        updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
-        handler.sendMessage(updateControlsMsg);
+        updateMediaPlayerUIControls();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+            playerWatcher = new Thread() {
+                @Override
+                public void run() {
 
-                int currentPosition = 0;
+                    int currentPosition = 0;
 
-                    while (player.isPlaying()) {
+                    while (!stopThread) {
 
                         try {
                             Thread.sleep(1000);
@@ -533,25 +687,35 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                         if (currentPosition >= stopTime) {
                             player.seekTo(total);
 
-                            if(songPosn <= songs.size() - 1 && SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
+                            if (songPosn <= songs.size() - 1) {
                                 checkForNextSongDuringPlay();
-                            } else if(!SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
-
-                                if(songPosn == songs.size() - 1 ) {
-                                    stop(playSong.getId());
-                                } else {
-                                    checkForNextSongDuringPlay();
-                                }
-
-                            } else {
-                                stop(playSong.getId());
                             }
                         }
+
                     }
                 }
 
-        }).start();
+            };
 
+            playerWatcher.start();
+
+    }
+
+    public void resetSongs()
+    {
+        stop(playSong.getId());
+
+        if(songPosn != 0 && !(songPosn < 0))
+        {
+            if(!songs.isEmpty())
+                songPosn = 0;
+        }
+    }
+
+    public void updateMediaPlayerUIControls()
+    {
+        updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
+        handler.sendMessage(updateControlsMsg);
     }
 
     public void setHandler(MessageHandler handler)

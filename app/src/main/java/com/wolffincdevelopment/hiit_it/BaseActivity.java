@@ -1,12 +1,16 @@
 package com.wolffincdevelopment.hiit_it;
 
+import android.annotation.TargetApi;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -17,6 +21,7 @@ import android.os.Message;
 import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -37,12 +42,8 @@ public class BaseActivity extends AppCompatActivity {
 
 	public static final int ADD_ACTIVITY_RESULT_CODE = 232;
 
-    private Intent playIntent, playPauseIntent, prevIntent, nextIntent, notificationIntent;
-    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent, pendingSwitchIntent;
-    private RemoteViews notificationView;
-
-    private NotificationManager notificationManager;
-    private Notification notification;
+    private Intent playIntent;
+    private NotificationCompat style;
 
     private RecyclerView.LayoutManager mLayoutManager;
     private BaseAdapter baseAdapter;
@@ -65,6 +66,8 @@ public class BaseActivity extends AppCompatActivity {
     private MusicService.MusicBinder binder;
 
     private ProgressDialog progress;
+
+    private CheckForStorageDeletion storageDeletion;
 
     private boolean musicBound = false;
     private boolean musicConnected = false;
@@ -156,6 +159,8 @@ public class BaseActivity extends AppCompatActivity {
         // Hides the default title for the actity so we can use our custom one
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        storageDeletion = new CheckForStorageDeletion(this);
+
 		prefFirstTime = new FirstTimePreference(this);
 		trackDBAdapter = new TrackDBAdapter(this);
 		mLayoutManager = new LinearLayoutManager(this);
@@ -191,7 +196,18 @@ public class BaseActivity extends AppCompatActivity {
                 } else if(msg.what == whatIntegers.pauseResumeCurrentSong()) {
                     pauseResume();
                 } else if(msg.what == whatIntegers.getCurrentSong()) {
-                    baseAdapter.setCurrentSong(musicService.getCurrentSong());
+
+                    if(!msg.getData().isEmpty())
+                    {
+                        if(msg.getData().getString("NULL").compareTo("NULL") == 0)
+                        {
+                            baseAdapter.setCurrentSong(null);
+                        }
+                    }
+                    else
+                    {
+                        baseAdapter.setCurrentSong(musicService.getCurrentSong());
+                    }
                 } else if(msg.what == whatIntegers.getNextOrPrev()) {
 
                     if(msg.getData().getString("next") != null && (msg.getData().getString("next").compareTo("next") ==0 )) {
@@ -219,7 +235,8 @@ public class BaseActivity extends AppCompatActivity {
 
 		init();
 
-        if(musicService != null && ( musicService.isPlaying() || musicService.isPaused() )) {
+        if(musicService != null && ( musicService.isPlaying() || musicService.isPaused() ))
+        {
 
             setSoundIconData();
 
@@ -243,7 +260,7 @@ public class BaseActivity extends AppCompatActivity {
         super.onPause();
 
         if(musicService != null && musicService.isPlaying()) {
-            setNotification();
+            musicService.setNotification();
         }
 
 
@@ -262,15 +279,12 @@ public class BaseActivity extends AppCompatActivity {
                 unbindService(musicConnection);
             }
         }
-
-        if(notification != null) {
-            notificationManager.cancelAll();
-        }
-
     }
 
     private void init()
     {
+        //storageDeletion.getStorageAndDeletePlaylistItems();
+
 		showDialog();
 
 		checkFirstTimePreference();
@@ -279,40 +293,8 @@ public class BaseActivity extends AppCompatActivity {
 
 		initMusicService();
 
-        initNotification();
-
         setSongList("none", null);
 
-    }
-
-    private void initNotification()
-    {
-        playPauseIntent = new Intent(Constant.ACTION_PLAY_PAUSE);
-        playPauseIntent.putExtra("MessageHandler", messageHandler);
-
-        prevIntent = new Intent(Constant.ACTION_PREVIOUS);
-        prevIntent.putExtra("MessageHandler", messageHandler);
-
-        nextIntent = new Intent(Constant.ACTION_NEXT);
-        nextIntent.putExtra("MessageHandler", messageHandler);
-
-        playPausePenIntent = PendingIntent.getBroadcast(this, 99, playPauseIntent, 0);
-        prevPenIntent = PendingIntent.getBroadcast(this, 99, prevIntent, 0);
-        nextPenIntent = PendingIntent.getBroadcast(this, 99, nextIntent, 0);
-
-        notification = new Notification(R.mipmap.ic_launcher, null, System.currentTimeMillis());
-
-        notificationManager =  (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationIntent = new Intent(this, BaseActivity.class);
-
-        notificationView = new RemoteViews(getPackageName(), R.layout.mediaplayer_notiification);
-
-        pendingNotificationIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-        notificationView.setOnClickPendingIntent(R.id.notPlayPause, playPausePenIntent);
-        notificationView.setOnClickPendingIntent(R.id.notNext, nextPenIntent);
-        notificationView.setOnClickPendingIntent(R.id.notPrev, prevPenIntent);
     }
 
     private void showDialog()
@@ -411,8 +393,10 @@ public class BaseActivity extends AppCompatActivity {
 
         if (musicService.isPlaying()) {
             playButton.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);
+            musicService.updateNotificationView();
         } else {
             playButton.setImageResource(R.drawable.ic_play_circle_outline_white);
+            musicService.updateNotificationView();
         }
     }
 
@@ -460,7 +444,7 @@ public class BaseActivity extends AppCompatActivity {
 
     public void sendSoundIconMessage()
     {
-        setSoundIcon = messageHandler.createMessage(setSoundIcon, whatIntegers.getSetSoundIconVisible(),data);
+        setSoundIcon = messageHandler.createMessage(setSoundIcon, whatIntegers.getSetSoundIconVisible(), data);
         messageHandler.sendMessage(setSoundIcon);
     }
 
@@ -474,14 +458,20 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void setNotification(){
-
-        notification.contentView = notificationView;
-        notification.contentIntent = pendingNotificationIntent;
-        notification.flags |= Notification.FLAG_NO_CLEAR;
-
-        notificationManager.notify(1, notification);
-    }
+//    public void updateNotificationView(boolean isPlaying)
+//    {
+//
+//        if(notification != null && notificationView != null) {
+//
+//            if(isPlaying) {
+//                notificationView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
+//            }else {
+//                notificationView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
+//            }
+//
+//            notificationManager.notify(1, notification);
+//        }
+//    }
 
 }
 

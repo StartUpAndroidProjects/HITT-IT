@@ -117,36 +117,35 @@ public class TrackDBAdapter {
                 null, null, null, COLUMN_ORDER_ID + " ASC ");
 
         cursor.moveToFirst();
-        if(trackData.getOrderId() == cursor.getInt(7))
-        {
-            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
-        }
 
-        cursor.moveToLast();
+        if(cursor.getColumnCount() != 0) {
 
-        if(trackData.getOrderId() == cursor.getInt(7))
-        {
-            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
-        }
-        else
-        {
-            int lastOrderId = cursor.getInt(7);
-
-            for (int count = trackData.getOrderId(); count < lastOrderId; count++)
-            {
-                updateOrderId.put(COLUMN_ORDER_ID, count);
-
-                if(count == trackData.getOrderId()) {
-                    sqLiteDatabase.update(TRACK_TABLE,updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(trackData.getOrderId() + 1), null);
-                }else {
-                    sqLiteDatabase.update(TRACK_TABLE,updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(count + 1), null);
-                }
-                updateOrderId.clear();
+            if (trackData.getOrderId() == cursor.getInt(7)) {
+                sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
             }
-        }
 
+            cursor.moveToLast();
+
+            if (trackData.getOrderId() == cursor.getInt(7)) {
+                sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+            } else {
+                int lastOrderId = cursor.getInt(7);
+
+                for (int count = trackData.getOrderId(); count < lastOrderId; count++) {
+                    updateOrderId.put(COLUMN_ORDER_ID, count);
+
+                    if (count == trackData.getOrderId()) {
+                        sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(trackData.getOrderId() + 1), null);
+                    } else {
+                        sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(count + 1), null);
+                    }
+                    updateOrderId.clear();
+                }
+            }
+
+            sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
+        }
         cursor.close();
-        sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackData.getId(), null);
     }
 
     public void reorderItem(TrackData trackData, String upOrdown) {

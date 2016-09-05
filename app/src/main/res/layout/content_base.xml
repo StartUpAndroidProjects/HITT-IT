@@ -32,17 +32,43 @@
         android:layout_above="@+id/view" />
 
 
-    <android.support.v7.widget.Toolbar
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:background="@color/colorPrimary"
-        android:id="@+id/view"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:elevation="5dp">
+        android:id="@+id/view">
 
-      <include layout="@layout/media_controller"> </include>
+        <android.support.v7.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@color/colorPrimary"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    </android.support.v7.widget.Toolbar>
+
+        <include
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center_horizontal"
+            layout="@layout/media_controller"
+            > </include>
+
+
+        </android.support.v7.widget.Toolbar>
+
+
+
+    </FrameLayout>
+
+
+
+
+
+
+
+
+
 
 </RelativeLayout>

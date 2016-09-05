@@ -28,12 +28,6 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AudioPlayerBroadCastReceiver" >
-            <intent-filter>
-                <action android:name="PLAY_PAUSE" />
-            </intent-filter>
-        </receiver>
-
         <service android:name=".MusicService" />
         <activity
             android:name=".AddTrackActivity"

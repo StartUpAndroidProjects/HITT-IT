@@ -3,15 +3,20 @@ package com.wolffincdevelopment.hiit_it;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
+
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -33,7 +38,13 @@ public class AddTrackActivity extends AppCompatActivity {
     private Intent i;
     private TrackData item;
     private ConvertTime convertTime;
-    public  TextWatcher textWatcher;
+    public TextWatcher textWatcher;
+
+    private String minutes, maxMin;
+    private String seconds, maxSec;
+    private long timeLong, maxMilliSec, maxMillMin, secMilli, minMilli, minutesLong, secondsLong, maxMinLong, maxSecLong;
+
+    private long startTimeStaticSec,startTimeStaticMin, stopTimeStaticSec, stopTimeStaticMin;
 
     private String STOP_TIME_MAX;
 
@@ -53,29 +64,26 @@ public class AddTrackActivity extends AppCompatActivity {
     RadioButton radioButton;
 
     @OnFocusChange(R.id.start_time)
-    protected void onStartTimeFocuseChange(boolean focused)
-    {
-        if(focused)
+    protected void onStartTimeFocuseChange(boolean focused) {
+        if (focused)
             startTime.getText().clear();
         else
             checkTimeField(startTime);
     }
 
     @OnFocusChange(R.id.stop_time)
-    protected void onStopTimeFocuseChange(boolean focused)
-    {
-        if(focused)
+    protected void onStopTimeFocuseChange(boolean focused) {
+        if (focused)
             stopTime.getText().clear();
         else
             checkTimeField(stopTime);
+
     }
 
     // Added a focusChangeListener so when this field as focus the keyboard does not display
     @OnFocusChange(R.id.browse_text_field)
-    protected void onFocusChanged(boolean focused)
-    {
-        if(focused)
-        {
+    protected void onFocusChanged(boolean focused) {
+        if (focused) {
             // Hides the keyboard
             inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             inputManager.hideSoftInputFromWindow(browseTextField.getWindowToken(), 0);
@@ -84,9 +92,8 @@ public class AddTrackActivity extends AppCompatActivity {
     }
 
     @OnClick(R.id.add_track_button)
-    protected void onClick()
-    {
-        if(STOP_TIME_MAX != null) {
+    protected void onClick() {
+        if (STOP_TIME_MAX != null) {
 
             if (!checkTimeFields(startTime)) {
                 startTime.setText("00:00");
@@ -125,45 +132,51 @@ public class AddTrackActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume()
-    {
+    protected void onResume() {
         super.onResume();
         browseTextField.clearFocus();
 
         init();
 
-        if(!addTrackButton.isEnabled()) {
+        if (!addTrackButton.isEnabled()) {
             addTrackButton.setBackgroundColor(Color.GRAY);
         }
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == BROWSE_ACTIVITY_RESULT_CODE) {
 
-            if(resultCode == RESULT_OK){
+            if (resultCode == RESULT_OK) {
 
                 boolean checked = data.getBooleanExtra("enabled", true);
                 item = (TrackData) data.getSerializableExtra("listItem");
 
-                browseTextField.setText(item.getSongName() + " - " + item.getArtistName());
-                stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
-                startTime.setText("00:00");
+                /*
+                 * Greater than 1 hour in milliseconds
+                 */
+                if(item.getDuration() >= 3600000) {
 
-                STOP_TIME_MAX = convertTime.convertMilliSecToStringWithColon(item.getDuration());
+                }else {
 
-                checkFields();
+                    browseTextField.setText(item.getSongName() + " - " + item.getArtistName());
+                    stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
+                    startTime.setText("00:00");
+
+                    STOP_TIME_MAX = convertTime.convertMilliSecToStringWithColon(item.getDuration());
+
+                    checkFields();
+                }
             }
         }
     }
 
     private void startNextActivity() {
 
-        Intent browseActivity = new Intent(AddTrackActivity.this,BrowseActivity.class);
-        AddTrackActivity.this.startActivityForResult(browseActivity,BROWSE_ACTIVITY_RESULT_CODE);
+        Intent browseActivity = new Intent(AddTrackActivity.this, BrowseActivity.class);
+        AddTrackActivity.this.startActivityForResult(browseActivity, BROWSE_ACTIVITY_RESULT_CODE);
     }
 
     public void init() {
@@ -172,7 +185,7 @@ public class AddTrackActivity extends AppCompatActivity {
          * This textWatcher is what handles the logic for the colon
          * We do not want the user to be able to select the colon so we will auto populate for them
          */
-        textWatcher= new TextWatcher() {
+        textWatcher = new TextWatcher() {
 
             private int delete;
 
@@ -192,42 +205,35 @@ public class AddTrackActivity extends AppCompatActivity {
 
                 checkFields();
 
-                if(s.length() == 2 && delete != 0 && s.subSequence(1,2).toString().compareTo(":") != 0)
-                {
+                if (s.length() == 2 && delete != 0 && s.subSequence(1, 2).toString().compareTo(":") != 0) {
                     s.append(":");
                 }
 
-                if(s.toString().matches("^([0-9]{3})$"))
-                {
-                    CharSequence added = s.subSequence(0,2);
-                    CharSequence added2 = s.subSequence(2,3);
+                if (s.toString().matches("^([0-9]{3})$")) {
+                    CharSequence added = s.subSequence(0, 2);
+                    CharSequence added2 = s.subSequence(2, 3);
 
                     s.clear();
 
                     s.append(added + ":" + added2);
 
 
-
                 }
 
-                if(s.toString().startsWith(":") && s.toString().endsWith(":"))
-                {
+                if (s.toString().startsWith(":") && s.toString().endsWith(":")) {
                     s.clear();
                 }
 
-                if(s.toString().matches("^([0-9]{1}):$"))
-                {
-                    s.delete(1,2);
+                if (s.toString().matches("^([0-9]{1}):$")) {
+                    s.delete(1, 2);
                 }
 
-                if(s.toString().matches("^([0-9]{2})::$"))
-                {
-                    s.delete(2,3);
+                if (s.toString().matches("^([0-9]{2})::$")) {
+                    s.delete(2, 3);
                 }
 
-                if(s.toString().matches("^([0-9]{2}):([0-9]{1}):$"))
-                {
-                    s.delete(4,5);
+                if (s.toString().matches("^([0-9]{2}):([0-9]{1}):$")) {
+                    s.delete(4, 5);
                 }
             }
         };
@@ -238,38 +244,32 @@ public class AddTrackActivity extends AppCompatActivity {
 
     }
 
-    private void checkTimeField(EditText textField)
-    {
-        if(textField.getText().toString().matches("^:([0-9]{2})$"))
-        {
-            CharSequence add =  textField.getText().subSequence(0,3);
+    private void checkTimeField(EditText textField) {
+        if (textField.getText().toString().matches("^:([0-9]{2})$")) {
+            CharSequence add = textField.getText().subSequence(0, 3);
             textField.getText().clear();
             textField.getText().append("00" + add);
-        } else if(textField.getText().toString().matches("^([0-9]{2}):$"))
-        {
-            CharSequence add =  textField.getText().subSequence(0,3);
+        } else if (textField.getText().toString().matches("^([0-9]{2}):$")) {
+            CharSequence add = textField.getText().subSequence(0, 3);
             textField.getText().clear();
             textField.getText().append(add + "00");
-        } else if(textField.getText().toString().matches("^([0-9]{2}):([0-9]{1})$"))
-        {
-            CharSequence add =  textField.getText().subSequence(0,4);
+        } else if (textField.getText().toString().matches("^([0-9]{2}):([0-9]{1})$")) {
+            CharSequence add = textField.getText().subSequence(0, 4);
             textField.getText().clear();
             textField.getText().append(add + "0");
-        } else if(textField.getText().toString().matches("^([0-9]{1}):([0-9]{2})$"))
-        {
-            CharSequence add =  textField.getText().subSequence(0,4);
+        } else if (textField.getText().toString().matches("^([0-9]{1}):([0-9]{2})$")) {
+            CharSequence add = textField.getText().subSequence(0, 4);
             textField.getText().clear();
             textField.getText().append("0" + add);
         }
     }
 
-    public void checkFields()
-    {
+    public void checkFields() {
         boolean verified;
 
-        if(browseTextField.getText().toString().isEmpty() || startTime.getText().toString().isEmpty()
+        if (browseTextField.getText().toString().isEmpty() || startTime.getText().toString().isEmpty()
                 || stopTime.getText().toString().isEmpty() || !startTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")
-                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$") ) {
+                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")) {
 
             verified = false;
             addTrackButton.setEnabled(verified);
@@ -285,15 +285,111 @@ public class AddTrackActivity extends AppCompatActivity {
 
     public boolean checkTimeFields(EditText timeField)
     {
-        if(Integer.valueOf(timeField.getText().toString().substring(0, 2)) > Integer.valueOf(STOP_TIME_MAX.substring(0, 2)) ||
-                (Integer.valueOf(timeField.getText().toString().substring(0, 2)).compareTo(Integer.valueOf(STOP_TIME_MAX.substring(0, 2))) == 0 && Integer.valueOf(timeField.getText().toString().substring(3, 5)) > Integer.valueOf(STOP_TIME_MAX.substring(3, 5)))
-                            || (Integer.valueOf(timeField.getText().toString().substring(0, 2)) < Integer.valueOf(STOP_TIME_MAX.substring(0, 2)) &&
-                        Integer.valueOf(timeField.getText().toString().substring(3, 5)) > Integer.valueOf(STOP_TIME_MAX.substring(3, 5)))
-                ||  Integer.valueOf(timeField.getText().toString().substring(3, 5)) >= 60
-        ){
-            return false;
-        }else {
-            return  true;
+        boolean checked = false;
+
+        maxSec = STOP_TIME_MAX.substring(3,5);
+        maxSecLong = Long.parseLong(maxSec);
+        maxMilliSec = TimeUnit.SECONDS.toMillis(maxSecLong);
+
+        maxMin =  STOP_TIME_MAX.substring(0,2);
+        maxMinLong = Long.parseLong(maxMin);
+        maxMillMin = TimeUnit.MINUTES.toMillis(maxMinLong);
+
+        seconds = timeField.getText().toString().substring(3,5);
+        secondsLong = Long.parseLong(seconds);
+        secMilli = TimeUnit.SECONDS.toMillis(secondsLong);
+
+        minutes =  timeField.getText().toString().substring(0,2);
+        minutesLong = Long.parseLong(minutes);
+        minMilli = TimeUnit.MINUTES.toMillis(minutesLong);
+
+        if(timeField == startTime) {
+
+            if (minMilli <= maxMillMin)
+            {
+                if(minMilli == maxMillMin)
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+
+                }
+                else
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else if(secMilli >= maxMilliSec && secMilli < 59000)
+                    {
+                        checked = true;
+                    }
+                }
+
+            }
+            else
+            {
+                checked = false;
+            }
+
+            if(checked)
+            {
+
+                startTimeStaticSec = secMilli;
+                startTimeStaticMin = minMilli;
+            }
+
         }
+        else
+        {
+           if(minMilli >= startTimeStaticMin && minMilli <= maxMillMin)
+            {
+                if(minMilli == maxMillMin)
+                {
+                    if(secMilli <= maxMilliSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+                }
+                else if(minMilli == startTimeStaticMin)
+                {
+                    if(secMilli >= startTimeStaticSec)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked = false;
+                    }
+                }
+                else if(minMilli < maxMillMin && minMilli > startTimeStaticMin)
+                {
+                    if(secMilli < 59000)
+                    {
+                        checked = true;
+                    }
+                    else
+                    {
+                        checked= false;
+                    }
+                }
+            }
+            else
+           {
+               checked = false;
+           }
+        }
+
+        return checked;
+
     }
 }

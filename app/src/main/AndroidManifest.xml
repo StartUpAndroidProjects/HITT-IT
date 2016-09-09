@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".BaseActivity"
+            android:name=".activity.BaseActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"
             android:launchMode="singleTop"
@@ -28,25 +28,27 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".MusicService" />
+        <service android:name=".activity.MusicService" />
         <activity
-            android:name=".AddTrackActivity"
+            android:name=".activity.AddTrackActivity"
             android:label="@string/add_track"
-            android:parentActivityName="com.wolffincdevelopment.hiit_it.BaseActivity"
+            android:parentActivityName=".activity.BaseActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.wolffincdevelopment.hiit_it.BaseActivity" />
+                android:value=".activity.BaseActivity" />
         </activity>
 
         <activity
-            android:name=".BrowseActivity"
+            android:name=".activity.BrowseActivity"
             android:label="@string/browse_title"
-            android:parentActivityName="com.wolffincdevelopment.hiit_it.AddTrackActivity"
+            android:parentActivityName=".activity.AddTrackActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.wolffincdevelopment.hiit_it.AddTrackActivity" />
+                android:value=".activity.AddTrackActivity" />
         </activity>
 
         <meta-data

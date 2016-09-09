@@ -1,9 +1,11 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.adapter;
 
 import android.os.Bundle;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
+import android.support.v7.view.menu.MenuBuilder;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -13,12 +15,19 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.wolffincdevelopment.hiit_it.IconizedMenu;
+import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
+import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
+import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.What;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import util.SharedPreferencesUtil;
+import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 
 /**
  * Created by kylewolff on 6/2/2016.
@@ -40,8 +49,10 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public boolean firstUpdateSound = false;
     public boolean activeIcon = false;
     public boolean menuItemClicked = false;
-    public int currentTrackPlaying, previousTrackPlayed = -1, position;
+    public int currentTrackPlaying, previousTrackPlayed = -1, position, popUpsDisplaying;
     public Bundle data;
+    public MenuInflater inflater;
+    public IconizedMenu firstMenuSelected;
 
     /*
      * A ViewHolder describes an item view and metadata about its place within the RecyclerView.
@@ -66,8 +77,8 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         public String trackId;
 
-        public MyViewHolder(View view) {
-
+        public MyViewHolder(View view)
+        {
             super(view);
             ButterKnife.bind(this, view);
 
@@ -88,22 +99,24 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 @Override
                 public void onClick(View v) {
 
-                    if(currentSong == null) {
-
+                    if(currentSong == null)
+                    {
                         data.clear();
                         data.putSerializable("id", trackId);
                         playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
                         handler.sendMessage(playThisSong);
 
-                    } else if(currentSong.getId().compareTo(trackId) != 0) {
-
+                    }
+                    else if(currentSong.getId().compareTo(trackId) != 0)
+                    {
                         data.clear();
                         data.putSerializable("id", trackId);
                         playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
                         handler.sendMessage(playThisSong);
 
-                    } else {
-
+                    }
+                    else
+                    {
                         Bundle data = new Bundle();
                         data.clear();
                         data.putSerializable("id", trackId);
@@ -117,22 +130,25 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     }
 
-    public class FooterViewHolder extends RecyclerView.ViewHolder {
-
+    public class FooterViewHolder extends RecyclerView.ViewHolder
+    {
         @BindView(R.id.off_or_on)
         TextView oNorOffTextView;
 
         @BindView(R.id.replay_icon)
         ImageView replayIcon;
 
-        public FooterViewHolder(View view) {
-
+        public FooterViewHolder(View view)
+        {
             super(view);
             ButterKnife.bind(this, view);
 
-            if(sharedPreferencesUtil.getRepeat(view.getContext()) == false) {
+            if(!sharedPreferencesUtil.getRepeat(view.getContext()))
+            {
                 oNorOffTextView.setText("OFF");
-            } else {
+            }
+            else
+            {
                 oNorOffTextView.setText("ON");
                 replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
             }
@@ -141,11 +157,14 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 @Override
                 public void onClick(View v) {
 
-                    if(sharedPreferencesUtil.getRepeat(v.getContext()) == false) {
+                    if(!sharedPreferencesUtil.getRepeat(v.getContext()))
+                    {
                         sharedPreferencesUtil.setRepeat(v.getContext(), true);
                         oNorOffTextView.setText("ON");
                         replayIcon.setImageResource(R.drawable.ic_repeat_deep_orange_48dp);
-                    } else {
+                    }
+                    else
+                    {
                         sharedPreferencesUtil.setRepeat(v.getContext(), false);
                         oNorOffTextView.setText("OFF");
                         replayIcon.setImageResource(R.drawable.ic_repeat_black_48dp);
@@ -162,19 +181,27 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // The method to display the popUp menu
-    private void showMenu(View v, final TrackData trackData1) {
-
+    private void showMenu(View v, final TrackData trackData1)
+    {
         final IconizedMenu popup = new IconizedMenu(v.getContext(), v);
-        MenuInflater inflater = popup.getMenuInflater();
+        inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.pop_up_menu, popup.getMenu());
         popup.show();
 
-        popup.setOnMenuItemClickListener(new IconizedMenu.OnMenuItemClickListener() {
+        if(firstMenuSelected != null && firstMenuSelected.isShowing() && popup.isShowing())
+        {
+            firstMenuSelected.dismiss();
+        }
+
+        firstMenuSelected = popup;
+
+        popup.setOnMenuItemClickListener(new IconizedMenu.OnMenuItemClickListener()
+        {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
-
-                switch(item.getTitle().toString()) {
-
+            public boolean onMenuItemClick(MenuItem item)
+            {
+                switch(item.getTitle().toString())
+                {
                     case "Move Up":
 
                         data.putSerializable("action", item.getTitle().toString());

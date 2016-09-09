@@ -1,24 +1,20 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.activity;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
@@ -29,15 +25,24 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RemoteViews;
 
-import java.io.Serializable;
+import com.wolffincdevelopment.hiit_it.adapter.BaseAdapter;
+import com.wolffincdevelopment.hiit_it.DividerItemDecoration;
+import com.wolffincdevelopment.hiit_it.FirstTimePreference;
+import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
+import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
+import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.What;
 import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+/**
+ * Create by Kyle Wolff
+ */
 public class BaseActivity extends AppCompatActivity {
 
 	public static final int ADD_ACTIVITY_RESULT_CODE = 232;
@@ -67,11 +72,8 @@ public class BaseActivity extends AppCompatActivity {
 
     private ProgressDialog progress;
 
-    private CheckForStorageDeletion storageDeletion;
-
     private boolean musicBound = false;
     private boolean musicConnected = false;
-    private long mLastClickTime = 0;
 
     @BindView( R.id.recycler_view )
     RecyclerView recyclerView;
@@ -105,17 +107,22 @@ public class BaseActivity extends AppCompatActivity {
     @OnClick(R.id.play)
     protected void onPlayPressed()
     {
-        if (musicService != null) {
+        if (musicService != null)
+        {
+            if (musicService.getSongs().isEmpty())
+            {
 
-            if (musicService.getSongs().isEmpty()) {
-
-            } else {
-
+            }
+            else
+            {
                 TrackData currentSong = musicService.getCurrentSong();
 
-                if(!musicService.isPlaying() && !musicService.isPaused()) {
+                if(!musicService.isPlaying() && !musicService.isPaused())
+                {
                     musicService.playSong(currentSong.getStartTime2(), currentSong.getStopTime3(), currentSong.getId());
-                } else {
+                }
+                else
+                {
                     pauseResume();
                 }
             }
@@ -156,10 +163,8 @@ public class BaseActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Hides the default title for the actity so we can use our custom one
+        // Hides the default title for the activity so we can use our custom one
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-        storageDeletion = new CheckForStorageDeletion(this);
 
 		prefFirstTime = new FirstTimePreference(this);
 		trackDBAdapter = new TrackDBAdapter(this);
@@ -197,7 +202,7 @@ public class BaseActivity extends AppCompatActivity {
                     pauseResume();
                 } else if(msg.what == whatIntegers.getCurrentSong()) {
 
-                    if(!msg.getData().isEmpty())
+                    if(msg.getData().getString("NULL") != null)
                     {
                         if(msg.getData().getString("NULL").compareTo("NULL") == 0)
                         {
@@ -224,6 +229,9 @@ public class BaseActivity extends AppCompatActivity {
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
+        trackDBAdapter.open();
+        trackDBAdapter.checkForStorageDeletion();
+        trackDBAdapter.close();
     }
 
 	@Override
@@ -240,16 +248,20 @@ public class BaseActivity extends AppCompatActivity {
 
             setSoundIconData();
 
-            if (musicService.isPlaying()) {
+            if (musicService.isPlaying())
+            {
                 data.putSerializable("boolean", true);
-            } else if(musicService.isPaused()) {
+            }
+            else if(musicService.isPaused())
+            {
                 data.putSerializable("boolean", false);
             }
 
             sendSoundIconMessage();
         }
 
-		if(musicService != null && musicConnected) {
+		if(musicService != null && musicConnected)
+        {
 			dismissDialog();
 		}
 	}
@@ -259,11 +271,10 @@ public class BaseActivity extends AppCompatActivity {
     {
         super.onPause();
 
-        if(musicService != null && musicService.isPlaying()) {
+        if(musicService != null && musicService.isPlaying())
+        {
             musicService.setNotification();
         }
-
-
     }
 
     @Override
@@ -271,11 +282,13 @@ public class BaseActivity extends AppCompatActivity {
     {
         super.onDestroy();
 
-        if(playIntent != null) {
+        if(playIntent != null)
+        {
             musicService.stopPlayer();
             stopService(playIntent);
 
-            if(musicBound) {
+            if(musicBound)
+            {
                 unbindService(musicConnection);
             }
         }
@@ -375,11 +388,14 @@ public class BaseActivity extends AppCompatActivity {
             musicService.setList(trackDataList, action, trackData);
         }
 
-        baseAdapter.refresh(trackDataList);
+        if(trackDataList != null)
+        {
+            baseAdapter.refresh(trackDataList);
+        }
     }
 
-    private void checkFirstTimePreference() {
-
+    private void checkFirstTimePreference()
+    {
         SharedPreferences sharedPreferences = getSharedPreferences("FirstKeyPreferences", Context.MODE_PRIVATE);
 
         if(sharedPreferences.contains(getBaseContext().getString(R.string.firstTimeFabPressed))) {
@@ -457,21 +473,5 @@ public class BaseActivity extends AppCompatActivity {
             }
         }
     }
-
-//    public void updateNotificationView(boolean isPlaying)
-//    {
-//
-//        if(notification != null && notificationView != null) {
-//
-//            if(isPlaying) {
-//                notificationView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
-//            }else {
-//                notificationView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
-//            }
-//
-//            notificationManager.notify(1, notification);
-//        }
-//    }
-
 }
 

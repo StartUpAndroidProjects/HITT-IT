@@ -1,12 +1,10 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.handler;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.io.Serializable;
 
 /**
  * Created by kylewolff on 7/10/2016.

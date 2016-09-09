@@ -1,8 +1,7 @@
-package util;
+package com.wolffincdevelopment.hiit_it.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 /**
  * Created by mitchross on 6/30/16.

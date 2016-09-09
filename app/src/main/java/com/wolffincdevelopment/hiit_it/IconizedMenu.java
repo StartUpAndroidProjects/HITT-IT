@@ -104,6 +104,11 @@ public class IconizedMenu implements MenuBuilder.Callback, MenuPresenter.Callbac
         mPopup.dismiss();
     }
 
+    public boolean isShowing()
+    {
+        return mPopup.isShowing();
+    }
+
     /**
      * Set a listener that will be notified when the user selects an item from the menu.
      *
@@ -182,5 +187,6 @@ public class IconizedMenu implements MenuBuilder.Callback, MenuPresenter.Callbac
          */
         public boolean onMenuItemClick(MenuItem item);
     }
+
 
 }

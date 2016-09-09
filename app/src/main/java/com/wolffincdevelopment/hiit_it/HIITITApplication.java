@@ -14,7 +14,6 @@ public class HIITITApplication extends Application
 {
 	private static HIITITApplication singleton;
 
-
 	@Override
 	public void onCreate()
 	{

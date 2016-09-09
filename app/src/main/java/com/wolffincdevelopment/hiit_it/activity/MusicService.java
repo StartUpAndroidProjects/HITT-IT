@@ -1,4 +1,4 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.activity;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,32 +8,35 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.session.MediaSession;
-import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.widget.MediaController;
 import android.widget.RemoteViews;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
+import com.wolffincdevelopment.hiit_it.Constant;
+import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.What;
 
-import util.SharedPreferencesUtil;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
+import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 
 /**
  * Created by kylewolff on 6/5/2016.
  */
-public class MusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
-
+public class MusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener
+{
     private final IBinder musicBind = new MusicBinder();
 
     private Intent playPauseIntent, prevIntent, nextIntent, notificationIntent;
@@ -57,9 +60,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     //media player
     private MediaPlayer player;
     private final int NOTIFICATION_ID = 1;
-    private MediaSessionManager mediaSessionManager;
-    private MediaSession mediaSession;
-    private MediaController mediaController;
 
     //song list
     private ArrayList<TrackData> songs;
@@ -68,7 +68,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private TrackData playSong;
 
-    private Thread playerWatcher;
+    private Executor playerWatcher;
 
     public void onCreate()
     {
@@ -83,15 +83,20 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         whatInteger = new What();
         data = new Bundle();
         nonVisibleIconData = new Bundle();
+        playerWatcher = Executors.newSingleThreadExecutor();
 
         initMusicPlayer();
         initNotification();
     }
 
-    public void onDestroy() {
+    public void onDestroy()
+    {
         super.onDestroy();
+
         player.release();
-        if(notification != null) {
+
+        if(notification != null)
+        {
             notificationManager.cancelAll();
         }
     }
@@ -130,7 +135,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
 
-        if(isPlaying()) {
+        if(isPlaying())
+        {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
         }
 
@@ -141,13 +147,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         notification.contentIntent = pendingNotificationIntent;
         notification.flags = Notification.FLAG_ONGOING_EVENT;
 
-
-
-        notificationManager.notify(1, notification);
+        notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
-    public void initMusicPlayer(){
-
+    public void initMusicPlayer()
+    {
         //set player properties
         player.setWakeMode(getApplicationContext(),
                 PowerManager.PARTIAL_WAKE_LOCK);
@@ -162,10 +166,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0) {
-
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
+        if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0)
+        {
             contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
 
             pauseResumeMessage = handler.createMessage(pauseResumeMessage, whatInteger.pauseResumeCurrentSong());
@@ -173,21 +177,24 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             updateMediaPlayerUIControls();
 
-
-        }else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0) {
-
+        }
+        else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0)
+        {
             TrackData song = getNextSong();
 
-            if(song != null) {
+            if(song != null)
+            {
                 playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
 
-        }else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0) {
-
+        }
+        else if(intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0)
+        {
             TrackData song = getPreviousSong();
 
-            if(song != null) {
+            if(song != null)
+            {
                 playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
@@ -195,90 +202,101 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
 
         return super.onStartCommand(intent, flags, startId);
-
     }
 
     public void updateNotificationView()
     {
-        if(isPlaying()) {
+        if(isPlaying())
+        {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
-        }else {
+        }
+        else
+        {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
         }
 
-        if(notification != null) {
-            notificationManager.notify(1, notification);
+        if(notification != null)
+        {
+            notificationManager.notify(NOTIFICATION_ID, notification);
         }
     }
 
-    public void setList(ArrayList<TrackData> songs, String action, TrackData trackData){
-
+    public void setList(ArrayList<TrackData> songs, String action, TrackData trackData)
+    {
         boolean currentSong = false;
         boolean previousSong = false;
         boolean nextSong = false;
 
-        if(trackData != null) {
-
-            if(trackData.getId().compareTo(getCurrentSong().getId()) == 0){
+        if(trackData != null)
+        {
+            if(trackData.getId().compareTo(getCurrentSong().getId()) == 0)
+            {
                 currentSong = true;
-            }else if (trackData.getOrderId() < getCurrentSong().getOrderId() && !(trackData.getOrderId() < getCurrentSong().getOrderId() - 1)) {
+            }
+            else if (trackData.getOrderId() < getCurrentSong().getOrderId() && !(trackData.getOrderId() < getCurrentSong().getOrderId() - 1))
+            {
                 previousSong = true;
-            } else if (trackData.getOrderId() > getCurrentSong().getOrderId() && !(trackData.getOrderId() > getCurrentSong().getOrderId() + 1)) {
+            }
+            else if (trackData.getOrderId() > getCurrentSong().getOrderId() && !(trackData.getOrderId() > getCurrentSong().getOrderId() + 1))
+            {
                 nextSong = true;
             }
         }
 
         this.songs = songs;
 
-        switch (action) {
-
+        switch (action)
+        {
             case "Move Up":
 
-                if(!songs.isEmpty()) {
-
-                    if(songPosn != 0 && currentSong && songPosn != songs.size()) {
-
+                if(!songs.isEmpty())
+                {
+                    if(songPosn != 0 && currentSong && songPosn != songs.size())
+                    {
                         songPosn--;
 
-                        if (playSong != null && isPlaying()) {
-
+                        if (playSong != null && isPlaying())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", true);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
-                        } else if (playSong != null && isPaused()) {
-
+                        }
+                        else if (playSong != null && isPaused())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", false);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
                         }
 
-                    } else if(nextSong && songPosn != songs.size()) {
+                        previousSongPosn = songPosn;
 
+                    }
+                    else if(nextSong && songPosn != songs.size())
+                    {
                         songPosn++;
 
-                        if (playSong != null && isPlaying()) {
-
+                        if (playSong != null && isPlaying())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", true);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
-                        } else if (playSong != null && isPaused()) {
-
+                        }
+                        else if (playSong != null && isPaused())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", false);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
                         }
+
+                        previousSongPosn = songPosn;
                     }
                 }
 
@@ -286,55 +304,59 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             case "Move Down":
 
-                if(!songs.isEmpty()) {
-
-                    if(currentSong && songPosn != songs.size()) {
-
+                if(!songs.isEmpty())
+                {
+                    if(currentSong && songPosn != songs.size())
+                    {
                         songPosn++;
 
-                        if(songPosn == songs.size()) {
+                        if(songPosn == songs.size())
+                        {
                             songPosn--;
                         }
 
-                        if (playSong != null && isPlaying()) {
-
+                        if (playSong != null && isPlaying())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", true);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
-                        } else if (playSong != null && isPaused()) {
-
+                        }
+                        else if (playSong != null && isPaused())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", false);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
                         }
 
-                    }else if(songPosn != 0 && previousSong && songPosn != songs.size() ) {
+                        previousSongPosn = songPosn;
 
+                    }
+                    else if(songPosn != 0 && previousSong && songPosn != songs.size() )
+                    {
                         songPosn--;
 
-                        if (playSong != null && isPlaying()) {
-
+                        if (playSong != null && isPlaying())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", true);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
-                        } else if (playSong != null && isPaused()) {
-
+                        }
+                        else if (playSong != null && isPaused())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", false);
                             sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
                             handler.sendMessage(sendSoundIconVisible);
-
                         }
+
+                        previousSongPosn = songPosn;
                     }
                 }
 
@@ -345,14 +367,16 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 if(!songs.isEmpty())
                 {
 
-                    if(currentSong) {
-
-                        if(songPosn == songs.size() && !songs.isEmpty()) {
+                    if(currentSong)
+                    {
+                        if(songPosn == songs.size() && !songs.isEmpty())
+                        {
                             songPosn--;
+                            previousSongPosn = songPosn;
                         }
 
-                        if (playSong != null && isPlaying()) {
-
+                        if (playSong != null && isPlaying())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", true);
@@ -361,30 +385,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
                             playSong(getCurrentSong().getStartTime2(), getCurrentSong().getStopTime3(), getCurrentSong().getId());
 
-                        } else if (playSong != null && isPaused()) {
-
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-
                         }
-
-                    }else if(previousSong && songPosn != 0) {
-
-                        songPosn--;
-
-                        if (playSong != null && isPlaying()) {
-
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-
-                        } else if (playSong != null && isPaused()) {
-
+                        else if (playSong != null && isPaused())
+                        {
                             data.clear();
                             data.putSerializable("id", getCurrentSong().getId());
                             data.putSerializable("boolean", false);
@@ -394,7 +397,29 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                         }
 
                     }
+                    else if(previousSong && songPosn != 0)
+                    {
+                        songPosn--;
 
+                        if (playSong != null && isPlaying())
+                        {
+                            data.clear();
+                            data.putSerializable("id", getCurrentSong().getId());
+                            data.putSerializable("boolean", true);
+                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
+                            handler.sendMessage(sendSoundIconVisible);
+                        }
+                        else if (playSong != null && isPaused())
+                        {
+                            data.clear();
+                            data.putSerializable("id", getCurrentSong().getId());
+                            data.putSerializable("boolean", false);
+                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
+                            handler.sendMessage(sendSoundIconVisible);
+                        }
+
+                        previousSongPosn = songPosn;
+                    }
                 }
                 else if(isPlaying() || isPaused())
                 {
@@ -412,28 +437,28 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         nextSong= false;
     }
 
-    public class MusicBinder extends Binder {
-
-        MusicService getService() {
+    public class MusicBinder extends Binder
+    {
+        MusicService getService()
+        {
             return MusicService.this;
         }
     }
 
-    public void playSong(int startTime, int stopTime, String id) {
-
-        if(!songs.isEmpty()) {
-
-            if(songs.get(songPosn).getId().compareTo(id) != 0) {
-
-                for(TrackData trackData : songs) {
-
-                    if(trackData.getId().compareTo(id) == 0) {
-
+    public void playSong(int startTime, int stopTime, String id)
+    {
+        if(!songs.isEmpty())
+        {
+            if(songPosn != songs.size() && songs.get(songPosn).getId().compareTo(id) != 0)
+            {
+                for(TrackData trackData : songs)
+                {
+                    if(trackData.getId().compareTo(id) == 0)
+                    {
                         int index = songs.indexOf(trackData);
                         songPosn = index;
                     }
                 }
-
             }
 
             previousSongPosn = songPosn;
@@ -443,7 +468,15 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
             player.reset();
 
-            playSong = songs.get(songPosn);
+            // Thumser crashed the app by setting the songPosn == songs.size()
+            if(songPosn == songs.size())
+            {
+                songPosn = 0;
+            }
+            else
+            {
+                playSong = songs.get(songPosn);
+            }
 
             //get id
             long currSong = playSong.getMediaId();
@@ -466,19 +499,21 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 Log.e("MUSIC SERVICE", "Error setting data source", e);
             }
 
-            try
-            {
                 try
                 {
-                    player.prepare();
+                    try
+                    {
+                        player.prepare();
+                    }
+                    catch (IllegalStateException e)
+                    {
+                        playSong(startTime, stopTime, id);
+                    }
                 }
-                catch (IllegalStateException e) {
-                    playSong(startTime,stopTime,id);
+                catch (IOException e)
+                {
+                    Log.e("Logged Issue: ", e.getMessage());
                 }
-            }
-            catch (IOException e) {
-                Log.e("Logged Issue: ", e.getMessage());
-            }
 
         }
     }
@@ -504,13 +539,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         return paused;
     }
 
-    public void pausePlayer(){
+    public void pausePlayer()
+    {
         player.pause();
         paused = true;
     }
 
-    public void resume() {
-
+    public void resume()
+    {
         paused = false;
         player.seekTo(getPosn());
         player.start();
@@ -518,7 +554,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void stopPlayer()
     {
-        player.stop();
+        if(isPlaying())
+        {
+            player.stop();
+        }
 
         paused = false;
     }
@@ -542,52 +581,61 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     }
 
-    public void seek(int posn){
-        player.seekTo(posn);
-    }
-
-    public void go(){
-
-        player.start();
-    }
-
-    public void playPrev(int startTime, int stopTime, String id){
+    public void playPrev(int startTime, int stopTime, String id)
+    {
         playSong(startTime, stopTime, id);
     }
 
-    public void playNext(int startTime, int stopTime, String id){
+    public void playNext(int startTime, int stopTime, String id)
+    {
          playSong(startTime, stopTime, id);
     }
 
     public TrackData getCurrentSong() {
 
-        if(!songs.isEmpty() && songPosn != songs.size())
-            playSong = songs.get(songPosn);
-        else {
-            playSong = songs.get(0);
+        if(songs != null && !songs.isEmpty() )
+        {
+            if (songPosn != songs.size())
+                playSong = songs.get(songPosn);
+            else
+            {
+                playSong = songs.get(0);
+            }
         }
 
         return playSong;
     }
 
-    public TrackData getPreviousSong() {
-
-        if(!songs.isEmpty()) {
-
+    public TrackData getPreviousSong()
+    {
+        if(!songs.isEmpty())
+        {
             songPosn--;
 
-            if (songPosn == songs.size()) {
-                songPosn = -1;
-            } else if (songPosn > songs.size()) {
+            if (songPosn == songs.size())
+            {
+                songPosn = 0;
+            }
+            else if (songPosn > songs.size() - 1)
+            {
                 songPosn = 0;
                 playSong = songs.get(songPosn);
-            } else if (songPosn <= 0) {
-                songPosn = 0;
+            }
+            else if (songPosn == 0)
+            {
                 playSong = songs.get(songPosn);
-            } else {
+            }
+            else if(songPosn == -1)
+            {
+                songPosn = songs.size() - 1;
+                playSong = songs.get(songPosn);
+            }
+            else
+            {
                 playSong = songs.get(songPosn);
             }
         }
+
         return playSong;
     }
 
@@ -608,12 +656,12 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         return playSong;
     }
 
-    public void checkForNextSongDuringPlay() {
-
+    public void checkForNextSongDuringPlay()
+    {
         if(previousSongPosn != songs.size() - 1)
         {
-            if(!(songPosn > songs.size()) && !(songPosn < 0)) {
-
+            if(!(songPosn > songs.size()) && !(songPosn < 0))
+            {
                 TrackData song = getNextSong();
 
                 if(songPosn != 0)
@@ -642,18 +690,20 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) {
+    public void onCompletion(MediaPlayer mp)
+    {
 
     }
 
     @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
+    public boolean onError(MediaPlayer mp, int what, int extra)
+    {
         return false;
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) {
-
+    public void onPrepared(MediaPlayer mp)
+    {
         player.start();
         player.seekTo(startTime);
         stopThread = false;
@@ -661,44 +711,48 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     @Override
-    public void onSeekComplete(MediaPlayer mp) {
-
+    public void onSeekComplete(MediaPlayer mp)
+    {
         updateMediaPlayerUIControls();
 
-            playerWatcher = new Thread() {
+            playerWatcher.execute(new Runnable()
+            {
                 @Override
-                public void run() {
-
+                public void run()
+                {
                     int currentPosition = 0;
 
-                    while (!stopThread) {
-
-                        try {
+                    while (!stopThread)
+                    {
+                        try
+                        {
                             Thread.sleep(1000);
                             currentPosition = getPosn();
-                        } catch (InterruptedException e) {
+                        }
+                        catch (InterruptedException e)
+                        {
                             return;
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e)
+                        {
                             return;
                         }
 
                         final int total = getDur();
 
-                        if (currentPosition >= stopTime) {
+                        if (currentPosition >= stopTime)
+                        {
                             player.seekTo(total);
 
-                            if (songPosn <= songs.size() - 1) {
+                            if (songPosn <= songs.size() - 1)
+                            {
                                 checkForNextSongDuringPlay();
                             }
                         }
-
                     }
                 }
 
-            };
-
-            playerWatcher.start();
-
+            });
     }
 
     public void resetSongs()
@@ -723,13 +777,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         this.handler = handler;
     }
 
-    public void completeAudio()
+    public ArrayList<TrackData> getSongs()
     {
-        player.release();
-    }
-
-    public ArrayList<TrackData> getSongs() {
-
         return songs;
     }
 
@@ -740,14 +789,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     @Override
-    public boolean onUnbind(Intent intent){
-        player.stop();
+    public boolean onUnbind(Intent intent)
+    {
+        stopPlayer();
         player.release();
         return false;
-    }
-
-    public void updateNotification(String text)
-    {
-
     }
 }

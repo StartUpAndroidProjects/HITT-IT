@@ -1,22 +1,18 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.activity;
 
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.PermissionInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.v4.content.PermissionChecker;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -26,6 +22,9 @@ import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
+import com.wolffincdevelopment.hiit_it.adapter.BrowseListAdapter;
+import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.TrackData;
 
 import java.util.ArrayList;
 
@@ -37,8 +36,8 @@ import butterknife.OnItemClick;
 /**
  * Created by kylewolff on 6/4/2016.
  */
-public class BrowseActivity extends AppCompatActivity {
-
+public class BrowseActivity extends AppCompatActivity
+{
     private ContentResolver cr;
     private Cursor cur;
     private BrowseListAdapter adapter;
@@ -48,6 +47,9 @@ public class BrowseActivity extends AppCompatActivity {
 
     public String artist, title, stream;
     public long mediaId, duration;
+    public int permissionGranted;
+
+    private boolean permissonAlreadyChecked = false;
 
     Intent applicationSettingsIntent;
 
@@ -63,14 +65,13 @@ public class BrowseActivity extends AppCompatActivity {
     ListView listView;
 
     @OnClick(R.id.desc_no_permissions)
-    protected void onDescPressed(){
-
+    protected void onDescPressed()
+    {
         applicationSettingsIntent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", this.getPackageName(), null);
         applicationSettingsIntent.setData(uri);
         applicationSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getBaseContext().startActivity(applicationSettingsIntent);
-
     }
 
     @OnItemClick(R.id.browse_list_view)
@@ -108,24 +109,18 @@ public class BrowseActivity extends AppCompatActivity {
         applicationSettingsIntent = new Intent();
     }
 
-    private void showDialog()
-    {
-        Button changePermissions = (Button) findViewById(R.id.permissionsChange);
-        Button changeDismiss = (Button) findViewById(R.id.permissionDismiss);
-
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.permission_dialog, null);
-        dialogBuilder.setView(dialogView);
-
-
-
-        dialogBuilder.show();
-    }
-
     @Override
     protected void onResume()
     {
         super.onResume();
+
+        permissionGranted = ContextCompat.checkSelfPermission(getBaseContext(), android.Manifest.permission.READ_EXTERNAL_STORAGE );
+
+        if(permissionGranted == 0 && items != null && items.isEmpty())
+        {
+            permissonAlreadyChecked = true;
+            findMusicFiles();
+        }
     }
 
     private void getPermission()
@@ -135,7 +130,10 @@ public class BrowseActivity extends AppCompatActivity {
             @Override
             public void onPermissionGranted( PermissionGrantedResponse response )
             {
-                findMusicFiles();
+                if(!permissonAlreadyChecked && items != null && items.isEmpty())
+                {
+                    findMusicFiles();
+                }
             }
 
             @Override

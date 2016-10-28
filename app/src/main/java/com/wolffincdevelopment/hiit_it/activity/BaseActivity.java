@@ -1,27 +1,40 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
+import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -34,6 +47,9 @@ import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
 import com.wolffincdevelopment.hiit_it.TrackData;
 import com.wolffincdevelopment.hiit_it.What;
+import com.wolffincdevelopment.hiit_it.util.DialogBuilder;
+import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
+
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -71,6 +87,8 @@ public class BaseActivity extends AppCompatActivity {
     private MusicService.MusicBinder binder;
 
     private ProgressDialog progress;
+
+    private PermissionUtil permissionUtil;
 
     private boolean musicBound = false;
     private boolean musicConnected = false;
@@ -172,6 +190,7 @@ public class BaseActivity extends AppCompatActivity {
 		trackDataList = new ArrayList<>();
         whatIntegers = new What();
         data = new Bundle();
+        permissionUtil = new PermissionUtil();
 
         handler = new Handler(new Handler.Callback() {
             @Override
@@ -232,6 +251,8 @@ public class BaseActivity extends AppCompatActivity {
         trackDBAdapter.open();
         trackDBAdapter.checkForStorageDeletion();
         trackDBAdapter.close();
+
+       // permissionUtil.checkPhoneStatePermission(this);
     }
 
 	@Override
@@ -296,8 +317,6 @@ public class BaseActivity extends AppCompatActivity {
 
     private void init()
     {
-        //storageDeletion.getStorageAndDeletePlaylistItems();
-
 		showDialog();
 
 		checkFirstTimePreference();
@@ -308,6 +327,93 @@ public class BaseActivity extends AppCompatActivity {
 
         setSongList("none", null);
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        final Activity activity = this;
+
+        if(requestCode == 0)
+        {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+
+            }
+            else
+            {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_PHONE_STATE))
+                {
+                    showDialogOK("The HIIT IT! app needs access to check if you are making or receiving calls. Try again?",
+                            new DialogInterface.OnClickListener()
+                            {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which)
+                                {
+                                    switch (which)
+                                    {
+                                        case DialogInterface.BUTTON_POSITIVE:
+                                            permissionUtil.checkPhoneStatePermission(activity);
+
+                                            break;
+
+                                        case DialogInterface.BUTTON_NEGATIVE:
+                                            finish();
+
+                                            break;
+                                    }
+                                }
+                            });
+                }
+                else
+                {
+                    showDialogToSettings("Please allo the HIIT IT! app to have access to the Phone State. Please change permissions in settings.",
+                            new DialogInterface.OnClickListener()
+                            {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which)
+                                {
+                                    switch (which)
+                                    {
+                                        case DialogInterface.BUTTON_POSITIVE:
+
+                                            Intent applicationSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                            Uri uri = Uri.fromParts("package", getPackageName(), null);
+                                            applicationSettingsIntent.setData(uri);
+                                            startActivity(applicationSettingsIntent);
+
+                                            break;
+
+                                        case DialogInterface.BUTTON_NEGATIVE:
+
+                                            finish();
+                                            break;
+                                    }
+                                }
+                            });
+                }
+            }
+        }
+        else
+        {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    private void showDialogOK(String message, DialogInterface.OnClickListener okListener)
+    {
+        DialogBuilder dialogBuilder = new DialogBuilder(message,this);
+        dialogBuilder.setButtons("Ok", "Cancel", okListener);
+        dialogBuilder.create();
+        dialogBuilder.show();
+    }
+
+    private void showDialogToSettings(String message, DialogInterface.OnClickListener okListener)
+    {
+        DialogBuilder dialogBuilder = new DialogBuilder(message,this);
+        dialogBuilder.setButtons("Change Permissions", "Dismiss", okListener);
+        dialogBuilder.create();
+        dialogBuilder.show();
     }
 
     private void showDialog()
@@ -388,7 +494,7 @@ public class BaseActivity extends AppCompatActivity {
             musicService.setList(trackDataList, action, trackData);
         }
 
-        if(trackDataList != null)
+        if(trackDataList != null && !trackDataList.isEmpty())
         {
             baseAdapter.refresh(trackDataList);
         }

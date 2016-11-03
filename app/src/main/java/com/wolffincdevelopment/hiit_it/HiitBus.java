@@ -14,6 +14,16 @@ public class HiitBus extends Bus{
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
+    private static HiitBus bus = null;
+
+    public static HiitBus getInstance() {
+        if(bus == null) {
+            bus = new HiitBus();
+        }
+
+        return bus;
+    }
+
     public HiitBus() {
         super();
     }

@@ -18,10 +18,10 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-import com.squareup.otto.Bus;
-import com.squareup.otto.ThreadEnforcer;
+import com.squareup.otto.Subscribe;
 import com.wolffincdevelopment.hiit_it.Constant;
 import com.wolffincdevelopment.hiit_it.HiitBus;
+import com.wolffincdevelopment.hiit_it.MusicAction;
 import com.wolffincdevelopment.hiit_it.MusicListener;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackData;
@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 
 import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
+import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 
 /**
  * Created by kylewolff on 6/5/2016.
@@ -42,30 +43,25 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private final IBinder musicBind = new MusicBinder();
 
     private Intent playPauseIntent, prevIntent, nextIntent, notificationIntent;
-    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent, pendingSwitchIntent;
-    private RemoteViews contentView, bigView;
+    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent;
+    private RemoteViews contentView;
 
     private NotificationManager notificationManager;
     private Notification notification;
-
-    private Bundle data, nonVisibleIconData, updateMediaControlsData;
 
     private TelephonyManager telephonyManager;
 
     private int startTime, stopTime;
 
-    private boolean paused = false;
-    private boolean stopThread = false;
-    private boolean mPlayerReleased = true;
+    private boolean paused;
+    private boolean stopThread;
 
     //media player
-    private MediaPlayer player;
+    private MusicPlayer player;
     private final int NOTIFICATION_ID = 1;
 
     //song list
     private ArrayList<TrackData> songs;
-    //current position
-    private int songPosn, previousSongPosn;
 
     private TrackData playSong;
 
@@ -80,11 +76,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         super.onCreate();
 
         //create player
-        player = new MediaPlayer();
+        player = new MusicPlayer();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-        data = new Bundle();
-        nonVisibleIconData = new Bundle();
         playerWatcher = Executors.newSingleThreadExecutor();
 
         indexManager = MusicIndexManager.getInstance();
@@ -92,11 +86,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         initMusicPlayer();
         initNotification();
 
-        bus = new HiitBus();
-    }
-
-    public HiitBus getHiitBus() {
-        return bus;
+        bus = HiitBus.getInstance();
     }
 
     public void onDestroy() {
@@ -165,9 +155,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.setOnErrorListener(this);
         player.setOnSeekCompleteListener(this);
         player.setOnCompletionListener(this);
-
-        updateMediaControlsData = new Bundle();
-
     }
 
     @Override
@@ -242,8 +229,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                     }
                 }
 
-                previousSongPosn = indexManager.getIndex();
-
                 break;
 
             case "Move Down":
@@ -260,15 +245,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
                         callOnStateChanged();
 
-                    } else if (songPosn != 0 && previousSong && songPosn != songs.size()) {
+                    } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
 
                         indexManager.getPrevIndex();
 
                         callOnStateChanged();
                     }
                 }
-
-                previousSongPosn = indexManager.getIndex();
 
                 break;
 
@@ -284,7 +267,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
                         callOnStateChanged();
 
-                    } else if (previousSong && songPosn != 0) {
+                    } else if (previousSong && indexManager.getIndex() != 0) {
 
                         indexManager.getPrevIndex();
 
@@ -293,8 +276,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 } else if (isPlaying() || isPaused()) {
                     stopPlayer();
                 }
-
-                previousSongPosn = songPosn;
 
                 break;
         }
@@ -306,38 +287,43 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
     }
 
+    public void playSong(String id) {
+
+        for(TrackData data : songs) {
+
+            if(data.getId().compareTo(id) == 0) {
+                indexManager.setIndex(songs.indexOf(data));
+                playSong = data;
+                playSong();
+            }
+        }
+    }
+
     public void playSong() {
 
-        int startTime = getCurrentSong().getStartTime2();
-        int stopTime = getCurrentSong().getStopTime3();
-        String id = getCurrentSong().getId();
-
         if (!songs.isEmpty()) {
-            if (songPosn != songs.size() && songs.get(songPosn).getId().compareTo(id) != 0) {
+
+            if (songs.get(indexManager.getIndex()).getId().compareTo(playSong.getId()) != 0) {
+
                 for (TrackData trackData : songs) {
-                    if (trackData.getId().compareTo(id) == 0) {
-                        int index = songs.indexOf(trackData);
-                        songPosn = index;
+
+                    if (trackData.getId().compareTo(playSong.getId()) == 0) {
+                        indexManager.setIndex(songs.indexOf(trackData));
+                        playSong = songs.get(indexManager.getIndex());
                     }
                 }
             }
 
-            previousSongPosn = songPosn;
-
-            this.startTime = startTime;
-            this.stopTime = stopTime;
+            this.startTime = playSong.getStartTime2();
+            this.stopTime = playSong.getStopTime3();
 
             player.reset();
 
             // Thumser crashed the app by setting the songPosn == songs.size()
-            if (songPosn == songs.size()) {
-                songPosn = 0;
-            } else {
-                playSong = songs.get(songPosn);
+            if (indexManager.getIndex() == songs.size()) {
+                indexManager.setIndex(0);
             }
 
-            //get id
-            long currSong = playSong.getMediaId();
             //set uri
             Uri trackUri = Uri.parse(playSong.getStream());
 
@@ -351,7 +337,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 try {
                     player.prepare();
                 } catch (IllegalStateException e) {
-                    //playSong(startTime, stopTime, id);
+                    // If this excpetion happens we will just play the song again
+                    playSong();
                 }
             } catch (IOException e) {
                 Log.e("Logged Issue: ", e.getMessage());
@@ -372,10 +359,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         return player.isPlaying();
     }
 
-    public boolean isReleased() {
-        return mPlayerReleased;
-    }
-
     public boolean isPaused() {
         return paused;
     }
@@ -390,7 +373,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         paused = false;
         player.seekTo(getPosn());
         player.start();
-        callOnStateChanged();
     }
 
     public void callOnStateChanged() {
@@ -408,12 +390,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void stop(String id) {
         paused = false;
 
-        nonVisibleIconData.clear();
-        nonVisibleIconData.putSerializable("id", id);
         player.stop();
-
-        data.clear();
-        data.putString("NULL", "NULL");
 
         notificationManager.cancelAll();
 
@@ -452,11 +429,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     public void checkForNextSongDuringPlay() {
-        if (previousSongPosn != songs.size() - 1) {
-            if (!(songPosn > songs.size()) && !(songPosn < 0)) {
+        if (indexManager.getPrevIndex() != songs.size() - 1) {
+            if (!(indexManager.getIndex() > songs.size()) && !(indexManager.getIndex() < 0)) {
                 TrackData song = songs.get(indexManager.getNextIndex());
 
-                if (songPosn != 0) {
+                if (indexManager.getIndex() != 0) {
                     //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 } else {
                     //playSong(song.getStartTime2(), song.getStopTime3(), song.getId());
@@ -521,7 +498,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                     if (currentPosition >= stopTime) {
                         player.seekTo(total);
 
-                        if (songPosn <= songs.size() - 1) {
+                        if (indexManager.getIndex() <= songs.size() - 1) {
                             checkForNextSongDuringPlay();
                         }
                     }
@@ -536,9 +513,25 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void resetSongs() {
         stop(playSong.getId());
 
-        if (songPosn != 0 && !(songPosn < 0)) {
+        if (indexManager.getIndex() != 0 && !(indexManager.getIndex() < 0)) {
             if (!songs.isEmpty())
-                songPosn = 0;
+                indexManager.setIndex(0);
+        }
+    }
+
+    public MusicPlayer getMusicPlayer() {
+        return player;
+    }
+
+    @Subscribe
+    public void listItemClicked(MusicAction musicAction) {
+
+        if(musicAction.action == MusicAction.Action.PLAY) {
+            playSong(musicAction.id);
+        } else if(musicAction.action == MusicAction.Action.PAUSE) {
+            pausePlayer();
+        } else {
+            resume();
         }
     }
 

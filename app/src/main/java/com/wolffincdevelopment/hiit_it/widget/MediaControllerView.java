@@ -52,16 +52,6 @@ public class MediaControllerView extends LinearLayout implements View.OnClickLis
 
     }
 
-    @Subscribe
-    public void musicListener(MusicListener event) {
-
-        if (event.paused) {
-            playButton.setImageResource(R.drawable.ic_play_circle_outline_white);
-        } else {
-            playButton.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);
-        }
-    }
-
     public interface MediaControllerListener {
 
         void onPlay();
@@ -92,5 +82,15 @@ public class MediaControllerView extends LinearLayout implements View.OnClickLis
 
     public void setListener(MediaControllerListener listener) {
          this.listener = listener;
+    }
+
+    public void updatePlayButton(boolean paused) {
+
+        if (paused) {
+            playButton.setImageResource(R.drawable.ic_play_circle_outline_white);
+        } else {
+            playButton.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);
+        }
+
     }
 }

@@ -9,6 +9,7 @@ public class MusicIndexManager {
     private static MusicIndexManager manager = null;
 
     private int index;
+    private int previousIndex;
     private int trackListLength;
 
     private MusicIndexManager(){};
@@ -26,9 +27,14 @@ public class MusicIndexManager {
         this.trackListLength = trackListLength;
     }
 
+    public void setIndex(int index) {
+        previousIndex = this.index;
+        this.index = index;
+    }
+
     public int getIndex() {
 
-        if(index != trackListLength) {
+        if(!(index <= trackListLength) && !(index > trackListLength)) {
             return index;
         } else {
             return index = 0;
@@ -36,6 +42,8 @@ public class MusicIndexManager {
     }
 
     public int getPrevIndex() {
+
+        previousIndex = index;
 
         if (trackListLength != 0) {
 
@@ -55,6 +63,8 @@ public class MusicIndexManager {
 
     public int getNextIndex() {
 
+        previousIndex = index;
+
         if(trackListLength != 0) {
 
             index++;
@@ -65,6 +75,10 @@ public class MusicIndexManager {
         }
 
         return getIndex();
+    }
+
+    public int getPreviousIndex() {
+        return previousIndex;
     }
 
 }

@@ -14,8 +14,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.otto.Subscribe;
+import com.wolffincdevelopment.hiit_it.HiitBus;
 import com.wolffincdevelopment.hiit_it.IconizedMenu;
 import com.wolffincdevelopment.hiit_it.MusicListener;
+import com.wolffincdevelopment.hiit_it.MusicAction;
 import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
@@ -52,6 +54,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public Bundle data;
     private MenuInflater inflater;
     private IconizedMenu firstMenuSelected;
+    private HiitBus bus;
 
     /*
      * A ViewHolder describes an item view and metadata about its place within the RecyclerView.
@@ -98,35 +101,22 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 @Override
                 public void onClick(View v) {
 
-                    if(currentSong == null)
-                    {
-                        data.clear();
-                        data.putSerializable("id", trackId);
-                        playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
-                        handler.sendMessage(playThisSong);
+                    if (currentSong.getId().compareTo(trackId) != 0) {
+                        bus.post(new MusicAction(trackId, MusicAction.Action.PLAY));
+                    } else {
 
-                    }
-                    else if(currentSong.getId().compareTo(trackId) != 0)
-                    {
-                        data.clear();
-                        data.putSerializable("id", trackId);
-                        playThisSong = handler.createMessage(playThisSong, whatInteger.getPlayThisSong(), data);
-                        handler.sendMessage(playThisSong);
-
-                    }
-                    else
-                    {
-                        Bundle data = new Bundle();
-                        data.clear();
-                        data.putSerializable("id", trackId);
-                        pauseResumeSong = handler.createMessage(playThisSong, whatInteger.pauseResumeCurrentSong(), data);
-                        handler.sendMessage(pauseResumeSong);
+                        if (paused) {
+                            bus.post(new MusicAction(trackId, MusicAction.Action.RESUME));
+                        } else {
+                            bus.post(new MusicAction(trackId, MusicAction.Action.PAUSE));
+                        }
                     }
                 }
             });
 
+            bus = HiitBus.getInstance();
+            bus.register(this);
         }
-
     }
 
     public class FooterViewHolder extends RecyclerView.ViewHolder
@@ -266,9 +256,6 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         if(menuItemClicked) {
 
-            refreshMsg = handler.createMessage(refreshMsg, whatInteger.getRefreshSongList());
-            refreshMsg.setData(data);
-            handler.sendMessage(refreshMsg);
             menuItemClicked = false;
         }
 
@@ -420,6 +407,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Subscribe
     public void musicListener(MusicListener event) {
+        currentSong = event.trackData;
         updateSoundIcon(event.trackData.getId());
         this.paused = event.paused;
     }

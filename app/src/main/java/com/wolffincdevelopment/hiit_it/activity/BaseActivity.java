@@ -53,11 +53,9 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
 
     private RecyclerView.LayoutManager mLayoutManager;
     private BaseAdapter baseAdapter;
-    private Bundle data;
 
     private TrackDBAdapter trackDBAdapter;
 
-    private ArrayList<TrackData> songList;
     private ArrayList<TrackData> trackDataList;
 
     private FirstTimePreference prefFirstTime;
@@ -123,7 +121,6 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
 		trackDBAdapter = new TrackDBAdapter(this);
 		mLayoutManager = new LinearLayoutManager(this);
 		trackDataList = new ArrayList<>();
-        data = new Bundle();
         permissionUtil = new PermissionUtil();
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -349,13 +346,12 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
 
             musicService = binder.getService();
 
+            musicService.getMusicPlayer().setMediaControllerView(mediaControllerView);
+
             musicService.setList(trackDataList, "none", null);
 
             progress.dismiss();
             musicBound = true;
-
-            musicService.getHiitBus().register(mediaControllerView);
-            musicService.getHiitBus().register(baseAdapter);
         }
 
         @Override

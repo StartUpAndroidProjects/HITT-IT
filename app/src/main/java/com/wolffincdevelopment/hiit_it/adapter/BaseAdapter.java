@@ -3,9 +3,7 @@ package com.wolffincdevelopment.hiit_it.adapter;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
-import android.support.v7.view.menu.MenuBuilder;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,7 +13,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.otto.Subscribe;
 import com.wolffincdevelopment.hiit_it.IconizedMenu;
+import com.wolffincdevelopment.hiit_it.MusicListener;
 import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
@@ -39,20 +39,19 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private TrackDBAdapter trackDBAdapter;
     private TrackData currentSong;
     private SharedPreferencesUtil sharedPreferencesUtil = SharedPreferencesUtil.getInstance();
-    private MyViewHolder myViewHolder;
     private MessageHandler handler;
     private What whatInteger;
-    private Message refreshMsg, playThisSong, pauseResumeSong, setCurrentSong;
-    public List<TrackData> trackData;
-    public ArrayList<TrackData> trackDataPositions;
-    public boolean setSoundIconVisible = false;
-    public boolean firstUpdateSound = false;
-    public boolean activeIcon = false;
-    public boolean menuItemClicked = false;
-    public int currentTrackPlaying, previousTrackPlayed = -1, position, popUpsDisplaying;
+    private Message refreshMsg, playThisSong, pauseResumeSong;
+    private List<TrackData> trackData;
+    private ArrayList<TrackData> trackDataPositions;
+    private boolean setSoundIconVisible = false;
+    private boolean firstUpdateSound = false;
+    private boolean paused = false;
+    private boolean menuItemClicked = false;
+    private int currentTrackPlaying, previousTrackPlayed = -1, position;
     public Bundle data;
-    public MenuInflater inflater;
-    public IconizedMenu firstMenuSelected;
+    private MenuInflater inflater;
+    private IconizedMenu firstMenuSelected;
 
     /*
      * A ViewHolder describes an item view and metadata about its place within the RecyclerView.
@@ -176,10 +175,6 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    public void setCurrentSong(TrackData currentSong) {
-        this.currentSong = currentSong;
-    }
-
     // The method to display the popUp menu
     private void showMenu(View v, final TrackData trackData1)
     {
@@ -279,7 +274,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     }
 
-    public void updateSoundIcon(final String id, boolean active)
+    public void updateSoundIcon(final String id)
     {
         if(previousTrackPlayed != -1){
             notifyItemChanged(previousTrackPlayed);
@@ -295,7 +290,6 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                 setSoundIconVisible = true;
                 firstUpdateSound = true;
-                activeIcon = active;
 
             }
         }
@@ -319,11 +313,6 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
 
         notifyItemChanged(position);
-    }
-
-    public void setHandler(MessageHandler handler)
-    {
-        this.handler = handler;
     }
 
     @Override
@@ -393,7 +382,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     ((MyViewHolder) holder).sound.setVisibility(View.VISIBLE);
                     previousTrackPlayed = position;
 
-                    if(!activeIcon) {
+                    if(paused) {
                         ((MyViewHolder) holder).sound.setImageResource(R.drawable.ic_volume_up_black_48dp);
                     } else {
                         ((MyViewHolder) holder).sound.setImageResource(R.drawable.ic_volume_up_deep_orange_48dp);
@@ -421,11 +410,18 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         int items = 0;
 
-        if(!trackData.isEmpty()) {
+        if (!trackData.isEmpty()) {
             items = trackData.size() + 1;
         }
 
         return items;
+    }
+
+
+    @Subscribe
+    public void musicListener(MusicListener event) {
+        updateSoundIcon(event.trackData.getId());
+        this.paused = event.paused;
     }
 
 }

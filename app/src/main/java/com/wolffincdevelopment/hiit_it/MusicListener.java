@@ -7,10 +7,10 @@ package com.wolffincdevelopment.hiit_it;
 public class MusicListener {
 
     public boolean paused;
-    public TrackData trackData;
+    public TrackItem trackItem;
 
-    public MusicListener(boolean paused, TrackData trackData) {
+    public MusicListener(boolean paused, TrackItem trackItem) {
         this.paused = paused;
-        this.trackData = trackData;
+        this.trackItem = trackItem;
     }
 }

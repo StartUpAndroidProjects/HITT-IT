@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,7 +20,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnFocusChange;
-import com.wolffincdevelopment.hiit_it.util.ConvertTime;
+
+import com.wolffincdevelopment.hiit_it.TrackItem;
+import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 
 /*
  * Add Track Activity Created by Kyle Wolff
@@ -34,16 +35,14 @@ public class AddTrackActivity extends AppCompatActivity {
 
     private InputMethodManager inputManager;
     private TrackDBAdapter trackDBAdapter;
-    private Intent i;
     private TrackData item;
-    private ConvertTime convertTime;
     public TextWatcher textWatcher;
 
     private String minutes, maxMin;
     private String seconds, maxSec;
-    private long timeLong, maxMilliSec, maxMillMin, secMilli, minMilli, minutesLong, secondsLong, maxMinLong, maxSecLong;
+    private long timeLong, maxMilliSec, maxMillMin, secMilli, minMilli;
 
-    private long startTimeStaticSec,startTimeStaticMin, stopTimeStaticSec, stopTimeStaticMin;
+    private long startTimeStaticSec,startTimeStaticMin;
 
     private String STOP_TIME_MAX;
 
@@ -119,9 +118,11 @@ public class AddTrackActivity extends AppCompatActivity {
 
         trackDBAdapter.open();
 
-        trackDBAdapter.createTrackData(item.getArtistName(), item.getSongName(),
+        TrackItem trackItem = new TrackItem(item);
+
+        trackDBAdapter.createTrackData(trackItem.getArtistName(), trackItem.getSongName(),
                 stopTime.getText().toString(), startTime.getText().toString(),
-                item.getStream(), item.getMediaId(), trackDBAdapter.getNextOrderId());
+                trackItem.getStream(), trackItem.getMediaId(), trackDBAdapter.getNextOrderId());
 
         trackDBAdapter.close();
 
@@ -147,8 +148,6 @@ public class AddTrackActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_add_track);
         ButterKnife.bind(this);
-
-        convertTime = new ConvertTime();
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
         inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -178,24 +177,24 @@ public class AddTrackActivity extends AppCompatActivity {
         {
             if (resultCode == RESULT_OK)
             {
-                boolean checked = data.getBooleanExtra("enabled", true);
-                item = (TrackData) data.getSerializableExtra("listItem");
+                item = data.getParcelableExtra("item");
+                TrackItem trackItem = new TrackItem(item);
 
                 /*
                  * Greater than 1 hour in milliseconds
                  */
-                if(item.getDuration() >= 3600000)
+                if(trackItem.getDuration() >= 3600000)
                 {
 
                 }
                 else
                 {
 
-                    browseTextField.setText(item.getSongName() + " - " + item.getArtistName());
-                    stopTime.setText(convertTime.convertMilliSecToStringWithColon(item.getDuration()));
+                    browseTextField.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
+                    stopTime.setText(ConvertTimeUtils.convertMilliSecToStringWithColon(trackItem.getDuration()));
                     startTime.setText("00:00");
 
-                    STOP_TIME_MAX = convertTime.convertMilliSecToStringWithColon(item.getDuration());
+                    STOP_TIME_MAX = ConvertTimeUtils.convertMilliSecToStringWithColon(trackItem.getDuration());
 
                     checkFields();
                 }
@@ -206,7 +205,7 @@ public class AddTrackActivity extends AppCompatActivity {
     private void startNextActivity()
     {
         Intent browseActivity = new Intent(AddTrackActivity.this, BrowseActivity.class);
-        AddTrackActivity.this.startActivityForResult(browseActivity, BROWSE_ACTIVITY_RESULT_CODE);
+        startActivityForResult(browseActivity, BROWSE_ACTIVITY_RESULT_CODE);
     }
 
     public void init()
@@ -309,22 +308,19 @@ public class AddTrackActivity extends AppCompatActivity {
         }
     }
 
-    public void checkFields()
-    {
+    public void checkFields() {
+
         boolean verified;
 
         if (browseTextField.getText().toString().isEmpty() || startTime.getText().toString().isEmpty()
                 || stopTime.getText().toString().isEmpty() || !startTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")
-                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$"))
-        {
+                || !stopTime.getText().toString().matches("^([0-9]{2}):([0-9]{2})$")) {
 
             verified = false;
             addTrackButton.setEnabled(verified);
             addTrackButton.setBackgroundColor(Color.GRAY);
 
-        }
-        else
-        {
+        } else {
 
             verified = true;
             addTrackButton.setEnabled(verified);
@@ -332,21 +328,21 @@ public class AddTrackActivity extends AppCompatActivity {
         }
     }
 
-    public boolean checkTimeFields(EditText timeField)
-    {
+    public boolean checkTimeFields(EditText timeField) {
+
         boolean checked = false;
 
         maxSec = STOP_TIME_MAX.substring(3, 5);
-        maxMilliSec = convertTime.getMilliSeconds(maxSec, "sec");
+        maxMilliSec = ConvertTimeUtils.getMilliSeconds(maxSec, "sec");
 
         maxMin = STOP_TIME_MAX.substring(0, 2);
-        maxMillMin = convertTime.getMilliSeconds(maxMin, "min");
+        maxMillMin = ConvertTimeUtils.getMilliSeconds(maxMin, "min");
 
         seconds = timeField.getText().toString().substring(3, 5);
-        secMilli = convertTime.getMilliSeconds(seconds, "sec");
+        secMilli = ConvertTimeUtils.getMilliSeconds(seconds, "sec");
 
         minutes = timeField.getText().toString().substring(0, 2);
-        minMilli = convertTime.getMilliSeconds(minutes, "min");
+        minMilli = ConvertTimeUtils.getMilliSeconds(minutes, "min");
 
 
         if (timeField == startTime)

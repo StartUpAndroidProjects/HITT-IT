@@ -1,28 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
+<layout>
+
+    <data>
+        <import type="com.wolffincdevelopment.hiit_it.HeaderItem"/>
+        <variable name="headerItem" type="HeaderItem"/>
+    </data>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:textAllCaps="true"
-        android:textStyle="bold"
-        android:textSize="15sp"
-        android:text="A"
-        android:id="@+id/browse_section_header_textview"/>
+        android:orientation="horizontal">
 
-    <View
-        android:layout_width="wrap_content"
-        android:layout_height="1dp"
-        android:layout_marginLeft="35dp"
-        android:layout_marginTop="25dp"
-        android:background="@android:color/black" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:text="@{headerItem.getChar()}"
+            android:id="@+id/browse_section_header_textview"/>
 
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:layout_marginLeft="35dp"
+            android:layout_marginTop="25dp"
+            android:background="@android:color/black" />
 
+    </RelativeLayout>
 
-
-</RelativeLayout>
+</layout>

@@ -26,14 +26,17 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.wolffincdevelopment.hiit_it.adapter.BaseAdapter;
+import com.wolffincdevelopment.hiit_it.TrackData;
 import com.wolffincdevelopment.hiit_it.DividerItemDecoration;
 import com.wolffincdevelopment.hiit_it.FirstTimePreference;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
-import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.TrackItem;
+import com.wolffincdevelopment.hiit_it.TrackListener;
+import com.wolffincdevelopment.hiit_it.adapter.HomeAdapter;
 import com.wolffincdevelopment.hiit_it.util.DialogBuilder;
 import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
+import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 import com.wolffincdevelopment.hiit_it.widget.MediaControllerView;
 
 import java.util.ArrayList;
@@ -45,18 +48,17 @@ import butterknife.OnClick;
 /**
  * Create by Kyle Wolff
  */
-public class BaseActivity extends AppCompatActivity implements MediaControllerView.MediaControllerListener {
+public class HomeActivity extends AppCompatActivity implements MediaControllerView.MediaControllerListener {
 
 	public static final int ADD_ACTIVITY_RESULT_CODE = 232;
 
     private Intent playIntent;
 
-    private RecyclerView.LayoutManager mLayoutManager;
-    private BaseAdapter baseAdapter;
+    private HomeAdapter homeAdapter;
 
     private TrackDBAdapter trackDBAdapter;
 
-    private ArrayList<TrackData> trackDataList;
+    private ArrayList<TrackItem> trackDataList;
 
     private FirstTimePreference prefFirstTime;
 
@@ -68,7 +70,7 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
 
     private PermissionUtil permissionUtil;
 
-    private boolean musicBound = false;
+    private boolean musicBound;
 
     @BindView( R.id.recycler_view )
     RecyclerView recyclerView;
@@ -83,22 +85,19 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
     FloatingActionButton fab;
 
     @OnClick(R.id.fab)
-    protected void onFabPressed()
-    {
+    protected void onFabPressed() {
         prefFirstTime.runCheckFirstTime( getString(R.string.firstTimeFabPressed) );
 
-        Intent addTrackIntent = new Intent(BaseActivity.this, AddTrackActivity.class);
+        Intent addTrackIntent = new Intent(HomeActivity.this, AddTrackActivity.class);
         startActivityForResult(addTrackIntent, ADD_ACTIVITY_RESULT_CODE);
     }
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode, Intent data )
-	{
+	protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
 		super.onActivityResult( requestCode, resultCode, data );
 
-		if (requestCode == ADD_ACTIVITY_RESULT_CODE )
-		{
-			setSongList("none", null);
+		if (requestCode == ADD_ACTIVITY_RESULT_CODE ) {
+			setSongList();
 		}
 	}
 
@@ -112,37 +111,56 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mediaControllerView.setListener(this);
-
         // Hides the default title for the activity so we can use our custom one
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        mediaControllerView.setListener(this);
+
 		prefFirstTime = new FirstTimePreference(this);
 		trackDBAdapter = new TrackDBAdapter(this);
-		mLayoutManager = new LinearLayoutManager(this);
 		trackDataList = new ArrayList<>();
         permissionUtil = new PermissionUtil();
 
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        trackDBAdapter.open();
-        trackDBAdapter.checkForStorageDeletion();
-        trackDBAdapter.close();
-
+        if(trackDataList.size() == 0) {
+            getTrackList();
+        }
     }
 
     @Override
-	protected void onResume()
-    {
-		super.onResume();
+    protected void onResume() {
+        super.onResume();
 
-		init();
+        // Need to check if any songs from the phone were deleted and then delete them from
+        // the SQLite DB
+        checkForStorageDeletion();
 
-		if(musicBound)
-        {
-			dismissDialog();
-		}
-	}
+        // Possibly not needed
+        showDialog();
+
+        // Check the first time preference for the Add Track image
+        checkFirstTimePreference();
+
+        // Setting the song list also calls getTrackList() which is needed to set the trackDataList
+        setSongList();
+
+        if(homeAdapter == null) {
+            // Recycler View Adapter, passing the arrayList
+            homeAdapter = new HomeAdapter(trackDataList);
+        }
+
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(homeAdapter);
+        // Adding the divider lines to the recycler view
+        recyclerView.addItemDecoration(new DividerItemDecoration(this));
+
+        if (musicBound) {
+            dismissDialog();
+        }
+    }
 
     @Override
     protected void onStart() {
@@ -154,43 +172,47 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
     }
 
     @Override
-    protected void onPause()
-    {
+    protected void onPause() {
         super.onPause();
 
-        if(musicBound && musicService.isPlaying())
-        {
+        if(musicBound && musicService.isPlaying()) {
             musicService.setNotification();
         }
     }
 
     @Override
-    protected void onDestroy()
-    {
+    protected void onDestroy() {
         super.onDestroy();
 
-        if(playIntent != null)
-        {
+        if(playIntent != null) {
+
             musicService.stopPlayer();
             stopService(playIntent);
 
-            if(musicBound)
-            {
+            if(musicBound) {
                 unbindService(musicConnection);
             }
         }
     }
 
-    private void init()
-    {
-		showDialog();
+    private void getTrackList() {
+        trackDBAdapter.open();
+        trackDataList = trackDBAdapter.getAllTracks();
+        trackDBAdapter.close();
 
-		checkFirstTimePreference();
+        if(homeAdapter != null) {
+            homeAdapter.updateData(trackDataList);
+        }
+    }
 
-		initRecyclerView();
+    private void checkForStorageDeletion() {
+        trackDBAdapter.open();
+        trackDBAdapter.checkForStorageDeletion();
+        trackDBAdapter.close();
+    }
 
-        setSongList("none", null);
-
+    private Context getActivityContext() {
+        return this;
     }
 
     @Override
@@ -231,7 +253,7 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
                 }
                 else
                 {
-                    showDialogToSettings("Please allo the HIIT IT! app to have access to the Phone State. Please change permissions in settings.",
+                    showDialogToSettings("Please allow the HIIT IT! app to have access to the Phone State. Please change permissions in settings.",
                             new DialogInterface.OnClickListener()
                             {
                                 @Override
@@ -291,39 +313,26 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
         progress.dismiss();
     }
 
+    /**
+     * Call getTrackList() to get the current track list.
+     *
+     * @param action
+     * @param trackItem
+     */
+    public void setSongList(String action, TrackItem trackItem) {
 
-	private void initRecyclerView()
-	{
-        if(baseAdapter == null) {
-            // Recycler View Adapter, passing the arrayList
-            baseAdapter = new BaseAdapter(trackDataList);
-        }
-
-        if(recyclerView.getLayoutManager() == null) {
-
-            recyclerView.setLayoutManager(mLayoutManager);
-            recyclerView.setItemAnimator(new DefaultItemAnimator());
-            recyclerView.setAdapter(baseAdapter);
-            // Adding the divider lines to the recycler view
-            recyclerView.addItemDecoration(new DividerItemDecoration(this));
-        }
-
-	}
-
-    public void setSongList(String action, TrackData trackData)
-    {
-        trackDBAdapter.open();
-        trackDataList = trackDBAdapter.getAllTracks();
-        trackDBAdapter.close();
+        getTrackList();
 
         if(musicBound) {
-            musicService.setList(trackDataList, action, trackData);
+            musicService.setList(trackDataList, action, trackItem);
         }
+    }
 
-        if(trackDataList != null && !trackDataList.isEmpty())
-        {
-            baseAdapter.refresh(trackDataList);
-        }
+    /**
+     * Overrided call
+     */
+    public void setSongList() {
+        setSongList(null, null);
     }
 
     private void checkFirstTimePreference()
@@ -347,6 +356,7 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
             musicService = binder.getService();
 
             musicService.getMusicPlayer().setMediaControllerView(mediaControllerView);
+            musicService.setActivityContext(getActivityContext());
 
             musicService.setList(trackDataList, "none", null);
 
@@ -362,17 +372,7 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
 
     @Override
     public void onPlay() {
-
-        if(musicBound) {
-
-            if(musicService.isPlaying()) {
-                musicService.pausePlayer();
-            } else if(musicService.isPaused()){
-                musicService.resume();
-            } else {
-                musicService.playSong();
-            }
-        }
+        play();
     }
 
     @Override
@@ -387,6 +387,36 @@ public class BaseActivity extends AppCompatActivity implements MediaControllerVi
         if(musicBound) {
             musicService.playPrev();
         }
+    }
+
+    public void play() {
+        play(null);
+    }
+
+    public void play(TrackItem trackItem) {
+
+        if(musicBound) {
+            if(musicService.isPlaying()) {
+                musicService.pausePlayer();
+            } else if(musicService.isPaused()){
+                musicService.resume();
+            } else {
+
+                if(trackItem != null) {
+                    musicService.playSong(trackItem);
+                } else {
+                    musicService.playSong();
+                }
+            }
+        }
+    }
+
+    public HomeAdapter getAdapter() {
+        return homeAdapter;
+    }
+
+    public boolean isPaused() {
+        return musicService.isPaused();
     }
 }
 

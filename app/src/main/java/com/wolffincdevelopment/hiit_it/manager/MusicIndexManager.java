@@ -1,10 +1,12 @@
 package com.wolffincdevelopment.hiit_it.manager;
 
+import com.wolffincdevelopment.hiit_it.activity.MusicService;
+
 /**
  * Created by Kyle Wolff on 11/2/16.
  */
 
-public class MusicIndexManager {
+public class MusicIndexManager implements MusicService.MusicServiceListener{
 
     private static MusicIndexManager manager = null;
 
@@ -34,14 +36,34 @@ public class MusicIndexManager {
 
     public int getIndex() {
 
-        if(!(index <= trackListLength) && !(index > trackListLength)) {
+        if(!(index <= trackListLength) && !(index > trackListLength) && trackListLength != 0) {
             return index;
         } else {
             return index = 0;
         }
     }
 
-    public int getPrevIndex() {
+    public int getPreviousIndex() {
+        return previousIndex;
+    }
+
+    @Override
+    public void onNext() {
+
+        previousIndex = index;
+
+        if(trackListLength != 0) {
+
+            index++;
+
+            if(index >= trackListLength) {
+                index = 0;
+            }
+        }
+    }
+
+    @Override
+    public void onPrev() {
 
         previousIndex = index;
 
@@ -57,28 +79,5 @@ public class MusicIndexManager {
                 index = trackListLength - 1;
             }
         }
-
-        return getIndex();
     }
-
-    public int getNextIndex() {
-
-        previousIndex = index;
-
-        if(trackListLength != 0) {
-
-            index++;
-
-            if(index >= trackListLength) {
-                index = 0;
-            }
-        }
-
-        return getIndex();
-    }
-
-    public int getPreviousIndex() {
-        return previousIndex;
-    }
-
 }

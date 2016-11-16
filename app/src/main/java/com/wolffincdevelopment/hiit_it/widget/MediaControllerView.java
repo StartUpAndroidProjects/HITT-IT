@@ -1,17 +1,12 @@
 package com.wolffincdevelopment.hiit_it.widget;
 
 import android.content.Context;
-import android.content.Intent;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
-import com.squareup.otto.Subscribe;
-import com.wolffincdevelopment.hiit_it.MusicListener;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.TrackData;
-import com.wolffincdevelopment.hiit_it.activity.MusicService;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -85,7 +80,6 @@ public class MediaControllerView extends LinearLayout implements View.OnClickLis
     }
 
     public void updatePlayButton(boolean paused) {
-
         if (paused) {
             playButton.setImageResource(R.drawable.ic_play_circle_outline_white);
         } else {

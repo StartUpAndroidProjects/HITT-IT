@@ -15,15 +15,15 @@ public class MusicPlayer extends MediaPlayer {
     }
 
     @Override
-    public void pause() throws IllegalStateException {
-        super.pause();
-        mediaControllerView.updatePlayButton(true);
+    public void start() throws IllegalStateException {
+        super.start();
+        mediaControllerView.updatePlayButton(false);
     }
 
     @Override
-    public void seekTo(int msec) throws IllegalStateException {
-        super.seekTo(msec);
-        mediaControllerView.updatePlayButton(false);
+    public void pause() throws IllegalStateException {
+        super.pause();
+        mediaControllerView.updatePlayButton(true);
     }
 
     public void setMediaControllerView(MediaControllerView mediaControllerView) {

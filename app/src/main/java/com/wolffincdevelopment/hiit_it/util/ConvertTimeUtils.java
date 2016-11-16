@@ -6,18 +6,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by kylewolff on 6/29/2016.
  */
-public class ConvertTime {
+public class ConvertTimeUtils {
 
-    private String timeWithColon;
-    private DecimalFormat dfTwoPlaces, dfNoPlaces;
+    public static String timeWithColon;
+    public static DecimalFormat dfTwoPlaces = new DecimalFormat("#0.00");
+    public static DecimalFormat dfNoPlaces = new DecimalFormat("##");
 
-    public ConvertTime()
+    public ConvertTimeUtils()
     {
-        dfTwoPlaces = new DecimalFormat("#0.00");
-        dfNoPlaces = new DecimalFormat("##");
+
     }
 
-    public String convertMilliSecToStringWithColon(long milliseconds)
+    public static String convertMilliSecToStringWithColon(long milliseconds)
     {
         if(milliseconds < 60000)
         {
@@ -31,7 +31,7 @@ public class ConvertTime {
         return timeWithColon;
     }
 
-    public double toMinutes(long milliseconds)
+    public static double toMinutes(long milliseconds)
     {
         double seconds =  ((milliseconds / 1000) % 60) * .01;
         double minutes = ((milliseconds / (1000 * 60)) % 60);
@@ -49,7 +49,7 @@ public class ConvertTime {
      * @param time
      * @return
      */
-    public long getMilliSeconds(String timeSubstring, String time)
+    public static long getMilliSeconds(String timeSubstring, String time)
     {
         long seconds, minutes, milli = 0;
 
@@ -67,7 +67,7 @@ public class ConvertTime {
         return milli;
     }
 
-    public String addColonFormat(double time, String unitOfMeasure)
+    public static String addColonFormat(double time, String unitOfMeasure)
     {
         String zeros = "00";
         String colon = ":";

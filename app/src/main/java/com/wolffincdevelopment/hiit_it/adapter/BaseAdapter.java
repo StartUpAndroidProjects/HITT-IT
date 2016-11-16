@@ -17,11 +17,11 @@ import com.squareup.otto.Subscribe;
 import com.wolffincdevelopment.hiit_it.HiitBus;
 import com.wolffincdevelopment.hiit_it.IconizedMenu;
 import com.wolffincdevelopment.hiit_it.MusicListener;
-import com.wolffincdevelopment.hiit_it.MusicAction;
+import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.TrackItem;
 import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
-import com.wolffincdevelopment.hiit_it.TrackData;
 import com.wolffincdevelopment.hiit_it.What;
 
 import java.util.ArrayList;
@@ -39,13 +39,13 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int FOOTER_VIEW = 1;
 
     private TrackDBAdapter trackDBAdapter;
-    private TrackData currentSong;
+    private TrackItem currentSong;
     private SharedPreferencesUtil sharedPreferencesUtil = SharedPreferencesUtil.getInstance();
     private MessageHandler handler;
     private What whatInteger;
     private Message refreshMsg, playThisSong, pauseResumeSong;
-    private List<TrackData> trackData;
-    private ArrayList<TrackData> trackDataPositions;
+    private List<TrackItem> trackItems;
+    private ArrayList<TrackItem> trackDataPositions;
     private boolean setSoundIconVisible = false;
     private boolean firstUpdateSound = false;
     private boolean paused = false;
@@ -101,16 +101,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 @Override
                 public void onClick(View v) {
 
-                    if (currentSong.getId().compareTo(trackId) != 0) {
-                        bus.post(new MusicAction(trackId, MusicAction.Action.PLAY));
-                    } else {
 
-                        if (paused) {
-                            bus.post(new MusicAction(trackId, MusicAction.Action.RESUME));
-                        } else {
-                            bus.post(new MusicAction(trackId, MusicAction.Action.PAUSE));
-                        }
-                    }
                 }
             });
 
@@ -166,7 +157,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // The method to display the popUp menu
-    private void showMenu(View v, final TrackData trackData1)
+    private void showMenu(View v, final TrackItem trackItem)
     {
         final IconizedMenu popup = new IconizedMenu(v.getContext(), v);
         inflater = popup.getMenuInflater();
@@ -189,15 +180,12 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 {
                     case "Move Up":
 
-                        data.putSerializable("action", item.getTitle().toString());
-                        data.putSerializable("TrackData", trackData1);
-
                         menuItemClicked = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.reorderItem(trackData1, "Move Up");
-                        trackData = trackDBAdapter.getAllTracks();
+                        trackDBAdapter.reorderItem(trackItem, "Move Up");
+                        trackItems = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
-                        refresh(trackData);
+                        refresh(trackItems);
 
                         popup.dismiss();
 
@@ -205,15 +193,12 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                     case "Move Down":
 
-                        data.putSerializable("action", item.getTitle().toString());
-                        data.putSerializable("TrackData", trackData1);
-
                         menuItemClicked = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.reorderItem(trackData1, "Move Down");
-                        trackData = trackDBAdapter.getAllTracks();
+                        trackDBAdapter.reorderItem(trackItem, "Move Down");
+                        trackItems = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
-                        refresh(trackData);
+                        refresh(trackItems);
 
                         popup.dismiss();
 
@@ -221,15 +206,12 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                     case "Delete":
 
-                        data.putSerializable("action", item.getTitle().toString());
-                        data.putSerializable("TrackData", trackData1);
-
                         menuItemClicked = true;
                         trackDBAdapter.open();
-                        trackDBAdapter.deleteTrack(trackData1);
-                        trackData = trackDBAdapter.getAllTracks();
+                        trackDBAdapter.deleteTrack(trackItem);
+                        trackItems = trackDBAdapter.getAllTracks();
                         trackDBAdapter.close();
-                        refresh(trackData);
+                        refresh(trackItems);
 
                         break;
 
@@ -241,17 +223,17 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     // Constructor for this class
-    public BaseAdapter(List<TrackData> trackData) {
+    public BaseAdapter(List<TrackItem> trackItems) {
 
-        this.trackData = trackData;
+        this.trackItems = trackItems;
 
         whatInteger = new What();
         data = new Bundle();
     }
 
-    public void refresh(List<TrackData> trackData) {
+    public void refresh(List<TrackItem> trackItems) {
 
-        this.trackData = trackData;
+        this.trackItems = trackItems;
         notifyDataSetChanged();
 
         if(menuItemClicked) {
@@ -268,11 +250,11 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
 
 
-        for(TrackData td: trackData) {
+        for(TrackItem td: trackItems) {
 
             if(td.getId() == id) {
 
-                position = trackData.indexOf(td);
+                position = trackItems.indexOf(td);
                 currentTrackPlaying = position;
 
                 setSoundIconVisible = true;
@@ -287,11 +269,11 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public void setSoundIconInvisible(String id)
     {
-        for(TrackData td: trackData) {
+        for(TrackItem td: trackItems) {
 
             if(td.getId() == id) {
 
-                position = trackData.indexOf(td);
+                position = trackItems.indexOf(td);
 
                 setSoundIconVisible = false;
                 firstUpdateSound = false;
@@ -335,24 +317,24 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if(holder instanceof MyViewHolder) {
 
             trackDataPositions = new ArrayList<>();
-            trackDataPositions.add(trackData.get(position));
+            trackDataPositions.add(this.trackItems.get(position));
 
-            final TrackData trackData = this.trackData.get(position);
+            final TrackItem trackItem = this.trackItems.get(position);
 
-            ((MyViewHolder) holder).trackSongTextView.setText(trackData.getSongAndArtist());
-            ((MyViewHolder) holder).startTime.setText(trackData.getStartTime());
-            ((MyViewHolder) holder).stopTime.setText(trackData.getStopTime());
+            ((MyViewHolder) holder).trackSongTextView.setText(trackItem.getSongAndArtist());
+            ((MyViewHolder) holder).startTime.setText(trackItem.getStartTime());
+            ((MyViewHolder) holder).stopTime.setText(trackItem.getStopTime());
 
             // Sets onClick for all option buttons
             ((MyViewHolder) holder).options.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    showMenu(v, trackData);
+                    showMenu(v, trackItem);
                 }
             });
 
-            ((MyViewHolder) holder).trackId = trackData.getId();
+            ((MyViewHolder) holder).trackId = trackItem.getId();
 
             if(firstUpdateSound) {
 
@@ -384,7 +366,7 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemViewType(int position) {
 
-        if (position == trackData.size()) {
+        if (position == trackItems.size()) {
             // This is where we'll add footer.
             return FOOTER_VIEW;
         }
@@ -397,8 +379,8 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         int items = 0;
 
-        if (!trackData.isEmpty()) {
-            items = trackData.size() + 1;
+        if (!trackItems.isEmpty()) {
+            items = trackItems.size() + 1;
         }
 
         return items;
@@ -407,8 +389,8 @@ public class BaseAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Subscribe
     public void musicListener(MusicListener event) {
-        currentSong = event.trackData;
-        updateSoundIcon(event.trackData.getId());
+        currentSong = event.trackItem;
+        updateSoundIcon(event.trackItem.getId());
         this.paused = event.paused;
     }
 

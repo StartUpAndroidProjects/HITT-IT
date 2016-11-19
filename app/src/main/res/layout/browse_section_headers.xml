@@ -3,7 +3,7 @@
 <layout>
 
     <data>
-        <import type="com.wolffincdevelopment.hiit_it.HeaderItem"/>
+        <import type="com.wolffincdevelopment.hiit_it.viewmodel.HeaderItem"/>
         <variable name="headerItem" type="HeaderItem"/>
     </data>
 

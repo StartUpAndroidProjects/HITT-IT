@@ -8,11 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.wolffincdevelopment.hiit_it.BR;
-import com.wolffincdevelopment.hiit_it.BrowseTrackListener;
-import com.wolffincdevelopment.hiit_it.HeaderItem;
-import com.wolffincdevelopment.hiit_it.Item;
+import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
+import com.wolffincdevelopment.hiit_it.viewmodel.HeaderItem;
+import com.wolffincdevelopment.hiit_it.viewmodel.Item;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.TrackItem;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -20,9 +20,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
-import com.wolffincdevelopment.hiit_it.BrowseTrackListener;
-import com.wolffincdevelopment.hiit_it.TrackData;
-import com.wolffincdevelopment.hiit_it.TrackItem;
+import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
+import com.wolffincdevelopment.hiit_it.model.TrackData;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.adapter.BrowseListAdapter;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.util.DialogBuilder;

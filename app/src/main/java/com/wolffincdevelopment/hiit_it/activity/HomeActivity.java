@@ -23,20 +23,23 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.wolffincdevelopment.hiit_it.TrackData;
+import com.squareup.otto.Subscribe;
 import com.wolffincdevelopment.hiit_it.DividerItemDecoration;
-import com.wolffincdevelopment.hiit_it.FirstTimePreference;
+import com.wolffincdevelopment.hiit_it.HiitBus;
+import com.wolffincdevelopment.hiit_it.SoundIcon;
+import com.wolffincdevelopment.hiit_it.listeners.MenuListener;
+import com.wolffincdevelopment.hiit_it.listeners.TrackListener;
+import com.wolffincdevelopment.hiit_it.util.FirstTimePreferenceUtil;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
-import com.wolffincdevelopment.hiit_it.TrackItem;
-import com.wolffincdevelopment.hiit_it.TrackListener;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.adapter.HomeAdapter;
 import com.wolffincdevelopment.hiit_it.util.DialogBuilder;
 import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
-import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 import com.wolffincdevelopment.hiit_it.widget.MediaControllerView;
 
 import java.util.ArrayList;
@@ -48,7 +51,8 @@ import butterknife.OnClick;
 /**
  * Create by Kyle Wolff
  */
-public class HomeActivity extends AppCompatActivity implements MediaControllerView.MediaControllerListener {
+public class HomeActivity extends AppCompatActivity implements MediaControllerView.MediaControllerListener,
+        TrackListener, MenuListener {
 
 	public static final int ADD_ACTIVITY_RESULT_CODE = 232;
 
@@ -60,7 +64,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
     private ArrayList<TrackItem> trackDataList;
 
-    private FirstTimePreference prefFirstTime;
+    private FirstTimePreferenceUtil prefFirstTime;
 
     private MusicService musicService;
 
@@ -118,16 +122,15 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
         mediaControllerView.setListener(this);
 
-		prefFirstTime = new FirstTimePreference(this);
+		prefFirstTime = new FirstTimePreferenceUtil(this);
 		trackDBAdapter = new TrackDBAdapter(this);
 		trackDataList = new ArrayList<>();
         permissionUtil = new PermissionUtil();
 
+        HiitBus.getInstance().register(this);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        if(trackDataList.size() == 0) {
-            getTrackList();
-        }
     }
 
     @Override
@@ -149,7 +152,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
         if(homeAdapter == null) {
             // Recycler View Adapter, passing the arrayList
-            homeAdapter = new HomeAdapter(trackDataList);
+            homeAdapter = new HomeAdapter(trackDataList, this, this);
         }
 
         recyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -203,6 +206,12 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         if(homeAdapter != null) {
             homeAdapter.updateData(trackDataList);
         }
+    }
+
+    public void reorderTrack(TrackItem trackItem, String upOrDown) {
+        trackDBAdapter.open();
+        trackDBAdapter.reorderItem(trackItem, upOrDown);
+        trackDBAdapter.close();
     }
 
     private void checkForStorageDeletion() {
@@ -321,7 +330,9 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
      */
     public void setSongList(String action, TrackItem trackItem) {
 
-        getTrackList();
+        if(trackDataList.isEmpty()) {
+            getTrackList();
+        }
 
         if(musicBound) {
             musicService.setList(trackDataList, action, trackItem);
@@ -356,7 +367,6 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
             musicService = binder.getService();
 
             musicService.getMusicPlayer().setMediaControllerView(mediaControllerView);
-            musicService.setActivityContext(getActivityContext());
 
             musicService.setList(trackDataList, "none", null);
 
@@ -396,27 +406,55 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     public void play(TrackItem trackItem) {
 
         if(musicBound) {
-            if(musicService.isPlaying()) {
+
+            if(trackItem != null && !musicService.isPaused()) {
+                musicService.playSong(trackItem);
+            } else if(musicService.isPlaying()) {
                 musicService.pausePlayer();
             } else if(musicService.isPaused()){
                 musicService.resume();
             } else {
-
-                if(trackItem != null) {
-                    musicService.playSong(trackItem);
-                } else {
-                    musicService.playSong();
-                }
+                musicService.playSong();
             }
         }
     }
 
-    public HomeAdapter getAdapter() {
-        return homeAdapter;
+    @Override
+    public void onItemClicked(TrackItem trackItem) {
+        play(trackItem);
     }
 
-    public boolean isPaused() {
-        return musicService.isPaused();
+    @Override
+    public void onMenuItemSelected(TrackItem trackItem, MenuItem menuItem) {
+        reorderTrack(trackItem, menuItem.getTitle().toString());
+    }
+
+    @Subscribe
+    public void SoundIcon(SoundIcon soundIcon) {
+
+        if(soundIcon.iconActions  == SoundIcon.SoundIconActions.PAUSE) {
+            soundIcon.trackItem.setIsPlaying(false);
+        } else if(soundIcon.iconActions  == SoundIcon.SoundIconActions.RESUME) {
+            soundIcon.trackItem.setIsPlaying(true);
+        }
+
+        if(soundIcon.iconActions  == SoundIcon.SoundIconActions.VISIBLE) {
+            soundIcon.trackItem.setShowSoundIcon(true);
+            soundIcon.trackItem.setIsPlaying(true);
+        }
+
+        for(TrackItem trackItem : trackDataList) {
+
+            if(trackItem.showSoundIcon() && trackItem.getOrderId() != soundIcon.trackItem.getOrderId()) {
+                trackItem.setShowSoundIcon(false);
+            }
+
+            if(soundIcon.trackItem.getOrderId() == trackItem.getOrderId()) {
+                trackDataList.set(trackDataList.indexOf(trackItem), soundIcon.trackItem);
+            }
+        }
+
+        homeAdapter.updateData(trackDataList);
     }
 }
 

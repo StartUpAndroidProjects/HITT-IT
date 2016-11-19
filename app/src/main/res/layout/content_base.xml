@@ -31,6 +31,12 @@
         android:layout_height="fill_parent"
         android:layout_above="@+id/frame_controller"/>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_above="@+id/frame_controller"
+        android:background="@drawable/drop_shadow"/>
+
     <FrameLayout
         android:id="@+id/frame_controller"
         android:layout_width="match_parent"

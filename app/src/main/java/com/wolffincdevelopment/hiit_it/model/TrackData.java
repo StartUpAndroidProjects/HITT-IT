@@ -1,4 +1,4 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;

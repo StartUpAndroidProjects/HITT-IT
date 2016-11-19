@@ -3,10 +3,10 @@
 <layout>
 
     <data>
-        <import type="com.wolffincdevelopment.hiit_it.HomeFooter"/>
-        <import type="com.wolffincdevelopment.hiit_it.TrackListener"/>
+        <import type="com.wolffincdevelopment.hiit_it.viewmodel.HomeFooter"/>
+        <import type="com.wolffincdevelopment.hiit_it.listeners.FooterListener"/>
         <variable name="homeFooter" type="HomeFooter"/>
-        <variable name="listener" type="TrackListener"/>
+        <variable name="footerListener" type="FooterListener"/>
     </data>
 
     <RelativeLayout
@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="90dp"
         android:orientation="horizontal"
-        android:onClick="@{() -> listener.onFooterClicked(context)}">
+        android:onClick="@{() -> footerListener.onFooterClicked(context)}">
 
         <ImageView
             android:layout_width="wrap_content"

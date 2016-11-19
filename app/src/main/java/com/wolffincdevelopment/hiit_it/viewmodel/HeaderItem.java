@@ -1,4 +1,6 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.viewmodel;
+
+import com.wolffincdevelopment.hiit_it.R;
 
 /**
  * Created by Kyle Wolff on 11/15/16.

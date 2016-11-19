@@ -6,7 +6,7 @@ import com.wolffincdevelopment.hiit_it.activity.MusicService;
  * Created by Kyle Wolff on 11/2/16.
  */
 
-public class MusicIndexManager implements MusicService.MusicServiceListener{
+public class MusicIndexManager {
 
     private static MusicIndexManager manager = null;
 
@@ -36,7 +36,7 @@ public class MusicIndexManager implements MusicService.MusicServiceListener{
 
     public int getIndex() {
 
-        if(!(index <= trackListLength) && !(index > trackListLength) && trackListLength != 0) {
+        if(index != trackListLength && !(index > trackListLength) && trackListLength != 0) {
             return index;
         } else {
             return index = 0;
@@ -47,8 +47,7 @@ public class MusicIndexManager implements MusicService.MusicServiceListener{
         return previousIndex;
     }
 
-    @Override
-    public void onNext() {
+    public void next() {
 
         previousIndex = index;
 
@@ -62,8 +61,7 @@ public class MusicIndexManager implements MusicService.MusicServiceListener{
         }
     }
 
-    @Override
-    public void onPrev() {
+    public void prev() {
 
         previousIndex = index;
 

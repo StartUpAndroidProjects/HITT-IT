@@ -14,21 +14,21 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.wolffincdevelopment.hiit_it.Constant;
 import com.wolffincdevelopment.hiit_it.HiitBus;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.TrackData;
+import com.wolffincdevelopment.hiit_it.SoundIcon;
+import com.wolffincdevelopment.hiit_it.model.TrackData;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.wolffincdevelopment.hiit_it.TrackItem;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
@@ -36,8 +36,8 @@ import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 /**
  * Created by kylewolff on 6/5/2016.
  */
-public class MusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
+public class MusicService extends Service implements MusicPlayer.OnCompletionListener, MusicPlayer.OnPreparedListener,
+        MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener {
 
     private final IBinder musicBind = new MusicBinder();
 
@@ -47,8 +47,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private NotificationManager notificationManager;
     private Notification notification;
-
-    private TelephonyManager telephonyManager;
 
     private int startTime, stopTime;
 
@@ -72,16 +70,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     private HiitBus bus;
 
-    private Context context;
-
-    private MusicServiceListener listener;
-
-    public interface MusicServiceListener {
-
-        void onNext();
-        void onPrev();
-    }
-
     public void onCreate() {
         //create the service
         super.onCreate();
@@ -93,14 +81,12 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         playerWatcher = Executors.newSingleThreadExecutor();
 
         indexManager = MusicIndexManager.getInstance();
-        listener = indexManager;
 
         initMusicPlayer();
         initNotification();
         initHandler();
 
         bus = HiitBus.getInstance();
-        bus.register(this);
     }
 
     public void onDestroy() {
@@ -330,17 +316,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 trackToPlay = songs.get(indexManager.getIndex());
             }
 
-            if (songs.get(indexManager.getIndex()).getId().compareTo(trackToPlay.getId()) != 0) {
-
-                for (TrackItem trackData : songs) {
-
-                    if (trackData.getId().compareTo(trackToPlay.getId()) == 0) {
-                        indexManager.setIndex(songs.indexOf(trackData));
-                        trackToPlay = songs.get(indexManager.getIndex());
-                    }
-                }
-            }
-
             this.startTime = trackToPlay.getStartTime2();
             this.stopTime = trackToPlay.getStopTime3();
 
@@ -395,14 +370,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void pausePlayer() {
         player.pause();
         paused = true;
-        //((HomeActivity) context).getAdapter().updateSoundIcon(trackToPlay.getId());
+        sendPostMessage(SoundIcon.SoundIconActions.PAUSE);
     }
 
     public void resume() {
 
         paused = false;
-        player.seekTo(getPosn());
         player.start();
+        sendPostMessage(SoundIcon.SoundIconActions.RESUME);
     }
 
     public void stopPlayer() {
@@ -429,16 +404,16 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void playPrev() {
 
-        if(listener != null) {
-            listener.onPrev();
-        }
+        indexManager.prev();
+        trackToPlay = songs.get(indexManager.getIndex());
+        playSong();
     }
 
     public void playNext() {
 
-        if(listener != null) {
-            listener.onNext();
-        }
+        indexManager.next();
+        trackToPlay = songs.get(indexManager.getIndex());
+        playSong();
     }
 
     public TrackItem getCurrentSong() {
@@ -462,7 +437,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                     if (!(indexManager.getIndex() > songs.size()) && !(indexManager.getIndex() < 0)) {
 
                         // Call onNext to tell the index manager that we need to increment
-                        listener.onNext();
 
                         if (indexManager.getIndex() != 0) {
                             // Play song
@@ -496,10 +470,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onPrepared(MediaPlayer mp) {
 
-        //((HomeActivity) context).getAdapter().updateSoundIcon(trackToPlay.getId());
         player.start();
         player.seekTo(startTime);
         stopThread = false;
+
+        sendPostMessage(SoundIcon.SoundIconActions.VISIBLE);
     }
 
     @Override
@@ -514,6 +489,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 int staticTime = 0;
 
                 while (!stopThread) {
+
                     try {
                         Thread.sleep(1000);
                         currentPosition = getPosn();
@@ -541,10 +517,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         });
     }
 
-    public void setActivityContext(Context context) {
-        this.context = context;
-    }
-
     public void resetSongs() {
         stop();
 
@@ -556,6 +528,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public MusicPlayer getMusicPlayer() {
         return player;
+    }
+
+    private void sendPostMessage(SoundIcon.SoundIconActions actions) {
+        bus.post(new SoundIcon(actions, trackToPlay));
     }
 
     @Nullable

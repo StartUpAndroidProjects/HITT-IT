@@ -3,15 +3,19 @@
 <layout>
 
     <data>
-        <import type="com.wolffincdevelopment.hiit_it.TrackItem"/>
+        <import type="android.view.View"/>
+        <import type="com.wolffincdevelopment.hiit_it.viewmodel.TrackItem"/>
+        <import type="com.wolffincdevelopment.hiit_it.listeners.TrackListener"/>
         <variable name="trackItem" type="TrackItem"/>
+        <variable name="trackListener" type="TrackListener"/>
     </data>
 
     <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="90dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:onClick="@{() -> trackListener.onItemClicked(trackItem)}">
 
         <TextView
             android:layout_width="wrap_content"
@@ -76,15 +80,6 @@
             android:layout_marginTop="50dp"
             android:layout_marginLeft="245dp" />
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/sound_icon_imageview"
-            android:visibility="invisible"
-            android:src="@drawable/ic_volume_up_deep_orange_48dp"
-            android:layout_alignTop="@+id/track_text_view"
-            android:background="?android:selectableItemBackground"/>
-
         <ImageButton
             android:background="?android:selectableItemBackground"
             android:layout_width="wrap_content"
@@ -95,6 +90,16 @@
             android:layout_marginRight="5dp"
             android:layout_marginTop="20dp"
             android:onClick="showPopUp"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sound_icon_imageview"
+            android:visibility="@{trackItem.showSoundIcon() ? View.VISIBLE : View.INVISIBLE }"
+            android:src="@{trackItem.getIsPlaying() ? @drawable/ic_volume_up_deep_orange_48dp : @drawable/ic_volume_up_black_48dp}"
+            android:background="?android:selectableItemBackground"
+            android:layout_alignTop="@+id/track_text_view"
+            android:layout_alignParentStart="true" />
 
 
     </RelativeLayout>

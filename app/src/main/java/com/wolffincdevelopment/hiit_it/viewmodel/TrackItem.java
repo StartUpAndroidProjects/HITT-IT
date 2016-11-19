@@ -1,5 +1,9 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.viewmodel;
 
+import android.content.Context;
+
+import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -11,7 +15,9 @@ import java.util.concurrent.TimeUnit;
 public class TrackItem extends Item {
 
     private TrackData trackData;
-    private boolean show;
+    private boolean showDivider;
+    private boolean showSoundIcon;
+    private boolean isPlaying;
 
     public TrackItem(TrackData trackData) {
         super(R.layout.base_activity_row);
@@ -98,12 +104,24 @@ public class TrackItem extends Item {
         return trackData;
     }
 
-    public boolean show() {
-        return show;
+    public boolean showDivider() {
+        return showDivider;
     }
 
-    public void setShow(boolean show) {
-        this.show = show;
+    public boolean showSoundIcon() {
+        return showSoundIcon;
+    }
+
+    public void setShowSoundIcon(boolean showSoundIcon) {
+        this.showSoundIcon = showSoundIcon;
+    }
+
+    public void setIsPlaying(boolean isPlaying) {
+        this.isPlaying = isPlaying;
+    }
+
+    public boolean getIsPlaying() {
+        return isPlaying;
     }
 
     @Override

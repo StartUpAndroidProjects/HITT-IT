@@ -10,6 +10,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 
+import com.wolffincdevelopment.hiit_it.model.TrackData;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
+
 import java.util.ArrayList;
 
 /**

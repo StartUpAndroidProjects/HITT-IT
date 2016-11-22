@@ -79,8 +79,8 @@ public class MediaControllerView extends LinearLayout implements View.OnClickLis
          this.listener = listener;
     }
 
-    public void updatePlayButton(boolean paused) {
-        if (paused) {
+    public void updatePlayButton(boolean paused, boolean stopped) {
+        if (paused || stopped) {
             playButton.setImageResource(R.drawable.ic_play_circle_outline_white);
         } else {
             playButton.setImageResource(R.drawable.ic_pause_circle_outline_white_48dp);

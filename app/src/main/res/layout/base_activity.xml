@@ -19,12 +19,32 @@
     <include layout="@layout/content_base" />
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_spotify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/ic_spotify_icon"
+        app:backgroundTint="#1ED760"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_browse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        app:backgroundTint="#ffffff"
+        android:src="@drawable/ic_library_music"/>
+
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="@dimen/fab_margin_bottom"
         android:layout_marginRight="@dimen/fab_margin_right"
-        android:src="@drawable/ic_add_white_48dp" />
+        android:src="@drawable/ic_add_white_48dp"/>
 
 </android.support.design.widget.CoordinatorLayout>

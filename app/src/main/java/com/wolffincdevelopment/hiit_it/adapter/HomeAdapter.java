@@ -59,7 +59,9 @@ public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.HomeAdapterVie
             items.add(item);
         }
 
-        items.add(new HomeFooter());
+        if(!items.isEmpty()) {
+            items.add(new HomeFooter());
+        }
 
         notifyDataSetChanged();
     }

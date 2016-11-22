@@ -6,4 +6,9 @@
     <color name="greyText">#b1a7a4</color>
     <color name="grey_line">#aba7a6a5</color>
     <color name="white">#FFFFFF</color>
+    <color name="shadow_start">#40000000</color>
+    <color name="transparent">@android:color/transparent</color>
+    <color name="white_26">#BFFFFFFF</color>
+    <color name="round_button_cb">#535252</color>
+    <color name="fab_shadow">#6b000000</color>
 </resources>

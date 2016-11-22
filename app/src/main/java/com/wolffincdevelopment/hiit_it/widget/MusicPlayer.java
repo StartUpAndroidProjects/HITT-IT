@@ -17,13 +17,20 @@ public class MusicPlayer extends MediaPlayer {
     @Override
     public void start() throws IllegalStateException {
         super.start();
-        mediaControllerView.updatePlayButton(false);
+        mediaControllerView.updatePlayButton(false, false);
     }
 
     @Override
     public void pause() throws IllegalStateException {
         super.pause();
-        mediaControllerView.updatePlayButton(true);
+        mediaControllerView.updatePlayButton(true, false);
+    }
+
+    @Override
+    public void stop() throws IllegalStateException {
+        super.stop();
+        mediaControllerView.updatePlayButton(true, true);
+
     }
 
     public void setMediaControllerView(MediaControllerView mediaControllerView) {

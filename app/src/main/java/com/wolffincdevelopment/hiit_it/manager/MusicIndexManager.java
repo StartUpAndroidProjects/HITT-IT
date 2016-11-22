@@ -30,7 +30,7 @@ public class MusicIndexManager {
     }
 
     public void setIndex(int index) {
-        previousIndex = this.index;
+        previousIndex = index != 0 ? index - 1 : 0;
         this.index = index;
     }
 

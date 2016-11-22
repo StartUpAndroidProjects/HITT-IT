@@ -11,7 +11,7 @@
         android:textSize="20sp"
         android:text="@string/add_track"
         android:textAllCaps="false"
-        android:background="@drawable/rounded_button"
+        android:background="@drawable/square_button_background"
         android:layout_marginTop="56dp"
         android:textColor="@color/white"
         android:layout_below="@+id/card_view"

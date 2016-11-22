@@ -1,7 +1,5 @@
 package com.wolffincdevelopment.hiit_it.viewmodel;
 
-import android.content.Context;
-
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;

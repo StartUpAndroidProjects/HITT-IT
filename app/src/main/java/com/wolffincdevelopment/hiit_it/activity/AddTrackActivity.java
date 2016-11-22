@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,6 +24,8 @@ import butterknife.OnFocusChange;
 
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
+
+import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.ADDED_TRACK;
 
 /*
  * Add Track Activity Created by Kyle Wolff
@@ -132,7 +135,7 @@ public class AddTrackActivity extends AppCompatActivity {
             }
         }
 
-        finish();
+        setResultAddTrackFinish();
     }
 
     @Override
@@ -157,6 +160,17 @@ public class AddTrackActivity extends AppCompatActivity {
         if (!addTrackButton.isEnabled()) {
             addTrackButton.setBackgroundColor(Color.GRAY);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(item.getItemId() == android.R.id.home) {
+            setResult(RESULT_CANCELED);
+            finish();
+        }
+
+        return true;
     }
 
     @Override
@@ -185,6 +199,11 @@ public class AddTrackActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    private void setResultAddTrackFinish() {
+        setResult(ADDED_TRACK);
+        finish();
     }
 
     private void startNextActivity() {

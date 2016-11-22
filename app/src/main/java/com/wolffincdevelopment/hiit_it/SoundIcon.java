@@ -12,7 +12,8 @@ public class SoundIcon {
 
         VISIBLE,
         PAUSE,
-        RESUME
+        RESUME,
+        STOP
     }
 
     public TrackItem trackItem;

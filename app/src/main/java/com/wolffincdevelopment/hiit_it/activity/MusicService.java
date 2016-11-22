@@ -7,11 +7,13 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -64,7 +66,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
     private Executor playerWatcher;
 
-    private Handler mainThread;
+    private Handler handler;
 
     private MusicIndexManager indexManager;
 
@@ -79,12 +81,12 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         playerWatcher = Executors.newSingleThreadExecutor();
-
         indexManager = MusicIndexManager.getInstance();
+
+        handler = new Handler(Looper.getMainLooper());
 
         initMusicPlayer();
         initNotification();
-        initHandler();
 
         bus = HiitBus.getInstance();
     }
@@ -157,10 +159,6 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         player.setOnCompletionListener(this);
     }
 
-    public void initHandler() {
-        mainThread = new Handler(getApplicationContext().getMainLooper());
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -217,7 +215,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         this.songs = songs;
         indexManager.setTrackListLength(songs.size());
 
-        if(action != null) {
+        if (action != null) {
 
             switch (action) {
                 case "Move Up":
@@ -287,15 +285,16 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     /**
      * Play song pass the Track for the song you want to play
      * Should only be used for the Base Adapter since we allow the user to TAP to play
-     *
+     * <p>
      * We need to set the index based on the Track
+     *
      * @param trackItem see {@link TrackData}
      */
     public void playSong(TrackItem trackItem) {
 
-        for(TrackItem item : songs) {
+        for (TrackItem item : songs) {
 
-            if(item.getId().equals(trackItem.getId())) {
+            if (item.getId().equals(trackItem.getId())) {
                 indexManager.setIndex(songs.indexOf(item));
                 trackToPlay = item;
                 playSong();
@@ -311,9 +310,9 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         if (!songs.isEmpty()) {
 
             // If a song has not been initialized we must initialize
-            if(trackToPlay == null) {
+            if (trackToPlay == null) {
                 //If trackToPlay is
-                trackToPlay = songs.get(indexManager.getIndex());
+                setTrackToPlayWithCurrentIndex();
             }
 
             this.startTime = trackToPlay.getStartTime2();
@@ -391,28 +390,32 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
     public void stop() {
 
-        paused = false;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                player.stop();
+                sendPostMessage(SoundIcon.SoundIconActions.STOP);
+            }
+        });
 
-        player.stop();
+        paused = false;
 
         notificationManager.cancelAll();
 
         stopThread = true;
-
-        //((HomeActivity) context).getAdapter().setSoundIconInvisible(trackToPlay.getId());
     }
 
     public void playPrev() {
 
         indexManager.prev();
-        trackToPlay = songs.get(indexManager.getIndex());
+        setTrackToPlayWithCurrentIndex();
         playSong();
     }
 
     public void playNext() {
 
         indexManager.next();
-        trackToPlay = songs.get(indexManager.getIndex());
+        setTrackToPlayWithCurrentIndex();
         playSong();
     }
 
@@ -427,40 +430,24 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
     public void checkForNextSongDuringPlay() {
 
-        Runnable mainRunnable = new Runnable() {
+        if (indexManager.getIndex() != songs.size() - 1 && !(indexManager.getIndex() > songs.size())
+                && !(indexManager.getIndex() < 0)) {
+            playNext();
 
-            @Override
-            public void run() {
+        } else {
 
-                if (indexManager.getPreviousIndex() != songs.size() - 1) {
-
-                    if (!(indexManager.getIndex() > songs.size()) && !(indexManager.getIndex() < 0)) {
-
-                        // Call onNext to tell the index manager that we need to increment
-
-                        if (indexManager.getIndex() != 0) {
-                            // Play song
-                        }
-                    }
-
-                } else {
-
-                    if (SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
-                        //TrackData song = getNextSong();
-
-                        //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
-                    } else {
-                        resetSongs();
-                    }
-                }
+            if (SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
+                playNext();
+            } else {
+                resetSongs();
             }
-        };
-
-        mainThread.post(mainRunnable);
+        }
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) {}
+    public void onCompletion(MediaPlayer mp) {
+
+    }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -485,7 +472,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
             @Override
             public void run() {
 
-                int currentPosition = 0;
+                int currentPosition;
                 int staticTime = 0;
 
                 while (!stopThread) {
@@ -497,33 +484,35 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
                         return;
                     }
 
-                    final int total = getDur();
-
                     if (staticTime != 0 && staticTime == currentPosition) {
                         currentPosition = stopTime;
                     }
 
                     if (currentPosition >= stopTime) {
-                        player.seekTo(total);
-
-                        if (indexManager.getIndex() <= songs.size() - 1) {
-                            checkForNextSongDuringPlay();
-                        }
+                        checkForNextSongDuringPlay();
                     }
 
-                    staticTime = currentPosition;
+                    if (!paused) {
+                        staticTime = currentPosition;
+                    }
                 }
             }
         });
     }
 
     public void resetSongs() {
-        stop();
 
         if (indexManager.getIndex() != 0 && !(indexManager.getIndex() < 0)) {
             if (!songs.isEmpty())
                 indexManager.setIndex(0);
+            setTrackToPlayWithCurrentIndex();
         }
+
+        stop();
+    }
+
+    public void setTrackToPlayWithCurrentIndex() {
+        trackToPlay = songs.get(indexManager.getIndex());
     }
 
     public MusicPlayer getMusicPlayer() {

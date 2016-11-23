@@ -1,7 +1,5 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
-import android.annotation.TargetApi;
-import android.app.SharedElementCallback;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -9,16 +7,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.RadioButton;
-import android.widget.RelativeLayout;
 
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
@@ -31,9 +24,6 @@ import butterknife.OnFocusChange;
 
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
-
-import java.util.List;
-import java.util.Map;
 
 import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.ADDED_TRACK;
 
@@ -157,8 +147,6 @@ public class AddTrackActivity extends AppCompatActivity {
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
         inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-
-        setSharedElementCallback();
     }
 
     @Override
@@ -403,95 +391,4 @@ public class AddTrackActivity extends AppCompatActivity {
 
     }
 
-    @TargetApi(21)
-    public void setSharedElementCallback() {
-
-        setEnterSharedElementCallback(new SharedElementCallback() {
-
-            View mSnapshot;
-
-            @Override
-            public void onSharedElementStart(List<String> sharedElementNames,
-                                             List<View> sharedElements,
-                                             List<View> sharedElementSnapshots) {
-
-                addSnapshot(sharedElementNames, sharedElements, sharedElementSnapshots, false);
-
-                if (mSnapshot != null) {
-                    mSnapshot.setVisibility(View.VISIBLE);
-                }
-
-                findViewById(R.id.content).setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onSharedElementEnd(List<String> sharedElementNames,
-                                           List<View> sharedElements,
-                                           List<View> sharedElementSnapshots) {
-                addSnapshot(sharedElementNames, sharedElements, sharedElementSnapshots, true);
-
-                if (mSnapshot != null) {
-                    mSnapshot.setVisibility(View.INVISIBLE);
-                }
-
-                findViewById(R.id.content).setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
-                findViewById(R.id.content).setVisibility(View.INVISIBLE);
-            }
-
-            private void addSnapshot(List<String> sharedElementNames,
-                                     List<View> sharedElements,
-                                     List<View> sharedElementSnapshots,
-                                     boolean relayoutContainer) {
-
-                if (mSnapshot == null) {
-
-                    for (int i = 0; i < sharedElementNames.size(); i++) {
-
-                        if ("browse_transition".equals(sharedElementNames.get(i))) {
-
-                                FrameLayout element = (FrameLayout) sharedElements.get(i);
-                                mSnapshot = sharedElementSnapshots.get(i);
-
-                                int width = mSnapshot.getWidth();
-                                int height = mSnapshot.getHeight();
-
-                                FrameLayout.LayoutParams layoutParams =
-                                        new FrameLayout.LayoutParams(width, height);
-                                layoutParams.gravity = Gravity.CENTER;
-
-                                int widthSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
-                                int heightSpec = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
-
-                                mSnapshot.measure(widthSpec, heightSpec);
-                                mSnapshot.layout(0, 0, width, height);
-                                mSnapshot.setTransitionName("snapshot");
-
-                                if (relayoutContainer) {
-
-                                    ViewGroup container = (ViewGroup) findViewById(R.id.main_container);
-                                    int left = (container.getWidth() - width) / 2;
-                                    int top = (container.getHeight() - height) / 2;
-                                    element.measure(widthSpec, heightSpec);
-                                    element.layout(left, top, left + width, top + height);
-                                }
-
-                                element.addView(mSnapshot, layoutParams);
-
-                            break;
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    @Override
-    public void finishAfterTransition() {
-        super.finishAfterTransition();
-        findViewById(R.id.content).setVisibility(View.VISIBLE);
-    }
 }

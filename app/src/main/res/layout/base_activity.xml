@@ -36,7 +36,6 @@
         android:layout_marginRight="@dimen/fab_mini_margin_right"
         android:layout_gravity="bottom|end"
         android:src="@drawable/ic_library_music"
-        android:transitionName="browse_transition"
         app:backgroundTint="#ffffff" />
 
     <android.support.design.widget.FloatingActionButton

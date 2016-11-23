@@ -225,7 +225,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
         if(BuildSupportUtil.isLollipopAndUp()) {
 
-            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this, view, "browse_transition");
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this);
             startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE , options.toBundle());
         } else {
             startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
@@ -250,6 +250,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
     private void showFABMenu() {
         isFABOpen = true;
+
         fab.startAnimation(rotateForward);
 
         fabBrowse.animate().translationY(-getResources().getDimension(R.dimen.fab_marginBottom_Browse_animation))
@@ -261,7 +262,9 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
     private void closeFABMenu() {
         isFABOpen = false;
+
         fab.startAnimation(rotateBackward);
+
         fabBrowse.animate().translationY(0).alpha(0).setDuration(300);
         fabSpotify.animate().translationY(0).alpha(0).setDuration(300);
     }

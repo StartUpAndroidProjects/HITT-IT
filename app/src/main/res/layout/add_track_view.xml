@@ -14,8 +14,7 @@
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:transitionName="browse_transition" />
+            android:layout_gravity="center"/>
 
         <FrameLayout
             android:id="@+id/content"

@@ -13,9 +13,6 @@
         <changeImageTransform />
         <transition class="com.wolffincdevelopment.hiit_it.util.RevealTransition"
             android:transitionVisibilityMode="mode_in">
-            <targets>
-                <target android:targetName="snapshot" />
-            </targets>
         </transition>
     </transitionSet>
 </transitionSet>

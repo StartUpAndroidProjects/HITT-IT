@@ -8,6 +8,6 @@
     <dimen name="base_activity_textSize">15sp</dimen>
     <dimen name="notification_margin_top">10dp</dimen>
 
-    <dimen name="fab_marginBottom_Spotify_animation">122dp</dimen>
-    <dimen name="fab_marginBottom_Browse_animation">72dp</dimen>
+    <dimen name="fab_marginBottom_Spotify_animation">112dp</dimen>
+    <dimen name="fab_marginBottom_Browse_animation">62dp</dimen>
 </resources>

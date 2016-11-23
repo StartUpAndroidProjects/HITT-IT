@@ -13,7 +13,6 @@
             android:transitionVisibilityMode="mode_in" />
         <targets>
             <target android:targetId="@id/content" />
-            <target android:targetName="snapshot" />
         </targets>
     </transitionSet>
 </transitionSet>

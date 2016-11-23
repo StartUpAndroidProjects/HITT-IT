@@ -1,7 +1,11 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -17,6 +21,7 @@ import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.transition.Transition;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -36,6 +41,7 @@ import com.wolffincdevelopment.hiit_it.HiitItIntents;
 import com.wolffincdevelopment.hiit_it.SoundIcon;
 import com.wolffincdevelopment.hiit_it.listeners.MenuListener;
 import com.wolffincdevelopment.hiit_it.listeners.TrackListener;
+import com.wolffincdevelopment.hiit_it.util.BuildSupportUtil;
 import com.wolffincdevelopment.hiit_it.util.FirstTimePreferenceUtil;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
@@ -80,6 +86,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
     private boolean musicBound;
     private boolean isFABOpen;
+    private boolean reorderTracks;
     private int resultCode;
 
     private Animation rotateForward, rotateBackward;
@@ -102,51 +109,12 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     @BindView(R.id.fab_spotify)
     FloatingActionButton fabSpotify;
 
-    @OnClick(R.id.fab_browse)
-    protected void onFabBrowsePressed() {
-        startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
-    }
-
-    @OnClick(R.id.fab_spotify)
-    protected void onSpotifyPressed() {
-
-    }
-
-    @OnClick(R.id.fab)
-    protected void onFabPressed() {
-        prefFirstTime.runCheckFirstTime(getString(R.string.firstTimeFabPressed));
-
-        if(!isFABOpen){
-            showFABMenu();
-        }else {
-            closeFABMenu();
-        }
-    }
-
-    private void showFABMenu(){
-        isFABOpen = true;
-        fab.startAnimation(rotateForward);
-
-        fabBrowse.animate().translationY(-getResources().getDimension(R.dimen.fab_marginBottom_Browse_animation))
-                .alpha(1f).setDuration(300);
-
-        fabSpotify.animate().translationY(-getResources().getDimension(R.dimen.fab_marginBottom_Spotify_animation))
-                .alpha(1f).setDuration(300);
-    }
-
-    private void closeFABMenu() {
-        isFABOpen = false;
-        fab.startAnimation(rotateBackward);
-        fabBrowse.animate().translationY(0).alpha(0).setDuration(300);
-        fabSpotify.animate().translationY(0).alpha(0).setDuration(300);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == ADDED_TRACK) {
-            setSongList();
+            fetchSongList();
         }
     }
 
@@ -171,6 +139,8 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         trackDBAdapter = new TrackDBAdapter(this);
         trackDataList = new ArrayList<>();
         permissionUtil = new PermissionUtil();
+
+        // Setting up the fab button animations
         rotateForward = AnimationUtils.loadAnimation(getBaseContext(), R.anim.rotate_forward);
         rotateBackward = AnimationUtils.loadAnimation(getBaseContext(), R.anim.rotate_backward);
 
@@ -199,7 +169,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         checkFirstTimePreference();
 
         // Setting the song list also calls getTrackList() which is needed to set the trackDataList
-        setSongList();
+        fetchSongList();
 
         if (homeAdapter == null) {
             // Recycler View Adapter, passing the arrayList
@@ -249,32 +219,69 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         }
     }
 
-    private void getTrackList() {
+    @OnClick(R.id.fab_browse)
+    protected void onFabBrowsePressed(View view) {
 
-        trackDBAdapter.open();
-        trackDataList = trackDBAdapter.getAllTracks();
-        trackDBAdapter.close();
 
-        if (musicServiceIsActive()) {
+        if(BuildSupportUtil.isLollipopAndUp()) {
 
-            for (TrackItem trackItem : trackDataList) {
-
-                if (musicService.getCurrentSong().getOrderId() == trackItem.getOrderId()) {
-                    trackItem.setIsPlaying(true);
-                    trackItem.setShowSoundIcon(true);
-                }
-            }
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this, view, "browse_transition");
+            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE , options.toBundle());
+        } else {
+            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
         }
+    }
 
-        if (homeAdapter != null) {
-            homeAdapter.updateData(trackDataList);
+    @OnClick(R.id.fab_spotify)
+    protected void onSpotifyPressed() {
+
+    }
+
+    @OnClick(R.id.fab)
+    protected void onFabPressed() {
+        prefFirstTime.runCheckFirstTime(getString(R.string.firstTimeFabPressed));
+
+        if(!isFABOpen){
+            showFABMenu();
+        }else {
+            closeFABMenu();
         }
+    }
+
+    private void showFABMenu() {
+        isFABOpen = true;
+        fab.startAnimation(rotateForward);
+
+        fabBrowse.animate().translationY(-getResources().getDimension(R.dimen.fab_marginBottom_Browse_animation))
+                .alpha(1f).setDuration(300);
+
+        fabSpotify.animate().translationY(-getResources().getDimension(R.dimen.fab_marginBottom_Spotify_animation))
+                .alpha(1f).setDuration(300);
+    }
+
+    private void closeFABMenu() {
+        isFABOpen = false;
+        fab.startAnimation(rotateBackward);
+        fabBrowse.animate().translationY(0).alpha(0).setDuration(300);
+        fabSpotify.animate().translationY(0).alpha(0).setDuration(300);
     }
 
     public void reorderTrack(TrackItem trackItem, String upOrDown) {
         trackDBAdapter.open();
-        trackDBAdapter.reorderItem(trackItem, upOrDown);
+        reorderTracks = trackDBAdapter.reorderItem(trackItem, upOrDown);
         trackDBAdapter.close();
+
+        fetchSongList(upOrDown, trackItem);
+    }
+
+    public void deleteTrack(TrackItem trackItem) {
+        trackDBAdapter.open();
+        trackDBAdapter.deleteTrack(trackItem);
+        trackDBAdapter.close();
+
+        reorderTracks = true;
+
+        fetchSongList(null, trackItem);
     }
 
     private void checkForStorageDeletion() {
@@ -285,6 +292,164 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
     private boolean musicServiceIsActive() {
         return musicBound && (musicService.isPlaying() || musicService.isPaused());
+    }
+
+    private void showDialogOK(String message, DialogInterface.OnClickListener okListener) {
+        DialogBuilder dialogBuilder = new DialogBuilder(message, this);
+        dialogBuilder.setButtons("Ok", "Cancel", okListener);
+        dialogBuilder.create();
+        dialogBuilder.show();
+    }
+
+    private void showDialogToSettings(String message, DialogInterface.OnClickListener okListener) {
+        DialogBuilder dialogBuilder = new DialogBuilder(message, this);
+        dialogBuilder.setButtons("Change Permissions", "Dismiss", okListener);
+        dialogBuilder.create();
+        dialogBuilder.show();
+    }
+
+    private void showDialog() {
+        progress = new ProgressDialog(this);
+        progress.setMessage("Loading...");
+        progress.show();
+    }
+
+    private void dismissDialog() {
+        progress.dismiss();
+    }
+
+    /**
+     * Call getTrackList() to get the current track list.
+     *
+     * @param action
+     * @param item
+     */
+    public void fetchSongList(String action, TrackItem item) {
+
+        trackDBAdapter.open();
+        trackDataList = trackDBAdapter.getAllTracks();
+        trackDBAdapter.close();
+
+        if (musicBound) {
+            musicService.setList(trackDataList, action, item, reorderTracks);
+        }
+
+        if (musicServiceIsActive()) {
+
+            for (TrackItem trackItem : trackDataList) {
+
+                if (musicService.getCurrentSong().getOrderId() == trackItem.getOrderId()) {
+
+                    if(musicService.isPaused()) {
+                        trackItem.setIsPlaying(false);
+                    } else {
+                        trackItem.setIsPlaying(true);
+                    }
+
+                    trackItem.setShowSoundIcon(true);
+                }
+            }
+        }
+
+        if (homeAdapter != null) {
+            homeAdapter.updateData(trackDataList);
+        }
+
+        reorderTracks = false;
+    }
+
+    /**
+     * Overrided call
+     */
+    public void fetchSongList() {
+        fetchSongList(null, null);
+    }
+
+    private void checkFirstTimePreference() {
+        SharedPreferences sharedPreferences = getSharedPreferences("FirstKeyPreferences", Context.MODE_PRIVATE);
+
+        if (sharedPreferences.contains(getBaseContext().getString(R.string.firstTimeFabPressed))) {
+            firstTimeUserImageSwitcher.setVisibility(View.INVISIBLE);
+        } else {
+            firstTimeUserImageSwitcher.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            binder = (MusicService.MusicBinder) service;
+
+            musicService = binder.getService();
+
+            musicService.getMusicPlayer().setMediaControllerView(mediaControllerView);
+
+            musicService.setList(trackDataList, "none", null, false);
+
+            progress.dismiss();
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
+
+    @Override
+    public void onPlay() {
+        play();
+    }
+
+    @Override
+    public void onNext() {
+        if (musicBound) {
+            musicService.playNext();
+        }
+    }
+
+    @Override
+    public void onPrev() {
+        if (musicBound) {
+            musicService.playPrev();
+        }
+    }
+
+    public void play() {
+        play(null);
+    }
+
+    public void play(TrackItem trackItem) {
+
+        if (musicBound) {
+
+            if (trackItem != null && trackItem.getId().compareTo(musicService.getCurrentSong().getId()) != 0) {
+                musicService.playSong(trackItem);
+            } else if (musicService.isPlaying()) {
+                musicService.pausePlayer();
+            } else if (musicService.isPaused()) {
+                musicService.resume();
+            } else {
+                musicService.playSong();
+            }
+        }
+    }
+
+    @Override
+    public void onItemClicked(TrackItem trackItem) {
+        play(trackItem);
+    }
+
+    @Override
+    public void onMenuItemSelected(TrackItem trackItem, MenuItem menuItem) {
+
+        if(menuItem.getTitle().toString().compareTo(getResources().getString(R.string.delete)) != 0) {
+            reorderTrack(trackItem, menuItem.getTitle().toString());
+        } else {
+            deleteTrack(trackItem);
+        }
     }
 
     @Override
@@ -340,135 +505,6 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-    }
-
-    private void showDialogOK(String message, DialogInterface.OnClickListener okListener) {
-        DialogBuilder dialogBuilder = new DialogBuilder(message, this);
-        dialogBuilder.setButtons("Ok", "Cancel", okListener);
-        dialogBuilder.create();
-        dialogBuilder.show();
-    }
-
-    private void showDialogToSettings(String message, DialogInterface.OnClickListener okListener) {
-        DialogBuilder dialogBuilder = new DialogBuilder(message, this);
-        dialogBuilder.setButtons("Change Permissions", "Dismiss", okListener);
-        dialogBuilder.create();
-        dialogBuilder.show();
-    }
-
-    private void showDialog() {
-        progress = new ProgressDialog(this);
-        progress.setMessage("Loading...");
-        progress.show();
-    }
-
-    private void dismissDialog() {
-        progress.dismiss();
-    }
-
-    /**
-     * Call getTrackList() to get the current track list.
-     *
-     * @param action
-     * @param trackItem
-     */
-    public void setSongList(String action, TrackItem trackItem) {
-
-        getTrackList();
-
-        if (musicBound) {
-
-            musicService.setList(trackDataList, action, trackItem);
-        }
-    }
-
-    /**
-     * Overrided call
-     */
-    public void setSongList() {
-        setSongList(null, null);
-    }
-
-    private void checkFirstTimePreference() {
-        SharedPreferences sharedPreferences = getSharedPreferences("FirstKeyPreferences", Context.MODE_PRIVATE);
-
-        if (sharedPreferences.contains(getBaseContext().getString(R.string.firstTimeFabPressed))) {
-            firstTimeUserImageSwitcher.setVisibility(View.INVISIBLE);
-        } else {
-            firstTimeUserImageSwitcher.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private ServiceConnection musicConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-
-            binder = (MusicService.MusicBinder) service;
-
-            musicService = binder.getService();
-
-            musicService.getMusicPlayer().setMediaControllerView(mediaControllerView);
-
-            musicService.setList(trackDataList, "none", null);
-
-            progress.dismiss();
-            musicBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
-        }
-    };
-
-    @Override
-    public void onPlay() {
-        play();
-    }
-
-    @Override
-    public void onNext() {
-        if (musicBound) {
-            musicService.playNext();
-        }
-    }
-
-    @Override
-    public void onPrev() {
-        if (musicBound) {
-            musicService.playPrev();
-        }
-    }
-
-    public void play() {
-        play(null);
-    }
-
-    public void play(TrackItem trackItem) {
-
-        if (musicBound) {
-
-            if (trackItem != null && !musicService.isPaused()) {
-                musicService.playSong(trackItem);
-            } else if (musicService.isPlaying()) {
-                musicService.pausePlayer();
-            } else if (musicService.isPaused()) {
-                musicService.resume();
-            } else {
-                musicService.playSong();
-            }
-        }
-    }
-
-    @Override
-    public void onItemClicked(TrackItem trackItem) {
-        play(trackItem);
-    }
-
-    @Override
-    public void onMenuItemSelected(TrackItem trackItem, MenuItem menuItem) {
-        reorderTrack(trackItem, menuItem.getTitle().toString());
     }
 
     @Subscribe

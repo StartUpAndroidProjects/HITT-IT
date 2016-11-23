@@ -197,7 +197,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
-    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem) {
+    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem, boolean reordedTracks) {
         boolean currentSong = false;
         boolean previousSong = false;
         boolean nextSong = false;
@@ -215,60 +215,39 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         this.songs = songs;
         indexManager.setTrackListLength(songs.size());
 
-        if (action != null) {
+        if (action != null && !songs.isEmpty() && reordedTracks) {
 
             switch (action) {
                 case "Move Up":
 
-                    if (!songs.isEmpty()) {
-
-                        if (indexManager.getIndex() != 0 && currentSong && indexManager.getIndex() != songs.size()) {
-
-                            //indexManager.getPrevIndex();
-                        } else if (nextSong && indexManager.getIndex() != songs.size()) {
-
-                            //indexManager.getNextIndex();
-                        }
+                    if (indexManager.getIndex() != 0 && currentSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.prev();
+                    } else if (nextSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.next();
                     }
 
                     break;
 
                 case "Move Down":
 
-                    if (!songs.isEmpty()) {
-
-                        if (currentSong && indexManager.getIndex() != songs.size()) {
-
-                            //indexManager.getNextIndex();
-
-                            if (indexManager.getIndex() == songs.size()) {
-                                //indexManager.getPrevIndex();
-                            }
-
-                        } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
-
-                            //indexManager.getPrevIndex();
-                        }
+                    if (currentSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.next();
+                    } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.prev();
                     }
 
                     break;
 
                 case "Delete":
 
-                    if (!songs.isEmpty()) {
+                    if (currentSong) {
 
-                        if (currentSong) {
-
-                            if (indexManager.getIndex() == songs.size() && !songs.isEmpty()) {
-                                //indexManager.getPrevIndex();
-                            }
-
-                        } else if (previousSong && indexManager.getIndex() != 0) {
-
-                            //indexManager.getPrevIndex();
+                        if (indexManager.getIndex() == songs.size() && !songs.isEmpty()) {
+                            indexManager.prev();
                         }
-                    } else if (isPlaying() || isPaused()) {
-                        stopPlayer();
+
+                    } else if (previousSong && indexManager.getIndex() != 0) {
+                        indexManager.prev();
                     }
 
                     break;

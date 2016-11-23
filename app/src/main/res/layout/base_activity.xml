@@ -35,8 +35,9 @@
         android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
         android:layout_marginRight="@dimen/fab_mini_margin_right"
         android:layout_gravity="bottom|end"
-        app:backgroundTint="#ffffff"
-        android:src="@drawable/ic_library_music"/>
+        android:src="@drawable/ic_library_music"
+        android:transitionName="browse_transition"
+        app:backgroundTint="#ffffff" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -45,6 +46,6 @@
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="@dimen/fab_margin_bottom"
         android:layout_marginRight="@dimen/fab_margin_right"
-        android:src="@drawable/ic_add_white_48dp"/>
+        android:src="@drawable/ic_add_white_48dp" />
 
 </android.support.design.widget.CoordinatorLayout>

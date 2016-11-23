@@ -18,8 +18,7 @@ import java.util.ArrayList;
 /**
  * Created by kylewolff on 6/6/2016.
  */
-public class TrackDBAdapter
-{
+public class TrackDBAdapter {
     private static int order_id_counter = 0;
     private int permissionGranted;
     private long media_id;
@@ -65,16 +64,14 @@ public class TrackDBAdapter
         this.context = context;
     }
 
-    public TrackDBAdapter open() throws android.database.SQLException
-    {
+    public TrackDBAdapter open() throws android.database.SQLException {
         trackDBHelper = new TrackDBHelper(context);
         sqLiteDatabase = trackDBHelper.getWritableDatabase();
 
         return this;
     }
 
-    public void close()
-    {
+    public void close() {
         trackDBHelper.close();
         sqLiteDatabase.close();
     }
@@ -82,12 +79,10 @@ public class TrackDBAdapter
     /**
      * When the user deletes a media file on their phone that is on their list we need to update accordingly
      */
-    public void checkForStorageDeletion()
-    {
-        permissionGranted = ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE );
+    public void checkForStorageDeletion() {
+        permissionGranted = ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_EXTERNAL_STORAGE);
 
-        if(permissionGranted == 0)
-        {
+        if (permissionGranted == 0) {
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
             String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
@@ -98,43 +93,35 @@ public class TrackDBAdapter
 
             int count = 0;
 
-            if (cursor != null && cursor.getColumnCount() != 0)
-            {
+            if (cursor != null && cursor.getColumnCount() != 0) {
                 count = cursor.getCount();
 
-                if (count > 0)
-                {
-                    while (cursor.moveToNext())
-                    {
+                if (count > 0) {
+                    while (cursor.moveToNext()) {
                         media_id = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
                         media_ids.add(String.valueOf(media_id));
                     }
                 }
             }
 
-            if(cursor != null)
-            {
+            if (cursor != null) {
                 cursor.close();
             }
 
             cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, COLUMN_MEDIA_ID + " NOT IN" + media_ids.toString().replace('[', '(').replace(']', ')'), null, null, null, null);
 
-            if (cursor != null && cursor.getColumnCount() != 0)
-            {
+            if (cursor != null && cursor.getColumnCount() != 0) {
                 count = cursor.getCount();
 
-                if (count > 0)
-                {
-                    while (cursor.moveToNext())
-                    {
+                if (count > 0) {
+                    while (cursor.moveToNext()) {
                         TrackItem trackItem = cursorToTrack(cursor);
                         deleteTrack(trackItem);
                     }
                 }
             }
 
-            if(cursor != null)
-            {
+            if (cursor != null) {
                 cursor.close();
             }
         }
@@ -146,8 +133,7 @@ public class TrackDBAdapter
      *
      * @return orderId
      */
-    public int getNextOrderId()
-    {
+    public int getNextOrderId() {
         int orderId;
 
         String[] orderIdStringArray = {COLUMN_ORDER_ID};
@@ -156,12 +142,9 @@ public class TrackDBAdapter
 
         cursor.moveToLast();
 
-        if(cursor.getPosition() == -1)
-        {
+        if (cursor.getPosition() == -1) {
             orderId = 1;
-        }
-        else
-        {
+        } else {
             orderId = cursor.getInt(0) + 1;
         }
 
@@ -182,8 +165,7 @@ public class TrackDBAdapter
      * @param orderId
      * @return TrackData
      */
-    public TrackItem createTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId, int orderId)
-    {
+    public TrackItem createTrackData(String aristName, String songName, String stopTime, String startTime, String stream, long mediaId, int orderId) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(COLUMN_ARTIST_NAME, aristName);
         contentValues.put(COLUMN_SONG_NAME, songName);
@@ -195,7 +177,7 @@ public class TrackDBAdapter
 
         long insertId = sqLiteDatabase.insert(TRACK_TABLE, null, contentValues);
 
-         createCursor = sqLiteDatabase.query(TRACK_TABLE, item_columns,
+        createCursor = sqLiteDatabase.query(TRACK_TABLE, item_columns,
                 COLUMN_ID + " = " + insertId, null, null, null, null);
 
         createCursor.moveToFirst();
@@ -219,33 +201,24 @@ public class TrackDBAdapter
 
         cursor.moveToFirst();
 
-        if(cursor.getColumnCount() != 0)
-        {
-            if (trackItem.getOrderId() == cursor.getInt(7))
-            {
+        if (cursor.getColumnCount() != 0) {
+            if (trackItem.getOrderId() == cursor.getInt(7)) {
                 sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackItem.getId(), null);
             }
 
             cursor.moveToLast();
 
-            if (trackItem.getOrderId() == cursor.getInt(7))
-            {
+            if (trackItem.getOrderId() == cursor.getInt(7)) {
                 sqLiteDatabase.delete(TRACK_TABLE, COLUMN_ID + " = " + trackItem.getId(), null);
-            }
-            else
-            {
+            } else {
                 int lastOrderId = cursor.getInt(7);
 
-                for (int count = trackItem.getOrderId(); count < lastOrderId; count++)
-                {
+                for (int count = trackItem.getOrderId(); count < lastOrderId; count++) {
                     updateOrderId.put(COLUMN_ORDER_ID, count);
 
-                    if (count == trackItem.getOrderId())
-                    {
+                    if (count == trackItem.getOrderId()) {
                         sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(trackItem.getOrderId() + 1), null);
-                    }
-                    else
-                    {
+                    } else {
                         sqLiteDatabase.update(TRACK_TABLE, updateOrderId, COLUMN_ORDER_ID + " = " + String.valueOf(count + 1), null);
                     }
 
@@ -265,29 +238,30 @@ public class TrackDBAdapter
      * @param trackItem
      * @param upOrdown
      */
-    public void reorderItem(TrackItem trackItem, String upOrdown) {
+    public boolean reorderItem(TrackItem trackItem, String upOrdown) {
 
         ContentValues contentValues = new ContentValues();
 
+        boolean reordered = false;
+        int totalTracks = getAllTracks().size();
         int previousId;
 
-        switch(upOrdown) {
+        switch (upOrdown) {
 
             case "Move Up":
 
-                if(trackItem.getOrderId() != 1)
-                {
+                if (trackItem.getOrderId() != 1) {
 
                     String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
 
                     Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
-                        String.valueOf(trackItem.getOrderId() - 1), null, null, null, null);
+                            String.valueOf(trackItem.getOrderId() - 1), null, null, null, null);
 
                     cursor.moveToLast();
 
-                        previousId = cursor.getInt(1);
-                        contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
-                        sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackItem.getId(), null);
+                    previousId = cursor.getInt(1);
+                    contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackItem.getId(), null);
 
                     cursor.close();
 
@@ -295,58 +269,63 @@ public class TrackDBAdapter
 
                     contentValues.put(COLUMN_ORDER_ID, trackItem.getOrderId());
 
-                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId) , null);
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId), null);
 
+                    reordered = true;
+                } else {
+                    reordered = false;
                 }
 
                 break;
 
             case "Move Down":
+                Cursor cursor;
 
-                   String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
+                String[] columnIds = {COLUMN_ORDER_ID, COLUMN_ID};
 
-                    Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
+                cursor = sqLiteDatabase.query(TRACK_TABLE, columnIds, COLUMN_ORDER_ID + " = " +
                         String.valueOf(trackItem.getOrderId() + 1), null, null, null, null);
 
-                    cursor.moveToLast();
+                cursor.moveToLast();
 
-                    if(cursor.getCount() != 0)
-                    {
-                        previousId = cursor.getInt(1);
-                        contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
-                        sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackItem.getId(), null);
+                if (cursor.getCount() != 0) {
 
-                        cursor.close();
+                    previousId = cursor.getInt(1);
 
-                        contentValues.clear();
+                    contentValues.put(COLUMN_ORDER_ID, cursor.getInt(0));
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + trackItem.getId(), null);
 
-                        contentValues.put(COLUMN_ORDER_ID, trackItem.getOrderId());
+                    cursor.close();
 
-                        sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId), null);
-                    }
-                    else
-                    {
-                        cursor.close();
-                    }
+                    contentValues.clear();
+
+                    contentValues.put(COLUMN_ORDER_ID, trackItem.getOrderId());
+                    sqLiteDatabase.update(TRACK_TABLE, contentValues, COLUMN_ID + " = " + String.valueOf(previousId), null);
+
+                    reordered = true;
+
+                } else {
+                    cursor.close();
+                    reordered = false;
+                }
 
                 break;
         }
+
+        return reordered;
     }
 
     /**
-     *
      * @return ArrayList<TrackData></TrackData>
      */
-    public ArrayList<TrackItem> getAllTracks()
-    {
+    public ArrayList<TrackItem> getAllTracks() {
         ArrayList<TrackItem> userTracks = new ArrayList<>();
 
         Cursor cursor = sqLiteDatabase.query(TRACK_TABLE, item_columns, null, null, null, null, COLUMN_ORDER_ID + " ASC");
 
         cursor.moveToFirst();
 
-        while(!cursor.isAfterLast())
-        {
+        while (!cursor.isAfterLast()) {
             userTracks.add(cursorToTrack(cursor));
             cursor.moveToNext();
         }
@@ -362,34 +341,29 @@ public class TrackDBAdapter
      * @param cursor
      * @return TrackData
      */
-    public TrackItem cursorToTrack(Cursor cursor)
-    {
+    public TrackItem cursorToTrack(Cursor cursor) {
         TrackData trackData;
 
         order_id_counter++;
 
         trackData = new TrackData(cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4),
-                    cursor.getString(5), cursor.getLong(6), cursor.getString(0), cursor.getInt(7));
+                cursor.getString(5), cursor.getLong(6), cursor.getString(0), cursor.getInt(7));
 
         return new TrackItem(trackData);
     }
 
-    private static class TrackDBHelper extends SQLiteOpenHelper
-    {
-        TrackDBHelper(Context context)
-        {
+    private static class TrackDBHelper extends SQLiteOpenHelper {
+        TrackDBHelper(Context context) {
             super(context, DATABASE_NAME, null, Integer.parseInt(DATABASE_VERSION));
         }
 
         @Override
-        public  void onCreate(SQLiteDatabase db)
-        {
+        public void onCreate(SQLiteDatabase db) {
             db.execSQL(DATABASE_CREATE);
         }
 
         @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
-        {
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             db.execSQL("DROP TABLE IF EXISTS " + TRACK_TABLE);
             onCreate(db);
         }

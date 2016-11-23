@@ -15,34 +15,38 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.ListView;
 import android.widget.TextView;
 
+import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
+import com.wolffincdevelopment.hiit_it.model.TrackData;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.adapter.BrowseListAdapter;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.TrackData;
 import com.wolffincdevelopment.hiit_it.util.DialogBuilder;
 import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import butterknife.OnItemClick;
 
 /**
  * Created by kylewolff on 6/4/2016.
  */
-public class BrowseActivity extends AppCompatActivity
+public class BrowseActivity extends AppCompatActivity implements BrowseTrackListener
 {
     private ContentResolver cr;
     private Cursor cur;
     private BrowseListAdapter adapter;
     private TrackData item;
 
-    public ArrayList<TrackData> items;
+    public ArrayList<TrackItem> items;
 
     public String artist, title, stream;
     public long mediaId, duration;
@@ -60,7 +64,7 @@ public class BrowseActivity extends AppCompatActivity
     TextView descNoPermissions;
 
     @BindView(R.id.browse_list_view)
-    ListView listView;
+    RecyclerView listView;
 
     @OnClick(R.id.desc_no_permissions)
     protected void onDescPressed()
@@ -73,20 +77,15 @@ public class BrowseActivity extends AppCompatActivity
         finish();
     }
 
-    @OnItemClick(R.id.browse_list_view)
-    protected void onItemClick(int position)
-    {
-        item = (TrackData) items.get(position);
+    protected void onItemClick(int position) {
+        item = items.get(position).getTrackData();
 
         Intent intent = new Intent();
 
-        if(!item.getSongName().isEmpty() && !item.getArtistName().isEmpty())
-        {
-            intent.putExtra("listItem", item);
-            intent.putExtra("enabled", true);
+        if (item != null) {
+            intent.putExtra("item", item);
             setResult(RESULT_OK, intent);
             finish();
-
         }
     }
 
@@ -107,6 +106,8 @@ public class BrowseActivity extends AppCompatActivity
         {
             findMusicFiles();
         }
+
+        listView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override
@@ -181,15 +182,16 @@ public class BrowseActivity extends AppCompatActivity
         dialogBuilder.show();
     }
 
-    public void findMusicFiles()
-    {
+    public void findMusicFiles() {
+
+        ArrayList<TrackItem> unknownItems = new ArrayList<>();
 
         titleNoMedia.setVisibility(View.INVISIBLE);
         descNoPermissions.setVisibility(View.INVISIBLE);
 
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
-        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        String sortOrder = MediaStore.Audio.Media.ARTIST + " ASC";
 
         cur = cr.query(uri, null, selection, null, sortOrder);
 
@@ -209,14 +211,12 @@ public class BrowseActivity extends AppCompatActivity
                     stream = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.DATA));
                     mediaId = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media._ID));
 
-                    if(artist.contains("unknown"))
-                    {
+                    if(artist.contains("unknown")) {
                         artist = "Unknown";
                     }
 
-                    if(duration <= 3540000)
-                    {
-                        items.add(new TrackData(artist, title, stream, duration, mediaId));
+                    if(duration <= 3540000) {
+                        items.add(new TrackItem(new TrackData(artist, title, stream, duration, mediaId)));
                     }
                 }
             }
@@ -224,13 +224,35 @@ public class BrowseActivity extends AppCompatActivity
 
         cur.close();
 
+        // Reorder the items because the query returns unknown tracks first
+        Collections.sort(items, new Comparator<TrackItem>() {
+            @Override
+            public int compare(TrackItem item, TrackItem t1) {
+                return item.getArtistName().compareToIgnoreCase(t1.getArtistName());
+            }
+        });
+
         if(items.isEmpty()) {
             titleNoMedia.setVisibility(View.VISIBLE);
         }else {
             titleNoMedia.setVisibility(View.INVISIBLE);
         }
 
-        adapter = new BrowseListAdapter(this, items);
+        adapter = new BrowseListAdapter(items, this);
         listView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onItemClicked(TrackItem item) {
+
+        TrackData data = item.getTrackData();
+
+        Intent intent = new Intent();
+
+        if (data != null) {
+            intent.putExtra("item", data);
+            setResult(RESULT_OK, intent);
+            finish();
+        }
     }
 }

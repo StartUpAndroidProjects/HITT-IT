@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".activity.BaseActivity">
+    tools:context=".activity.HomeActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -17,6 +17,26 @@
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_base" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_spotify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/ic_spotify_icon"
+        app:backgroundTint="#1ED760"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_browse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/ic_library_music"
+        app:backgroundTint="#ffffff" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

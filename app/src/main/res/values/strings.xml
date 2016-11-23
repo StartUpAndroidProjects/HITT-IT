@@ -19,4 +19,7 @@
     <string name="updatePlayControls">updatePlayControls</string>
     <string name="no_media_found">NO MEDIA FOUND</string>
     <string name="please_verify_your_permissions">Tap here to verify your permissions</string>
+
+    <string name="off">OFF</string>
+    <string name="on">ON</string>
 </resources>

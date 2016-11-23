@@ -1,91 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="90dp"
-    android:orientation="horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="Track: "
-        android:id="@+id/track_text_view"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="60dp"/>
+<layout>
 
-    <TextView
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="Bodies - Drowning Pool"
-        android:id="@+id/track_song_textview"
-        android:layout_alignTop="@+id/track_text_view"
-        android:layout_marginLeft="110dp"
-        android:singleLine="true"
-        android:ellipsize="end" />
+    <data>
+        <import type="android.view.View"/>
+        <import type="com.wolffincdevelopment.hiit_it.viewmodel.TrackItem"/>
+        <import type="com.wolffincdevelopment.hiit_it.listeners.TrackListener"/>
+        <variable name="trackItem" type="TrackItem"/>
+        <variable name="trackListener" type="TrackListener"/>
+    </data>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="Start:"
-        android:layout_marginTop="50dp"
-        android:layout_marginRight="50dp"
-        android:layout_alignStart="@+id/track_text_view" />
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:orientation="horizontal"
+        android:onClick="@{() -> trackListener.onItemClicked(trackItem)}">
 
-    <TextView
-        android:id="@+id/start_time_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="00:30"
-        android:layout_marginTop="50dp"
-        android:layout_marginLeft="105dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="Track: "
+            android:id="@+id/track_text_view"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="60dp"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="Stop:"
-        android:layout_marginTop="50dp"
-        android:layout_marginLeft="140dp"
-        android:layout_alignStart="@+id/track_text_view"
-        android:id="@+id/text_view" />
+        <TextView
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="@{trackItem.getSongAndArtist()}"
+            android:id="@+id/track_song_textview"
+            android:layout_alignTop="@+id/track_text_view"
+            android:layout_marginLeft="110dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/stop_time_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/base_activity_textSize"
-        android:textColor="@android:color/black"
-        android:text="00:60"
-        android:layout_marginTop="50dp"
-        android:layout_marginLeft="245dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="Start:"
+            android:layout_marginTop="50dp"
+            android:layout_marginRight="50dp"
+            android:layout_alignStart="@+id/track_text_view" />
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/sound_icon_imageview"
-        android:visibility="invisible"
-        android:src="@drawable/ic_volume_up_deep_orange_48dp"
-        android:layout_alignTop="@+id/track_text_view"
-        android:background="?android:selectableItemBackground"/>
+        <TextView
+            android:id="@+id/start_time_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="@{trackItem.getStartTime()}"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="105dp" />
 
-    <ImageButton
-        android:background="?android:selectableItemBackground"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/options_icon"
-        android:src="@drawable/ic_more_vert_black_48dp"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="5dp"
-        android:layout_marginTop="20dp"
-        android:onClick="showPopUp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="Stop:"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="140dp"
+            android:layout_alignStart="@+id/track_text_view"
+            android:id="@+id/text_view" />
+
+        <TextView
+            android:id="@+id/stop_time_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/base_activity_textSize"
+            android:textColor="@android:color/black"
+            android:text="@{trackItem.getStopTime()}"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="245dp" />
+
+        <ImageButton
+            android:background="?android:selectableItemBackground"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/options_icon"
+            android:src="@drawable/ic_more_vert_black_48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="20dp"
+            android:onClick="showPopUp"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sound_icon_imageview"
+            android:visibility="@{trackItem.showSoundIcon() ? View.VISIBLE : View.INVISIBLE }"
+            android:src="@{trackItem.getIsPlaying() ? @drawable/ic_volume_up_deep_orange_48dp : @drawable/ic_volume_up_black_48dp}"
+            android:background="?android:selectableItemBackground"
+            android:layout_alignTop="@+id/track_text_view"
+            android:layout_alignParentStart="true" />
 
 
-</RelativeLayout>
+    </RelativeLayout>
+</layout>

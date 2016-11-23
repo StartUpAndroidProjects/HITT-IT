@@ -7,106 +7,101 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.wolffincdevelopment.hiit_it.Constant;
+import com.wolffincdevelopment.hiit_it.HiitBus;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.TrackData;
-import com.wolffincdevelopment.hiit_it.What;
+import com.wolffincdevelopment.hiit_it.SoundIcon;
+import com.wolffincdevelopment.hiit_it.model.TrackData;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.wolffincdevelopment.hiit_it.handler.MessageHandler;
+import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
+import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
+import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 
 /**
  * Created by kylewolff on 6/5/2016.
  */
-public class MusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener
-{
+public class MusicService extends Service implements MusicPlayer.OnCompletionListener, MusicPlayer.OnPreparedListener,
+        MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener {
+
     private final IBinder musicBind = new MusicBinder();
 
     private Intent playPauseIntent, prevIntent, nextIntent, notificationIntent;
-    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent, pendingSwitchIntent;
-    private RemoteViews contentView, bigView;
+    private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent;
+    private RemoteViews contentView;
 
     private NotificationManager notificationManager;
     private Notification notification;
 
-    private Message updateControlsMsg, sendSoundIconVisible, sendSoundIconNonVisible, setCurrentSong, pauseResumeMessage;
-    private MessageHandler handler;
-    private What whatInteger;
-    private Bundle data, nonVisibleIconData, updateMediaControlsData;
-
-    private TelephonyManager telephonyManager;
-
     private int startTime, stopTime;
 
-    private boolean paused = false;
-    private boolean stopThread = false;
-    private boolean mPlayerReleased = true;
+    private boolean paused;
+    private boolean stopThread;
 
     //media player
-    private MediaPlayer player;
+    private MusicPlayer player;
     private final int NOTIFICATION_ID = 1;
 
     //song list
-    private ArrayList<TrackData> songs;
-    //current position
-    private int songPosn, previousSongPosn;
+    private ArrayList<TrackItem> songs;
 
-    private TrackData playSong;
+    private TrackItem trackToPlay;
 
     private Executor playerWatcher;
 
-    public void onCreate()
-    {
+    private Handler handler;
+
+    private MusicIndexManager indexManager;
+
+    private HiitBus bus;
+
+    public void onCreate() {
         //create the service
         super.onCreate();
-        //initialize position
-        songPosn = 0;
+
         //create player
-        player = new MediaPlayer();
+        player = new MusicPlayer();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-        whatInteger = new What();
-        data = new Bundle();
-        nonVisibleIconData = new Bundle();
         playerWatcher = Executors.newSingleThreadExecutor();
+        indexManager = MusicIndexManager.getInstance();
+
+        handler = new Handler(Looper.getMainLooper());
 
         initMusicPlayer();
         initNotification();
+
+        bus = HiitBus.getInstance();
     }
 
-    public void onDestroy()
-    {
+    public void onDestroy() {
         super.onDestroy();
 
         player.release();
 
-        if (notification != null)
-        {
+        if (notification != null) {
             notificationManager.cancelAll();
         }
     }
 
-    private void initNotification()
-    {
+    private void initNotification() {
 
         playPauseIntent = new Intent(this, MusicService.class);
         playPauseIntent.setAction(Constant.ACTION_PLAY_PAUSE);
@@ -123,7 +118,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        notificationIntent = new Intent(this, BaseActivity.class);
+        notificationIntent = new Intent(this, HomeActivity.class);
 
         contentView = new RemoteViews(getPackageName(), R.layout.mediaplayer_notiification);
 
@@ -135,13 +130,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     }
 
-    public void setNotification()
-    {
+    public void setNotification() {
 
         contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
 
-        if (isPlaying())
-        {
+        if (isPlaying()) {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
         }
 
@@ -155,8 +148,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
-    public void initMusicPlayer()
-    {
+    public void initMusicPlayer() {
         //set player properties
         player.setWakeMode(getApplicationContext(),
                 PowerManager.PARTIAL_WAKE_LOCK);
@@ -165,628 +157,359 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.setOnErrorListener(this);
         player.setOnSeekCompleteListener(this);
         player.setOnCompletionListener(this);
-
-        updateMediaControlsData = new Bundle();
-
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-    {
-        if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0)
-        {
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0) {
             contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+        } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0) {
+            //nextSong();
 
-            pauseResumeMessage = handler.createMessage(pauseResumeMessage, whatInteger.pauseResumeCurrentSong());
-            handler.sendMessage(pauseResumeMessage);
-
-        } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0)
-        {
-            TrackData song = getNextSong();
-
-            if (song != null)
-            {
-                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+            if (getCurrentSong() != null) {
+                //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
 
-        } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0)
-        {
-            TrackData song = getPreviousSong();
+        } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0) {
+            //prevSong();
 
-            if (song != null)
-            {
-                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
+            if (getCurrentSong() != null) {
+                //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
-
         }
 
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public void updateNotificationView()
-    {
-        if (isPlaying())
-        {
+    public void updateNotificationView() {
+
+        if (isPlaying()) {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_pause_circle_outline_white_48dp);
-        } else
-        {
+        } else {
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
         }
 
-        if (notification != null)
-        {
+        if (notification != null) {
             notificationManager.notify(NOTIFICATION_ID, notification);
         }
     }
 
-    public void setList(ArrayList<TrackData> songs, String action, TrackData trackData)
-    {
+    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem, boolean reordedTracks) {
         boolean currentSong = false;
         boolean previousSong = false;
         boolean nextSong = false;
 
-        if (trackData != null)
-        {
-            if (trackData.getId().compareTo(getCurrentSong().getId()) == 0)
-            {
+        if (trackItem != null) {
+            if (trackItem.getId().compareTo(getCurrentSong().getId()) == 0) {
                 currentSong = true;
-            } else if (trackData.getOrderId() < getCurrentSong().getOrderId() && !(trackData.getOrderId() < getCurrentSong().getOrderId() - 1))
-            {
+            } else if (trackItem.getOrderId() < getCurrentSong().getOrderId() && !(trackItem.getOrderId() < getCurrentSong().getOrderId() - 1)) {
                 previousSong = true;
-            } else if (trackData.getOrderId() > getCurrentSong().getOrderId() && !(trackData.getOrderId() > getCurrentSong().getOrderId() + 1))
-            {
+            } else if (trackItem.getOrderId() > getCurrentSong().getOrderId() && !(trackItem.getOrderId() > getCurrentSong().getOrderId() + 1)) {
                 nextSong = true;
             }
         }
 
         this.songs = songs;
+        indexManager.setTrackListLength(songs.size());
 
-        switch (action)
-        {
-            case "Move Up":
+        if (action != null && !songs.isEmpty() && reordedTracks) {
 
-                if (!songs.isEmpty())
-                {
-                    if (songPosn != 0 && currentSong && songPosn != songs.size())
-                    {
-                        songPosn--;
+            switch (action) {
+                case "Move Up":
 
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        }
-
-                        previousSongPosn = songPosn;
-
-                    } else if (nextSong && songPosn != songs.size())
-                    {
-                        songPosn++;
-
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        }
-
-                        previousSongPosn = songPosn;
+                    if (indexManager.getIndex() != 0 && currentSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.prev();
+                    } else if (nextSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.next();
                     }
-                }
 
-                break;
+                    break;
 
-            case "Move Down":
+                case "Move Down":
 
-                if (!songs.isEmpty())
-                {
-                    if (currentSong && songPosn != songs.size())
-                    {
-                        songPosn++;
-
-                        if (songPosn == songs.size())
-                        {
-                            songPosn--;
-                        }
-
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        }
-
-                        previousSongPosn = songPosn;
-
-                    } else if (songPosn != 0 && previousSong && songPosn != songs.size())
-                    {
-                        songPosn--;
-
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        }
-
-                        previousSongPosn = songPosn;
+                    if (currentSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.next();
+                    } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
+                        indexManager.prev();
                     }
-                }
 
-                break;
+                    break;
 
-            case "Delete":
+                case "Delete":
 
-                if (!songs.isEmpty())
-                {
+                    if (currentSong) {
 
-                    if (currentSong)
-                    {
-                        if (songPosn == songs.size() && !songs.isEmpty())
-                        {
-                            songPosn--;
-                            previousSongPosn = songPosn;
+                        if (indexManager.getIndex() == songs.size() && !songs.isEmpty()) {
+                            indexManager.prev();
                         }
 
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-
-                            playSong(getCurrentSong().getStartTime2(), getCurrentSong().getStopTime3(), getCurrentSong().getId());
-
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-
-                        }
-
-                    } else if (previousSong && songPosn != 0)
-                    {
-                        songPosn--;
-
-                        if (playSong != null && isPlaying())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", true);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        } else if (playSong != null && isPaused())
-                        {
-                            data.clear();
-                            data.putSerializable("id", getCurrentSong().getId());
-                            data.putSerializable("boolean", false);
-                            sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                            handler.sendMessage(sendSoundIconVisible);
-                        }
-
-                        previousSongPosn = songPosn;
+                    } else if (previousSong && indexManager.getIndex() != 0) {
+                        indexManager.prev();
                     }
-                } else if (isPlaying() || isPaused())
-                {
-                    stopPlayer();
 
-                    updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
-                    handler.sendMessage(updateControlsMsg);
-                }
-
-                break;
+                    break;
+            }
         }
-
-        currentSong = false;
-        previousSong = false;
-        nextSong = false;
     }
 
-    public class MusicBinder extends Binder
-    {
-        MusicService getService()
-        {
+    public class MusicBinder extends Binder {
+        MusicService getService() {
             return MusicService.this;
         }
     }
 
-    public void playSong(int startTime, int stopTime, String id)
-    {
-        if (!songs.isEmpty())
-        {
-            if (songPosn != songs.size() && songs.get(songPosn).getId().compareTo(id) != 0)
-            {
-                for (TrackData trackData : songs)
-                {
-                    if (trackData.getId().compareTo(id) == 0)
-                    {
-                        int index = songs.indexOf(trackData);
-                        songPosn = index;
-                    }
-                }
+    /**
+     * Play song pass the Track for the song you want to play
+     * Should only be used for the Base Adapter since we allow the user to TAP to play
+     * <p>
+     * We need to set the index based on the Track
+     *
+     * @param trackItem see {@link TrackData}
+     */
+    public void playSong(TrackItem trackItem) {
+
+        for (TrackItem item : songs) {
+
+            if (item.getId().equals(trackItem.getId())) {
+                indexManager.setIndex(songs.indexOf(item));
+                trackToPlay = item;
+                playSong();
+            }
+        }
+    }
+
+    /**
+     * Play song knows what song your on and should just work
+     */
+    public void playSong() {
+
+        if (!songs.isEmpty()) {
+
+            // If a song has not been initialized we must initialize
+            if (trackToPlay == null) {
+                //If trackToPlay is
+                setTrackToPlayWithCurrentIndex();
             }
 
-            previousSongPosn = songPosn;
-
-            this.startTime = startTime;
-            this.stopTime = stopTime;
+            this.startTime = trackToPlay.getStartTime2();
+            this.stopTime = trackToPlay.getStopTime3();
 
             player.reset();
 
             // Thumser crashed the app by setting the songPosn == songs.size()
-            if (songPosn == songs.size())
-            {
-                songPosn = 0;
-            } else
-            {
-                playSong = songs.get(songPosn);
+            if (indexManager.getIndex() == songs.size()) {
+                indexManager.setIndex(0);
             }
 
-            //get id
-            long currSong = playSong.getMediaId();
             //set uri
-            Uri trackUri = Uri.parse(playSong.getStream());
+            Uri trackUri = Uri.parse(trackToPlay.getStream());
 
-            try
-            {
+            try {
                 player.setDataSource(getApplicationContext(), trackUri);
-                data.clear();
-                data.putSerializable("id", playSong.getId());
-                data.putSerializable("boolean", true);
-                sendSoundIconVisible = handler.createMessage(sendSoundIconVisible, whatInteger.getSetSoundIconVisible(), data);
-                handler.sendMessage(sendSoundIconVisible);
-
-
-                setCurrentSong = handler.createMessage(setCurrentSong, whatInteger.getCurrentSong());
-                handler.sendMessage(setCurrentSong);
-
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 Log.e("MUSIC SERVICE", "Error setting data source", e);
             }
 
-            try
-            {
-                try
-                {
+            try {
+
+                try {
                     player.prepare();
-                } catch (IllegalStateException e)
-                {
-                    playSong(startTime, stopTime, id);
+                } catch (IllegalStateException e) {
+                    // If this excpetion happens we will just play the song again
+                    playSong();
                 }
-            } catch (IOException e)
-            {
+
+            } catch (IOException e) {
                 Log.e("Logged Issue: ", e.getMessage());
             }
 
         }
     }
 
-    public int getPosn()
-    {
+    public int getPosn() {
         return player.getCurrentPosition();
     }
 
-    public int getDur()
-    {
+    public int getDur() {
         return player.getDuration();
     }
 
-    public boolean isPlaying()
-    {
+    public boolean isPlaying() {
         return player.isPlaying();
     }
 
-    public boolean isReleased()
-    {
-        return mPlayerReleased;
-    }
-
-    public boolean isPaused()
-    {
+    public boolean isPaused() {
         return paused;
     }
 
-    public void pausePlayer()
-    {
+    public void pausePlayer() {
         player.pause();
         paused = true;
+        sendPostMessage(SoundIcon.SoundIconActions.PAUSE);
     }
 
-    public void resume()
-    {
+    public void resume() {
+
         paused = false;
-        player.seekTo(getPosn());
         player.start();
+        sendPostMessage(SoundIcon.SoundIconActions.RESUME);
     }
 
-    public void stopPlayer()
-    {
-        if (isPlaying())
-        {
+    public void stopPlayer() {
+
+        if (isPlaying()) {
             player.stop();
         }
 
         paused = false;
     }
 
-    public void stop(String id)
-    {
+    public void stop() {
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                player.stop();
+                sendPostMessage(SoundIcon.SoundIconActions.STOP);
+            }
+        });
+
         paused = false;
 
-        nonVisibleIconData.clear();
-        nonVisibleIconData.putSerializable("id", id);
-        player.stop();
-        sendSoundIconNonVisible = handler.createMessage(sendSoundIconNonVisible, whatInteger.getSetSoundIconNonVisible(), nonVisibleIconData);
-        handler.sendMessage(sendSoundIconNonVisible);
-
-        data.clear();
-        data.putString("NULL", "NULL");
-        setCurrentSong = handler.createMessage(setCurrentSong, whatInteger.getCurrentSong(), data);
-        handler.sendMessage(setCurrentSong);
+        notificationManager.cancelAll();
 
         stopThread = true;
-
     }
 
-    public void playPrev(int startTime, int stopTime, String id)
-    {
-        playSong(startTime, stopTime, id);
+    public void playPrev() {
+
+        indexManager.prev();
+        setTrackToPlayWithCurrentIndex();
+        playSong();
     }
 
-    public void playNext(int startTime, int stopTime, String id)
-    {
-        playSong(startTime, stopTime, id);
+    public void playNext() {
+
+        indexManager.next();
+        setTrackToPlayWithCurrentIndex();
+        playSong();
     }
 
-    public TrackData getCurrentSong()
-    {
+    public TrackItem getCurrentSong() {
 
-        if (songs != null && !songs.isEmpty())
-        {
-            if (songPosn != songs.size())
-                playSong = songs.get(songPosn);
-            else
-            {
-                playSong = songs.get(0);
-            }
+        if (songs != null && !songs.isEmpty()) {
+            trackToPlay = songs.get(indexManager.getIndex());
         }
 
-        return playSong;
+        return trackToPlay;
     }
 
-    public TrackData getPreviousSong()
-    {
-        if (!songs.isEmpty())
-        {
-            songPosn--;
+    public void checkForNextSongDuringPlay() {
 
-            if (songPosn == songs.size())
-            {
-                songPosn = 0;
-            } else if (songPosn > songs.size() - 1)
-            {
-                songPosn = 0;
-                playSong = songs.get(songPosn);
-            } else if (songPosn == 0)
-            {
-                playSong = songs.get(songPosn);
-            } else if (songPosn == -1)
-            {
-                songPosn = songs.size() - 1;
-                playSong = songs.get(songPosn);
-            } else
-            {
-                playSong = songs.get(songPosn);
-            }
-        }
+        if (indexManager.getIndex() != songs.size() - 1 && !(indexManager.getIndex() > songs.size())
+                && !(indexManager.getIndex() < 0)) {
+            playNext();
 
-        return playSong;
-    }
+        } else {
 
-    public TrackData getNextSong()
-    {
-
-        if (!songs.isEmpty())
-        {
-
-            songPosn++;
-
-            if (songPosn >= songs.size())
-            {
-                songPosn = 0;
-                playSong = songs.get(songPosn);
-            } else
-            {
-                playSong = songs.get(songPosn);
-            }
-        }
-
-        return playSong;
-    }
-
-    public void checkForNextSongDuringPlay()
-    {
-        if (previousSongPosn != songs.size() - 1)
-        {
-            if (!(songPosn > songs.size()) && !(songPosn < 0))
-            {
-                TrackData song = getNextSong();
-
-                if (songPosn != 0)
-                {
-                    playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
-                } else
-                {
-                    playSong(song.getStartTime2(), song.getStopTime3(), song.getId());
-                }
-            }
-        } else
-        {
-            if (SharedPreferencesUtil.getInstance().getRepeat(this))
-            {
-                TrackData song = getNextSong();
-
-                playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
-            } else
-            {
+            if (SharedPreferencesUtil.getInstance().getRepeat(getBaseContext())) {
+                playNext();
+            } else {
                 resetSongs();
             }
         }
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp)
-    {
+    public void onCompletion(MediaPlayer mp) {
 
     }
 
     @Override
-    public boolean onError(MediaPlayer mp, int what, int extra)
-    {
+    public boolean onError(MediaPlayer mp, int what, int extra) {
         return false;
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp)
-    {
+    public void onPrepared(MediaPlayer mp) {
+
         player.start();
         player.seekTo(startTime);
         stopThread = false;
 
+        sendPostMessage(SoundIcon.SoundIconActions.VISIBLE);
     }
 
     @Override
-    public void onSeekComplete(MediaPlayer mp)
-    {
-        updateMediaPlayerUIControls();
+    public void onSeekComplete(MediaPlayer mp) {
 
-        playerWatcher.execute(new Runnable()
-        {
+        playerWatcher.execute(new Runnable() {
+
             @Override
-            public void run()
-            {
-                int currentPosition = 0;
+            public void run() {
+
+                int currentPosition;
                 int staticTime = 0;
 
-                while (!stopThread)
-                {
-                    try
-                    {
+                while (!stopThread) {
+
+                    try {
                         Thread.sleep(1000);
                         currentPosition = getPosn();
-                    } catch (InterruptedException e)
-                    {
-                        return;
-                    } catch (Exception e)
-                    {
+                    } catch (InterruptedException e) {
                         return;
                     }
 
-                    final int total = getDur();
-
-                    if (staticTime != 0 && staticTime == currentPosition)
-                    {
+                    if (staticTime != 0 && staticTime == currentPosition) {
                         currentPosition = stopTime;
                     }
 
-                    if (currentPosition >= stopTime)
-                    {
-                        player.seekTo(total);
-
-                        if (songPosn <= songs.size() - 1)
-                        {
-                            checkForNextSongDuringPlay();
-                        }
+                    if (currentPosition >= stopTime) {
+                        checkForNextSongDuringPlay();
                     }
 
-                    staticTime = currentPosition;
+                    if (!paused) {
+                        staticTime = currentPosition;
+                    }
                 }
             }
-
         });
     }
 
-    public void resetSongs()
-    {
-        stop(playSong.getId());
+    public void resetSongs() {
 
-        if (songPosn != 0 && !(songPosn < 0))
-        {
+        if (indexManager.getIndex() != 0 && !(indexManager.getIndex() < 0)) {
             if (!songs.isEmpty())
-                songPosn = 0;
+                indexManager.setIndex(0);
+            setTrackToPlayWithCurrentIndex();
         }
+
+        stop();
     }
 
-    public void updateMediaPlayerUIControls()
-    {
-        updateControlsMsg = handler.createMessage(updateControlsMsg, whatInteger.getUpdatePlayControls());
-        handler.sendMessage(updateControlsMsg);
+    public void setTrackToPlayWithCurrentIndex() {
+        trackToPlay = songs.get(indexManager.getIndex());
     }
 
-    public void setHandler(MessageHandler handler)
-    {
-        this.handler = handler;
+    public MusicPlayer getMusicPlayer() {
+        return player;
     }
 
-    public ArrayList<TrackData> getSongs()
-    {
-        return songs;
+    private void sendPostMessage(SoundIcon.SoundIconActions actions) {
+        bus.post(new SoundIcon(actions, trackToPlay));
     }
 
     @Nullable
     @Override
-    public IBinder onBind(Intent intent)
-    {
+    public IBinder onBind(Intent intent) {
         return musicBind;
     }
 
     @Override
-    public boolean onUnbind(Intent intent)
-    {
+    public boolean onUnbind(Intent intent) {
         stopPlayer();
         player.release();
         return false;

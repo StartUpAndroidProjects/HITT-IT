@@ -1,4 +1,4 @@
-package com.wolffincdevelopment.hiit_it;
+package com.wolffincdevelopment.hiit_it.util;
 
 /**
  * Created by kylewolff on 6/4/2016.
@@ -6,25 +6,26 @@ package com.wolffincdevelopment.hiit_it;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+
+import com.wolffincdevelopment.hiit_it.R;
 
 /**
  * @author Gabriele Porcelli
  *
  *         Example.
- *         FirstTimePreference prefFirstTime = new FirstTimePreference(getApplicationContext());
+ *         FirstTimePreferenceUtil prefFirstTime = new FirstTimePreferenceUtil(getApplicationContext());
  *         if (prefFirstTime.runTheFirstNTimes("myKey" , 3)) {
  *         Toast.makeText(this,"Test myKey & coutdown: "+ prefFirstTime.getCountDown("myKey"),Toast.LENGTH_LONG).show(); }
  */
 
-public class FirstTimePreference {
+public class FirstTimePreferenceUtil {
 
     private static final int INT_ERROR = -1;
     public static final String FIRST_TIME_PREFERENCES_KEY = "FirstKeyPreferences";
     private final SharedPreferences firstTimePreferences;
     private Context context;
 
-    public FirstTimePreference(Context context) {
+    public FirstTimePreferenceUtil(Context context) {
 
         this.context = context;
 

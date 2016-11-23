@@ -178,7 +178,7 @@ public class AddTrackActivity extends AppCompatActivity {
 
         if(item.getItemId() == android.R.id.home) {
             setResult(RESULT_CANCELED);
-            finish();
+            supportFinishAfterTransition();
         }
 
         return true;

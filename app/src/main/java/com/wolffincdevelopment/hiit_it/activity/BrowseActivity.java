@@ -39,8 +39,7 @@ import butterknife.OnClick;
 /**
  * Created by kylewolff on 6/4/2016.
  */
-public class BrowseActivity extends AppCompatActivity implements BrowseTrackListener
-{
+public class BrowseActivity extends AppCompatActivity implements BrowseTrackListener {
     private ContentResolver cr;
     private Cursor cur;
     private BrowseListAdapter adapter;
@@ -67,8 +66,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
     RecyclerView listView;
 
     @OnClick(R.id.desc_no_permissions)
-    protected void onDescPressed()
-    {
+    protected void onDescPressed() {
         applicationSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         applicationSettingsIntent.setData(uri);
@@ -90,8 +88,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
     }
 
     @Override
-    protected void onCreate(Bundle savedInstances)
-    {
+    protected void onCreate(Bundle savedInstances) {
         super.onCreate(savedInstances);
 
         setContentView(R.layout.browse_layout);
@@ -102,8 +99,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
         permissionUtil = new PermissionUtil();
 
-        if(permissionUtil.checkReadStoragePermission(this))
-        {
+        if (permissionUtil.checkReadStoragePermission(this)) {
             findMusicFiles();
         }
 
@@ -111,8 +107,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
     }
 
     @Override
-    protected void onResume()
-    {
+    protected void onResume() {
         super.onResume();
 
         View v = findViewById(R.id.browse_layout);
@@ -120,28 +115,19 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         final Activity activity = this;
 
-        if(requestCode == 0)
-        {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            {
-                    findMusicFiles();
-            }
-            else
-            {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE))
-                {
+        if (requestCode == 0) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                findMusicFiles();
+            } else {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     showDialogOK("Read Storage Permission is required for this app. Try again?",
-                            new DialogInterface.OnClickListener()
-                            {
+                            new DialogInterface.OnClickListener() {
                                 @Override
-                                public void onClick(DialogInterface dialog, int which)
-                                {
-                                    switch (which)
-                                    {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    switch (which) {
                                         case DialogInterface.BUTTON_POSITIVE:
                                             permissionUtil.checkReadStoragePermission(activity);
 
@@ -154,29 +140,23 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
                                     }
                                 }
                             });
-                }
-                else
-                {
-                   showSettingsPrompt();
+                } else {
+                    showSettingsPrompt();
                 }
             }
-        }
-        else
-        {
+        } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
-    private void showSettingsPrompt()
-    {
+    private void showSettingsPrompt() {
         snackbar.show();
         titleNoMedia.setVisibility(View.VISIBLE);
         descNoPermissions.setVisibility(View.VISIBLE);
     }
 
-    private void showDialogOK(String message, DialogInterface.OnClickListener okListener)
-    {
-        DialogBuilder dialogBuilder = new DialogBuilder(message,this);
+    private void showDialogOK(String message, DialogInterface.OnClickListener okListener) {
+        DialogBuilder dialogBuilder = new DialogBuilder(message, this);
         dialogBuilder.setButtons("Ok", "Cancel", okListener);
         dialogBuilder.create();
         dialogBuilder.show();
@@ -197,25 +177,22 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
         int count = 0;
 
-        if(cur != null)
-        {
+        if (cur != null) {
             count = cur.getCount();
 
-            if(count > 0)
-            {
-                while(cur.moveToNext())
-                {
+            if (count > 0) {
+                while (cur.moveToNext()) {
                     artist = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                     title = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.TITLE));
                     duration = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media.DURATION));
                     stream = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.DATA));
                     mediaId = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media._ID));
 
-                    if(artist.contains("unknown")) {
+                    if (artist.contains("unknown")) {
                         artist = "Unknown";
                     }
 
-                    if(duration <= 3540000) {
+                    if (duration <= 3540000) {
                         items.add(new TrackItem(new TrackData(artist, title, stream, duration, mediaId)));
                     }
                 }
@@ -232,9 +209,9 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
             }
         });
 
-        if(items.isEmpty()) {
+        if (items.isEmpty()) {
             titleNoMedia.setVisibility(View.VISIBLE);
-        }else {
+        } else {
             titleNoMedia.setVisibility(View.INVISIBLE);
         }
 

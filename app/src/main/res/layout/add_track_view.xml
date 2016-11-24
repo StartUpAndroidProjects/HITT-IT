@@ -13,24 +13,6 @@
         card_view:cardCornerRadius="4dp"
         card_view:cardElevation="6dp">
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginLeft="46dp"
-            android:layout_marginRight="46dp"
-            android:layout_marginTop="132dp"
-            android:background="@drawable/background_circle" >
-
-            <ImageButton
-                android:id="@+id/play"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_play_circle_outline_white"
-                android:background="@drawable/round_button_ripple"/>
-
-        </FrameLayout>
-
         <RadioButton
             android:id="@+id/radio_song_button"
             android:layout_width="wrap_content"

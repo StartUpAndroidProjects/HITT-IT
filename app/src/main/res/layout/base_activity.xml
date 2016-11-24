@@ -26,6 +26,7 @@
         android:layout_marginRight="@dimen/fab_mini_margin_right"
         android:layout_gravity="bottom|end"
         android:src="@drawable/ic_spotify_icon"
+        android:visibility="gone"
         app:backgroundTint="#1ED760"/>
 
     <android.support.design.widget.FloatingActionButton

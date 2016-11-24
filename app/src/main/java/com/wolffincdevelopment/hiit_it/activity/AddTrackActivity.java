@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import com.wolffincdevelopment.hiit_it.HiitItIntents;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.TrackDBAdapter;
 import com.wolffincdevelopment.hiit_it.model.TrackData;
@@ -177,6 +178,7 @@ public class AddTrackActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == BROWSE_ACTIVITY_RESULT_CODE) {
+
             if (resultCode == RESULT_OK) {
                 item = data.getParcelableExtra("item");
                 TrackItem trackItem = new TrackItem(item);
@@ -206,8 +208,7 @@ public class AddTrackActivity extends AppCompatActivity {
     }
 
     private void startNextActivity() {
-        Intent browseActivity = new Intent(AddTrackActivity.this, BrowseActivity.class);
-        startActivityForResult(browseActivity, BROWSE_ACTIVITY_RESULT_CODE);
+        startActivityForResult(HiitItIntents.createBrowseIntent(this), BROWSE_ACTIVITY_RESULT_CODE);
     }
 
     public void init() {
@@ -243,7 +244,6 @@ public class AddTrackActivity extends AppCompatActivity {
                     s.clear();
 
                     s.append(added + ":" + added2);
-
 
                 }
 

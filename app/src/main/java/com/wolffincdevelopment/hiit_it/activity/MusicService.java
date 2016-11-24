@@ -41,7 +41,7 @@ import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 public class MusicService extends Service implements MusicPlayer.OnCompletionListener, MusicPlayer.OnPreparedListener,
         MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener {
 
-    private final IBinder musicBind = new MusicBinder();
+    private final int NOTIFICATION_ID = 1;
 
     private Intent playPauseIntent, prevIntent, nextIntent, notificationIntent;
     private PendingIntent playPausePenIntent, prevPenIntent, nextPenIntent, pendingNotificationIntent;
@@ -50,33 +50,32 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     private NotificationManager notificationManager;
     private Notification notification;
 
-    private int startTime, stopTime;
+    private int startTime;
+    private int stopTime;
 
     private boolean paused;
     private boolean stopThread;
 
-    //media player
     private MusicPlayer player;
-    private final int NOTIFICATION_ID = 1;
 
-    //song list
+
     private ArrayList<TrackItem> songs;
 
     private TrackItem trackToPlay;
-
-    private Executor playerWatcher;
-
-    private Handler handler;
 
     private MusicIndexManager indexManager;
 
     private HiitBus bus;
 
+    // Thread handlers
+    private Executor playerWatcher;
+    private Handler handler;
+
+    private final IBinder musicBind = new MusicBinder();
+
     public void onCreate() {
-        //create the service
         super.onCreate();
 
-        //create player
         player = new MusicPlayer();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -144,6 +143,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         notification.bigContentView = contentView;
         notification.contentIntent = pendingNotificationIntent;
         notification.flags = Notification.FLAG_ONGOING_EVENT;
+        notification.flags = Notification.FLAG_AUTO_CANCEL;
 
         notificationManager.notify(NOTIFICATION_ID, notification);
     }
@@ -163,20 +163,28 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PLAY_PAUSE) == 0) {
+
+            if (!isPaused() && isPlaying()) {
+                pausePlayer();
+            } else {
+                resume();
+            }
+
             contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+
         } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_NEXT) == 0) {
-            //nextSong();
+
+            playNext();
 
             if (getCurrentSong() != null) {
-                //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
 
         } else if (intent != null && intent.getAction() != null && intent.getAction().compareTo(Constant.ACTION_PREVIOUS) == 0) {
-            //prevSong();
+
+            playPrev();
 
             if (getCurrentSong() != null) {
-                //playNext(song.getStartTime2(), song.getStopTime3(), song.getId());
                 contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
             }
         }
@@ -192,12 +200,15 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
             contentView.setImageViewResource(R.id.notPlayPause, R.drawable.ic_play_circle_outline_white);
         }
 
+        contentView.setTextViewText(R.id.track_static, getCurrentSong().getSongAndArtist());
+
         if (notification != null) {
             notificationManager.notify(NOTIFICATION_ID, notification);
         }
     }
 
-    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem, boolean reordedTracks) {
+    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem, boolean reorderTracks) {
+
         boolean currentSong = false;
         boolean previousSong = false;
         boolean nextSong = false;
@@ -215,25 +226,30 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         this.songs = songs;
         indexManager.setTrackListLength(songs.size());
 
-        if (action != null && !songs.isEmpty() && reordedTracks) {
+        if (action != null && reorderTracks) {
 
             switch (action) {
+
                 case "Move Up":
 
-                    if (indexManager.getIndex() != 0 && currentSong && indexManager.getIndex() != songs.size()) {
-                        indexManager.prev();
-                    } else if (nextSong && indexManager.getIndex() != songs.size()) {
-                        indexManager.next();
+                    if (!songs.isEmpty()) {
+                        if (indexManager.getIndex() != 0 && currentSong && indexManager.getIndex() != songs.size()) {
+                            indexManager.prev();
+                        } else if (nextSong && indexManager.getIndex() != songs.size()) {
+                            indexManager.next();
+                        }
                     }
 
                     break;
 
                 case "Move Down":
 
-                    if (currentSong && indexManager.getIndex() != songs.size()) {
-                        indexManager.next();
-                    } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
-                        indexManager.prev();
+                    if (!songs.isEmpty()) {
+                        if (currentSong && indexManager.getIndex() != songs.size()) {
+                            indexManager.next();
+                        } else if (indexManager.getIndex() != 0 && previousSong && indexManager.getIndex() != songs.size()) {
+                            indexManager.prev();
+                        }
                     }
 
                     break;
@@ -244,6 +260,8 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
                         if (indexManager.getIndex() == songs.size() && !songs.isEmpty()) {
                             indexManager.prev();
+                        } else if(songs.isEmpty()) {
+                            stopPlayer();
                         }
 
                     } else if (previousSong && indexManager.getIndex() != 0) {
@@ -290,12 +308,11 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
             // If a song has not been initialized we must initialize
             if (trackToPlay == null) {
-                //If trackToPlay is
                 setTrackToPlayWithCurrentIndex();
             }
 
-            this.startTime = trackToPlay.getStartTime2();
-            this.stopTime = trackToPlay.getStopTime3();
+            this.startTime = trackToPlay.getStartTimeInMilliseconds();
+            this.stopTime = trackToPlay.getStopTimeInMilliseconds();
 
             player.reset();
 
@@ -333,10 +350,6 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         return player.getCurrentPosition();
     }
 
-    public int getDur() {
-        return player.getDuration();
-    }
-
     public boolean isPlaying() {
         return player.isPlaying();
     }
@@ -352,9 +365,8 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     }
 
     public void resume() {
-
-        paused = false;
         player.start();
+        paused = false;
         sendPostMessage(SoundIcon.SoundIconActions.RESUME);
     }
 
@@ -368,6 +380,8 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     }
 
     public void stop() {
+
+        // Need to stop the player and update UI on the main thread
 
         handler.post(new Runnable() {
             @Override
@@ -491,7 +505,10 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     }
 
     public void setTrackToPlayWithCurrentIndex() {
-        trackToPlay = songs.get(indexManager.getIndex());
+
+        if (!songs.isEmpty()) {
+            trackToPlay = songs.get(indexManager.getIndex());
+        }
     }
 
     public MusicPlayer getMusicPlayer() {
@@ -500,6 +517,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
     private void sendPostMessage(SoundIcon.SoundIconActions actions) {
         bus.post(new SoundIcon(actions, trackToPlay));
+        updateNotificationView();
     }
 
     @Nullable

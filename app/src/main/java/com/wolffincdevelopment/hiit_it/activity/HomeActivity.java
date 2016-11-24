@@ -1,9 +1,6 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.ProgressDialog;
@@ -21,7 +18,6 @@ import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.transition.Transition;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -87,7 +83,6 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     private boolean musicBound;
     private boolean isFABOpen;
     private boolean reorderTracks;
-    private int resultCode;
 
     private Animation rotateForward, rotateBackward;
 
@@ -222,14 +217,16 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     @OnClick(R.id.fab_browse)
     protected void onFabBrowsePressed(View view) {
 
-
-        if(BuildSupportUtil.isLollipopAndUp()) {
+        if (BuildSupportUtil.isLollipopAndUp()) {
 
             ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this);
-            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE , options.toBundle());
+            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE, options.toBundle());
         } else {
             startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
         }
+
+        // Close the fab menu once we select one of the options
+        closeFABMenu();
     }
 
     @OnClick(R.id.fab_spotify)
@@ -241,9 +238,9 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     protected void onFabPressed() {
         prefFirstTime.runCheckFirstTime(getString(R.string.firstTimeFabPressed));
 
-        if(!isFABOpen){
+        if (!isFABOpen) {
             showFABMenu();
-        }else {
+        } else {
             closeFABMenu();
         }
     }
@@ -274,7 +271,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         reorderTracks = trackDBAdapter.reorderItem(trackItem, upOrDown);
         trackDBAdapter.close();
 
-        fetchSongList(upOrDown, trackItem);
+        fetchSongList(upOrDown, trackItem, reorderTracks);
     }
 
     public void deleteTrack(TrackItem trackItem) {
@@ -284,7 +281,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
         reorderTracks = true;
 
-        fetchSongList(null, trackItem);
+        fetchSongList("Delete", trackItem, reorderTracks);
     }
 
     private void checkForStorageDeletion() {
@@ -327,7 +324,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
      * @param action
      * @param item
      */
-    public void fetchSongList(String action, TrackItem item) {
+    public void fetchSongList(String action, TrackItem item, boolean reorderTracks) {
 
         trackDBAdapter.open();
         trackDataList = trackDBAdapter.getAllTracks();
@@ -343,7 +340,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
 
                 if (musicService.getCurrentSong().getOrderId() == trackItem.getOrderId()) {
 
-                    if(musicService.isPaused()) {
+                    if (musicService.isPaused()) {
                         trackItem.setIsPlaying(false);
                     } else {
                         trackItem.setIsPlaying(true);
@@ -362,10 +359,10 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     }
 
     /**
-     * Overrided call
+     * Override call
      */
     public void fetchSongList() {
-        fetchSongList(null, null);
+        fetchSongList(null, null, false);
     }
 
     private void checkFirstTimePreference() {
@@ -448,7 +445,7 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     @Override
     public void onMenuItemSelected(TrackItem trackItem, MenuItem menuItem) {
 
-        if(menuItem.getTitle().toString().compareTo(getResources().getString(R.string.delete)) != 0) {
+        if (menuItem.getTitle().toString().compareTo(getResources().getString(R.string.delete)) != 0) {
             reorderTrack(trackItem, menuItem.getTitle().toString());
         } else {
             deleteTrack(trackItem);

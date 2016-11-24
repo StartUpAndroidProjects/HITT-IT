@@ -67,35 +67,12 @@ public class TrackItem extends Item {
         return trackData != null ? trackData.duration : 0;
     }
 
-    public int getStartTime2() {
+    public int getStartTimeInMilliseconds() {
         return trackData != null ? convertTime(trackData.startTime) : 0;
     }
 
-    public int getStopTime3() {
+    public int getStopTimeInMilliseconds() {
         return trackData != null ? convertTime(trackData.stopTime) : 0;
-    }
-
-    private int convertTime(String time) {
-
-        String minutes;
-        String seconds;
-        long timeLong, secMilli, minMilli, minutesLong, secondsLong = 0;
-
-        seconds = time.substring(3,5);
-        secondsLong = Long.parseLong(seconds);
-        secMilli = TimeUnit.SECONDS.toMillis(secondsLong);
-
-        minutes = time.substring(0,2);
-        minutesLong = Long.parseLong(minutes);
-        minMilli = TimeUnit.MINUTES.toMillis(minutesLong);
-
-        timeLong = minMilli + secMilli;
-
-        if(timeLong < Integer.MIN_VALUE || timeLong > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException(timeLong + "cannot cast Long value as int");
-        }
-
-        return (int) timeLong;
     }
 
     public TrackData getTrackData() {
@@ -120,6 +97,29 @@ public class TrackItem extends Item {
 
     public boolean getIsPlaying() {
         return isPlaying;
+    }
+
+    private int convertTime(String time) {
+
+        String minutes;
+        String seconds;
+        long timeLong, secMilli, minMilli, minutesLong, secondsLong = 0;
+
+        seconds = time.substring(3,5);
+        secondsLong = Long.parseLong(seconds);
+        secMilli = TimeUnit.SECONDS.toMillis(secondsLong);
+
+        minutes = time.substring(0,2);
+        minutesLong = Long.parseLong(minutes);
+        minMilli = TimeUnit.MINUTES.toMillis(minutesLong);
+
+        timeLong = minMilli + secMilli;
+
+        if(timeLong < Integer.MIN_VALUE || timeLong > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(timeLong + "cannot cast Long value as int");
+        }
+
+        return (int) timeLong;
     }
 
     @Override

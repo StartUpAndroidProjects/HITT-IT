@@ -5,57 +5,56 @@
     android:background="@color/colorPrimary">
 
     <TextView
+        android:id="@+id/track_static"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/track_static"
-        android:text="Track:"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:maxLength="10"
-        android:maxLines="1"
-        android:ellipsize="marquee"
         android:layout_marginStart="70dp"
         android:layout_marginTop="@dimen/notification_margin_top"
+        android:ellipsize="marquee"
         android:marqueeRepeatLimit="marquee_forever"
+        android:maxLength="10"
+        android:maxLines="1"
         android:scrollHorizontally="true"
-        />
+        android:text="Track:"
+        android:textColor="@color/white"
+        android:textSize="18sp" />
 
-    <ImageButton android:id="@+id/notPrev"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@+id/notPrev"
         android:layout_width="wrap_content"
-        android:src="@drawable/ic_skip_previous_white_48dp"
-        android:background="?android:selectableItemBackground"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="190dp"
-        android:layout_marginTop= "@dimen/notification_margin_top"
+        android:layout_marginTop="@dimen/notification_margin_top"
+        android:background="@drawable/round_button_ripple"
+        android:src="@drawable/ic_skip_previous_white_48dp" />
 
-        />
-
-    <ImageButton android:id="@+id/notPlayPause"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@+id/notPlayPause"
         android:layout_width="wrap_content"
-        android:src="@drawable/ic_play_circle_outline_white"
-        android:background="?android:selectableItemBackground"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="240dp"
-        android:layout_marginTop = "@dimen/notification_margin_top"
-        />
+        android:layout_marginTop="@dimen/notification_margin_top"
+        android:background="@drawable/round_button_ripple"
+        android:src="@drawable/ic_play_circle_outline_white" />
 
-    <ImageButton android:id="@+id/notNext"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@+id/notNext"
         android:layout_width="wrap_content"
-        android:src="@drawable/ic_skip_next_white_48dp"
-        android:background="?android:selectableItemBackground"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="290dp"
-        android:layout_marginTop = "@dimen/notification_margin_top"
+        android:layout_marginTop="@dimen/notification_margin_top"
+        android:background="@drawable/round_button_ripple"
+        android:src="@drawable/ic_skip_next_white_48dp"
 
         />
 
     <ImageView
+        android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/imageView"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="15dp"
-        android:src="@drawable/headphones"/>
+        android:src="@drawable/headphones" />
 
 
 </RelativeLayout>

@@ -24,7 +24,7 @@ android {
     defaultConfig {
         applicationId "com.wolffincdevelopment.hiit_it"
         minSdkVersion 19
-        targetSdkVersion 23
+        targetSdkVersion 25
         versionCode 1
         versionName "1"
         vectorDrawables.useSupportLibrary = true

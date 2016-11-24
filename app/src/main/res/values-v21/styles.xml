@@ -7,7 +7,7 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowEnableSplitTouch">false</item>
         <item name="android:splitMotionEvents">false</item>
-        <item name="android:windowSharedElementEnterTransition">@transition/shared_element_enter</item>
-        <item name="android:windowSharedElementReturnTransition">@transition/shared_element_return</item>
+        <!--<item name="android:windowSharedElementEnterTransition">@transition/shared_element_enter</item>-->
+        <!--<item name="android:windowSharedElementReturnTransition">@transition/shared_element_return</item>-->
     </style>
 </resources>

@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="4dp"
         android:layout_above="@+id/frame_controller"
-        android:background="@drawable/drop_shadow"/>
+        android:background="@drawable/reverse_drop_shadow"/>
 
     <FrameLayout
         android:id="@+id/frame_controller"

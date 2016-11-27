@@ -581,6 +581,10 @@ public class AddTrackActivity extends BaseMusicActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
+
+        if(BuildSupportUtil.isLollipopAndUp()) {
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPreviewHeader));
+        }
     }
 
     private void showAddTrack() {
@@ -593,6 +597,10 @@ public class AddTrackActivity extends BaseMusicActivity {
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().show();
+        }
+
+        if(BuildSupportUtil.isLollipopAndUp()) {
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
         }
     }
 

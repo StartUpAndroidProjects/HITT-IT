@@ -22,4 +22,6 @@
 
     <string name="off">OFF</string>
     <string name="on">ON</string>
+
+    <string name="timer">00:00:00</string>
 </resources>

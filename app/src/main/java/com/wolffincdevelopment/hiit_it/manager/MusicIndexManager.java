@@ -1,7 +1,5 @@
 package com.wolffincdevelopment.hiit_it.manager;
 
-import com.wolffincdevelopment.hiit_it.activity.MusicService;
-
 /**
  * Created by Kyle Wolff on 11/2/16.
  */

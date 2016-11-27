@@ -11,4 +11,5 @@
     <color name="white_26">#BFFFFFFF</color>
     <color name="round_button_cb">#80535252</color>
     <color name="fab_shadow">#6b000000</color>
+    <color name="fab_tint">#ffffff</color>
 </resources>

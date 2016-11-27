@@ -347,8 +347,11 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     }
 
     public int getPosn() {
-        return player.getCurrentPosition();
-    }
+        try {
+            return player.getCurrentPosition();
+        }catch (IllegalStateException e) {
+            return trackToPlay.getStopTimeInMilliseconds();
+        }    }
 
     public boolean isPlaying() {
         return player.isPlaying();
@@ -372,7 +375,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
     public void stopPlayer() {
 
-        if (isPlaying()) {
+        if (isPlaying() || isPaused()) {
             player.stop();
         }
 
@@ -530,6 +533,6 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     public boolean onUnbind(Intent intent) {
         stopPlayer();
         player.release();
-        return false;
+        return super.onUnbind(intent);
     }
 }

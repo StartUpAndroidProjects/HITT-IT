@@ -1,6 +1,9 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.ProgressDialog;
@@ -16,19 +19,27 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.squareup.otto.Subscribe;
 import com.wolffincdevelopment.hiit_it.DividerItemDecoration;
@@ -52,11 +63,12 @@ import java.util.ArrayList;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnTouch;
 
 /**
  * Create by Kyle Wolff
  */
-public class HomeActivity extends AppCompatActivity implements MediaControllerView.MediaControllerListener,
+public class HomeActivity extends BaseMusicActivity implements MediaControllerView.MediaControllerListener,
         TrackListener, MenuListener {
 
     public static final int ADD_ACTIVITY_RESULT_CODE = 232;
@@ -71,8 +83,6 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
     private ArrayList<TrackItem> trackDataList;
 
     private FirstTimePreferenceUtil prefFirstTime;
-
-    private MusicService musicService;
 
     private MusicService.MusicBinder binder;
 
@@ -214,19 +224,18 @@ public class HomeActivity extends AppCompatActivity implements MediaControllerVi
         }
     }
 
-    @OnClick(R.id.fab_browse)
-    protected void onFabBrowsePressed(View view) {
+    @OnTouch(R.id.fab_browse)
+    protected boolean onFabBrowsePressed(View view, MotionEvent motionEvent) {
 
         if (BuildSupportUtil.isLollipopAndUp()) {
 
-            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this);
-            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE, options.toBundle());
+            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
+
         } else {
             startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
         }
 
-        // Close the fab menu once we select one of the options
-        closeFABMenu();
+        return false;
     }
 
     @OnClick(R.id.fab_spotify)

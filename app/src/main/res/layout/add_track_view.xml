@@ -1,17 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/add_track_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
+    <LinearLayout
+        android:id="@+id/preview_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/song_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:layout_gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:text="Shutdown - "/>
+
+        <TextView
+            android:id="@+id/timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clickable="false"
+            android:textColor="@color/white"
+            android:text="@string/timer"
+            android:textSize="68sp"/>
+
+        <ImageButton
+            android:id="@+id/pausePlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:layout_gravity="center"
+            android:background="@drawable/round_button_ripple"
+            android:visibility="gone"
+            android:src="@drawable/ic_pause_circle_outline_white_48dp"/>
+
+    </LinearLayout>
+
     <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/card_view"
         android:layout_width="fill_parent"
         android:layout_height="250dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="8dp"
         card_view:cardCornerRadius="4dp"
-        card_view:cardElevation="6dp">
+        card_view:cardElevation="6dp" >
 
         <RadioButton
             android:id="@+id/radio_song_button"
@@ -40,6 +86,15 @@
             android:textColor="@android:color/black"
             android:textColorHint="@color/greyText" />
 
+        <ImageButton
+            android:id="@+id/previewButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="40dp"
+            android:background="@drawable/background_circle"
+            android:src="@drawable/ic_play_circle_outline_white"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,7 +118,7 @@
             android:id="@+id/start_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="40dp"
+            android:layout_marginLeft="26dp"
             android:layout_marginTop="164dp"
             android:ems="4"
             android:hint="@string/zero_time"
@@ -78,7 +133,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginRight="40dp"
+            android:layout_marginRight="52dp"
             android:layout_marginTop="164dp"
             android:ems="4"
             android:hint="@string/zero_time"
@@ -105,6 +160,7 @@
         android:textSize="20sp" />
 
     <View
+        android:id="@+id/add_track_button_view"
         android:layout_width="130dp"
         android:layout_height="4dp"
         android:layout_below="@id/add_track_button"

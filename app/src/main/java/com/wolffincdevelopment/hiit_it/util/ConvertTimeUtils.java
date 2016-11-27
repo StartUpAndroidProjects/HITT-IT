@@ -10,7 +10,7 @@ public class ConvertTimeUtils {
 
     public static String timeWithColon;
     public static DecimalFormat dfTwoPlaces = new DecimalFormat("#0.00");
-    public static DecimalFormat dfNoPlaces = new DecimalFormat("##");
+    public static DecimalFormat dfNoPlaces = new DecimalFormat("00");
 
     public ConvertTimeUtils()
     {

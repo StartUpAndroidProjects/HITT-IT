@@ -29,6 +29,8 @@
         </activity>
 
         <service android:name=".activity.MusicService" />
+        <service android:name=".activity.PreviewMusicService" />
+
         <activity
             android:name=".activity.AddTrackActivity"
             android:label="@string/add_track"

@@ -1,6 +1,8 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -11,17 +13,29 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.wolffincdevelopment.hiit_it.HiitItIntents;
 import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
 import com.wolffincdevelopment.hiit_it.model.TrackData;
+import com.wolffincdevelopment.hiit_it.util.ActionBarUtils;
+import com.wolffincdevelopment.hiit_it.util.AnimationUtil;
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.adapter.BrowseListAdapter;
 import com.wolffincdevelopment.hiit_it.R;
@@ -35,6 +49,8 @@ import java.util.Comparator;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+
+import static android.icu.text.DateTimePatternGenerator.PatternInfo.OK;
 
 /**
  * Created by kylewolff on 6/4/2016.
@@ -56,6 +72,9 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
     public PermissionUtil permissionUtil;
 
+    @BindView(R.id.browse_layout)
+    RelativeLayout browseLayout;
+
     @BindView(R.id.title_no_media)
     TextView titleNoMedia;
 
@@ -75,24 +94,34 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
         finish();
     }
 
-    protected void onItemClick(int position) {
-        item = items.get(position).getTrackData();
-
-        Intent intent = new Intent();
-
-        if (item != null) {
-            intent.putExtra("item", item);
-            setResult(RESULT_OK, intent);
-            finish();
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstances) {
         super.onCreate(savedInstances);
+        overridePendingTransition(R.anim.do_not_move, R.anim.do_not_move);
 
         setContentView(R.layout.browse_layout);
         ButterKnife.bind(this);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(toolbar);
+
+        ActionBarUtils.showUpButton(this);
+
+        if (savedInstances == null) {
+
+            browseLayout.setVisibility(View.INVISIBLE);
+
+            ViewTreeObserver viewTreeObserver = browseLayout.getViewTreeObserver();
+            if (viewTreeObserver.isAlive()) {
+                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        AnimationUtil.animateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
+                        browseLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+            }
+        }
 
         cr = getContentResolver();
         items = new ArrayList<>();
@@ -112,6 +141,22 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
         View v = findViewById(R.id.browse_layout);
         snackbar = Snackbar.make(v, "Cannot access media content without permission", Snackbar.LENGTH_LONG);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(item.getItemId() == android.R.id.home) {
+            AnimationUtil.reverseAnimateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        AnimationUtil.reverseAnimateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
+        super.onBackPressed();
     }
 
     @Override
@@ -224,12 +269,14 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
         TrackData data = item.getTrackData();
 
-        Intent intent = new Intent();
-
         if (data != null) {
-            intent.putExtra("item", data);
-            setResult(RESULT_OK, intent);
-            finish();
+
+            if(getIntent().getBooleanExtra(HiitItIntents.EXTRA_FINISH_ACTIVITY, false)) {
+                setResult(RESULT_OK, new Intent().putExtra(HiitItIntents.EXTRA_ITEM, data));
+                finish();
+            } else {
+                startActivity(HiitItIntents.createAddTrackIntent(this, data));
+            }
         }
     }
 }

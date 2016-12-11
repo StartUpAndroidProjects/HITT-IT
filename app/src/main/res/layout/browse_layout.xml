@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/browse_layout">
 
+    <include
+        android:id="@id/app_bar"
+        layout="@layout/default_toolbar"/>
+
     <TextView
+        android:layout_below="@id/app_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -16,8 +22,16 @@
         android:id="@+id/title_no_media"
         android:visibility="invisible"/>
 
+    <View
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_centerInParent="true"
+        android:visibility="invisible"
+        android:transitionName="browse_transition" />
+
 
     <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/app_bar"
         android:id="@+id/browse_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
@@ -33,6 +47,7 @@
         android:id="@+id/desc_no_permissions"
         android:visibility="invisible"
         android:clickable="true">
+
     </TextView>
 
 

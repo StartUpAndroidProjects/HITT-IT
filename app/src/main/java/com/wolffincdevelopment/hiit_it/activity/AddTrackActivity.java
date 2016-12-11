@@ -27,6 +27,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -50,7 +51,9 @@ import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import static com.wolffincdevelopment.hiit_it.HiitItIntents.EXTRA_ITEM;
 import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.ADDED_TRACK;
+import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.BROWSE_ACTIVITY_RESULT_CODE;
 
 /*
  * Add Track Activity Created by Kyle Wolff
@@ -59,11 +62,10 @@ import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.ADDED_TRACK;
  */
 public class AddTrackActivity extends BaseMusicActivity {
 
-    public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
+    public static final int ADD_ACTIVITY_RESULT_CODE = 232;
 
     private InputMethodManager inputManager;
     private TrackDBAdapter trackDBAdapter;
-    private TrackData item;
     private TrackItem trackItem;
     public TextWatcher textWatcher;
 
@@ -78,6 +80,7 @@ public class AddTrackActivity extends BaseMusicActivity {
     private boolean startTimeSucceeded;
     private boolean inPreviewMode;
     private boolean retrievedXY;
+    public boolean finish;
 
     private int previewButtonX;
     private int previewButtonY;
@@ -92,6 +95,9 @@ public class AddTrackActivity extends BaseMusicActivity {
 
     @BindView(R.id.add_track_button_view)
     View buttonShadow;
+
+    @BindView(R.id.preview_container)
+    LinearLayout previewContainer;
 
     @BindView(R.id.previewButton)
     ImageButton previewButton;
@@ -180,7 +186,7 @@ public class AddTrackActivity extends BaseMusicActivity {
         if (focused) {
             // Hides the keyboard
             InputManagerUtil.dismissKeyboard(browseTextField, inputManager);
-            startNextActivity();
+            startActivityForResult(HiitItIntents.createBrowseIntent(this, true), BROWSE_ACTIVITY_RESULT_CODE);
         }
     }
 
@@ -213,6 +219,12 @@ public class AddTrackActivity extends BaseMusicActivity {
 
         setContentView(R.layout.activity_add_track);
         ButterKnife.bind(this);
+
+        if (getIntent().hasExtra(EXTRA_ITEM)) {
+
+            TrackData item = getIntent().getParcelableExtra(EXTRA_ITEM);
+            initNewTrackItem(item);
+        }
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
         inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -265,28 +277,34 @@ public class AddTrackActivity extends BaseMusicActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == BROWSE_ACTIVITY_RESULT_CODE) {
+        if (requestCode == ADD_ACTIVITY_RESULT_CODE) {
 
             if (resultCode == RESULT_OK) {
-                item = data.getParcelableExtra("item");
-                trackItem = new TrackItem(item);
+
+                TrackData item = data.getParcelableExtra(EXTRA_ITEM);
+                initNewTrackItem(item);
+            }
+        }
+    }
+
+    private void initNewTrackItem(TrackData data) {
+
+        trackItem = new TrackItem(data);
 
                 /*
                  * Greater than 1 hour in milliseconds
                  */
-                if (trackItem.getDuration() >= 3600000) {
+        if (trackItem.getDuration() >= 3600000) {
 
-                } else {
+        } else {
 
-                    browseTextField.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
-                    stopTime.setText(trackItem.getStopTimeWithColon());
-                    startTime.setText("00:00");
+            browseTextField.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
+            stopTime.setText(trackItem.getStopTimeWithColon());
+            startTime.setText("00:00");
 
-                    STOP_TIME_MAX = ConvertTimeUtils.convertMilliSecToStringWithColon(trackItem.getDuration());
+            STOP_TIME_MAX = ConvertTimeUtils.convertMilliSecToStringWithColon(trackItem.getDuration());
 
-                    checkFields();
-                }
-            }
+            checkFields();
         }
     }
 
@@ -312,10 +330,6 @@ public class AddTrackActivity extends BaseMusicActivity {
     private void setResultAddTrackFinish() {
         setResult(ADDED_TRACK);
         supportFinishAfterTransition();
-    }
-
-    private void startNextActivity() {
-        startActivityForResult(HiitItIntents.createBrowseIntent(this), BROWSE_ACTIVITY_RESULT_CODE);
     }
 
     public void init() {
@@ -533,6 +547,8 @@ public class AddTrackActivity extends BaseMusicActivity {
     @TargetApi(21)
     private void animateCircularReveal(final ViewGroup viewRoot, @ColorRes int color, int x, int y) {
 
+        viewRoot.setVisibility(View.VISIBLE);
+
         float finalRadius = (float) Math.hypot(viewRoot.getWidth(), viewRoot.getHeight());
 
         Animator anim = ViewAnimationUtils.createCircularReveal(viewRoot, x, y, 0, finalRadius);
@@ -557,14 +573,24 @@ public class AddTrackActivity extends BaseMusicActivity {
         anim.start();
 
         anim.addListener(new AnimatorListenerAdapter() {
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+
+                addTrackContainer.animate().alpha(1).setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        super.onAnimationStart(animation);
+                        addTrackContainer.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-
-                @ColorRes int color = android.R.color.background_light;
-
-                viewRoot.setBackgroundColor(ContextCompat.getColor(context, color));
-                showAddTrack();
+                viewRoot.setVisibility(View.GONE);
             }
         });
 
@@ -588,16 +614,6 @@ public class AddTrackActivity extends BaseMusicActivity {
     }
 
     private void showAddTrack() {
-
-        cardView.setVisibility(View.VISIBLE);
-        addTrackButton.setVisibility(View.VISIBLE);
-        buttonShadow.setVisibility(View.VISIBLE);
-
-        playActionButton.setVisibility(View.GONE);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().show();
-        }
 
         if(BuildSupportUtil.isLollipopAndUp()) {
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
@@ -627,31 +643,34 @@ public class AddTrackActivity extends BaseMusicActivity {
         // Default to zeros every time we start a new song
         timer.setText("00:00:00");
 
-        if (item != null) {
+        animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
 
-            checkStartAndStopTimeDurations();
 
-            item.startTime = startTime.getText().toString();
-            item.stopTime = stopTime.getText().toString();
-
-            // Show start time asap
-            timer.setText("00:"  + item.startTime);
-
-            if (musicBound) {
-
-                inPreviewMode = true;
-                hideAddTrack();
-                animateCircularReveal(addTrackContainer, R.color.colorAccent, x, y);
-
-                songAndArtist.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
-                previewMusicService.playSong(trackItem);
-
-                startTimer();
-            }
-
-        } else {
-            Snackbar.make(addTrackContainer, "An issue occurred try to replay song...", Snackbar.LENGTH_SHORT).show();
-        }
+//        if (item != null) {
+//
+//            checkStartAndStopTimeDurations();
+//
+//            item.startTime = startTime.getText().toString();
+//            item.stopTime = stopTime.getText().toString();
+//
+//            // Show start time asap
+//            timer.setText("00:"  + item.startTime);
+//
+//            if (musicBound) {
+//
+//                inPreviewMode = true;
+//                //hideAddTrack();
+//                animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
+//
+//                songAndArtist.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
+//                previewMusicService.playSong(trackItem);
+//
+//                startTimer();
+//            }
+//
+//        } else {
+//            Snackbar.make(addTrackContainer, "An issue occurred try to replay song...", Snackbar.LENGTH_SHORT).show();
+//        }
     }
 
     private void startTimer() {
@@ -690,9 +709,16 @@ public class AddTrackActivity extends BaseMusicActivity {
         inPreviewMode = false;
 
         if (BuildSupportUtil.isLollipopAndUp()) {
-            animateReverseCircularReveal(addTrackContainer, R.color.colorAccent, previewButtonX, previewButtonY);
+            animateReverseCircularReveal(previewContainer, R.color.colorAccent, previewButtonX, previewButtonY);
         } else {
-            showAddTrack();
+
+            previewContainer.animate().alpha(0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    previewContainer.setVisibility(View.GONE);
+                }
+            });
         }
 
         if(addOne) {

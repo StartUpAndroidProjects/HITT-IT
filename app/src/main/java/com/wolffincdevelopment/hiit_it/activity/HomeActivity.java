@@ -23,12 +23,14 @@ import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.ArcMotion;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -71,7 +73,7 @@ import butterknife.OnTouch;
 public class HomeActivity extends BaseMusicActivity implements MediaControllerView.MediaControllerListener,
         TrackListener, MenuListener {
 
-    public static final int ADD_ACTIVITY_RESULT_CODE = 232;
+    public static final int BROWSE_ACTIVITY_RESULT_CODE = 232;
     public static final int ADDED_TRACK = 233;
 
     private Intent playIntent;
@@ -132,8 +134,6 @@ public class HomeActivity extends BaseMusicActivity implements MediaControllerVi
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        // Hides the default title for the activity so we can use our custom one
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -229,10 +229,11 @@ public class HomeActivity extends BaseMusicActivity implements MediaControllerVi
 
         if (BuildSupportUtil.isLollipopAndUp()) {
 
-            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(this, fabBrowse, fabBrowse.getTransitionName());
+            startActivityForResult(HiitItIntents.addSingleTopFlag(HiitItIntents.createBrowseIntent(this, false)), BROWSE_ACTIVITY_RESULT_CODE, options.toBundle());
 
         } else {
-            startActivityForResult(HiitItIntents.createAddTrackIntent(this), ADD_ACTIVITY_RESULT_CODE);
+            startActivityForResult(HiitItIntents.addSingleTopFlag(HiitItIntents.createBrowseIntent(this, false)), BROWSE_ACTIVITY_RESULT_CODE);
         }
 
         return false;

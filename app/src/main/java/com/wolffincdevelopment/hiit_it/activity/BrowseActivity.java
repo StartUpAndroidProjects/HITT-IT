@@ -1,8 +1,7 @@
+/*
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -13,21 +12,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewAnimationUtils;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -36,6 +29,7 @@ import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
 import com.wolffincdevelopment.hiit_it.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.ActionBarUtils;
 import com.wolffincdevelopment.hiit_it.util.AnimationUtil;
+import com.wolffincdevelopment.hiit_it.util.BuildSupportUtil;
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.adapter.BrowseListAdapter;
 import com.wolffincdevelopment.hiit_it.R;
@@ -50,11 +44,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-import static android.icu.text.DateTimePatternGenerator.PatternInfo.OK;
-
+*/
 /**
  * Created by kylewolff on 6/4/2016.
- */
+ *//*
+
 public class BrowseActivity extends AppCompatActivity implements BrowseTrackListener {
     private ContentResolver cr;
     private Cursor cur;
@@ -97,7 +91,6 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
     @Override
     protected void onCreate(Bundle savedInstances) {
         super.onCreate(savedInstances);
-        overridePendingTransition(R.anim.do_not_move, R.anim.do_not_move);
 
         setContentView(R.layout.browse_layout);
         ButterKnife.bind(this);
@@ -106,22 +99,6 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
         setSupportActionBar(toolbar);
 
         ActionBarUtils.showUpButton(this);
-
-        if (savedInstances == null) {
-
-            browseLayout.setVisibility(View.INVISIBLE);
-
-            ViewTreeObserver viewTreeObserver = browseLayout.getViewTreeObserver();
-            if (viewTreeObserver.isAlive()) {
-                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        AnimationUtil.animateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
-                        browseLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
-            }
-        }
 
         cr = getContentResolver();
         items = new ArrayList<>();
@@ -133,6 +110,17 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
         }
 
         listView.setLayoutManager(new LinearLayoutManager(this));
+
+        browseLayout.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View view, int i, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+
+                if(BuildSupportUtil.isLollipopAndUp()) {
+                    AnimationUtil.animateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
+                }
+            }
+        });
+
     }
 
     @Override
@@ -155,7 +143,6 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
 
     @Override
     public void onBackPressed() {
-        AnimationUtil.reverseAnimateCircularReveal(browseLayout, android.R.color.background_light, browseLayout.getContext());
         super.onBackPressed();
     }
 
@@ -275,8 +262,9 @@ public class BrowseActivity extends AppCompatActivity implements BrowseTrackList
                 setResult(RESULT_OK, new Intent().putExtra(HiitItIntents.EXTRA_ITEM, data));
                 finish();
             } else {
-                startActivity(HiitItIntents.createAddTrackIntent(this, data));
+                //startActivity(HiitItIntents.createAddTrackIntent(this, data));
             }
         }
     }
 }
+*/

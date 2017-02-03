@@ -1,3 +1,4 @@
+/*
 package com.wolffincdevelopment.hiit_it.adapter;
 
 import android.content.Context;
@@ -10,7 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.wolffincdevelopment.hiit_it.BR;
 import com.wolffincdevelopment.hiit_it.IconizedMenu;
 import com.wolffincdevelopment.hiit_it.databinding.BaseActivityRowBinding;
 import com.wolffincdevelopment.hiit_it.listeners.FooterListener;
@@ -25,9 +25,11 @@ import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+*/
 /**
  * Created by Kyle Wolff on 11/11/16.
- */
+ *//*
+
 
 public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.HomeAdapterViewHolder> implements FooterListener {
 
@@ -175,3 +177,4 @@ public class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.HomeAdapterVie
         }
     }
 }
+*/

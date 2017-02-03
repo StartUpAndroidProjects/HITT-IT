@@ -10,8 +10,9 @@ public class MusicPlayer extends MediaPlayer {
 
     private MediaControllerView mediaControllerView;
 
-    public MusicPlayer() {
+    public MusicPlayer(MediaControllerView mediaControllerView) {
         super();
+        this.mediaControllerView = mediaControllerView;
     }
 
     @Override
@@ -31,9 +32,5 @@ public class MusicPlayer extends MediaPlayer {
         super.stop();
         mediaControllerView.updatePlayButton(true, true);
 
-    }
-
-    public void setMediaControllerView(MediaControllerView mediaControllerView) {
-        this.mediaControllerView = mediaControllerView;
     }
 }

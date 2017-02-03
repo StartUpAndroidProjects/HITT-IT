@@ -8,49 +8,24 @@ import android.widget.LinearLayout;
 
 import com.wolffincdevelopment.hiit_it.R;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
 /**
  * Created by Kyle Wolff on 11/1/16.
  */
 
 public class MediaControllerView extends LinearLayout implements View.OnClickListener {
 
-    @BindView(R.id.play)
-    ImageButton playButton;
-
-    @BindView(R.id.next)
-    ImageButton nextButton;
-
-    @BindView(R.id.prev)
-    ImageButton prevButton;
-
     private MediaControllerListener listener;
 
-    @Override
-    public void onClick(View v) {
-
-      if(v.equals(playButton)) {
-          if(listener != null) {
-              listener.onPlay();
-          }
-      } else if(v.equals(nextButton)) {
-          if(listener != null) {
-              listener.onNext();
-          }
-      } else if(v.equals(prevButton)) {
-          if(listener != null) {
-              listener.onPrev();
-          }
-      }
-
-    }
+    private ImageButton playButton;
+    private ImageButton nextButton;
+    private ImageButton prevButton;
 
     public interface MediaControllerListener {
 
         void onPlay();
+
         void onNext();
+
         void onPrev();
     }
 
@@ -61,22 +36,42 @@ public class MediaControllerView extends LinearLayout implements View.OnClickLis
     public MediaControllerView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        inflate( context, R.layout.media_controller, this );
-        ButterKnife.bind( this );
+        inflate(context, R.layout.view_media_controller, this);
+
+        playButton = (ImageButton) findViewById(R.id.play);
+        nextButton = (ImageButton) findViewById(R.id.next);
+        prevButton = (ImageButton) findViewById(R.id.prev);
 
         initListener();
-
     }
 
-    public void initListener() {
+    @Override
+    public void onClick(View v) {
 
-        playButton.setOnClickListener(this);
-        nextButton.setOnClickListener(this);
-        prevButton.setOnClickListener(this);
+        if (v.equals(playButton)) {
+            if (listener != null) {
+                listener.onPlay();
+            }
+        } else if (v.equals(nextButton)) {
+            if (listener != null) {
+                listener.onNext();
+            }
+        } else if (v.equals(prevButton)) {
+            if (listener != null) {
+                listener.onPrev();
+            }
+        }
+
     }
 
     public void setListener(MediaControllerListener listener) {
-         this.listener = listener;
+        this.listener = listener;
+    }
+
+    public void initListener() {
+        playButton.setOnClickListener(this);
+        nextButton.setOnClickListener(this);
+        prevButton.setOnClickListener(this);
     }
 
     public void updatePlayButton(boolean paused, boolean stopped) {

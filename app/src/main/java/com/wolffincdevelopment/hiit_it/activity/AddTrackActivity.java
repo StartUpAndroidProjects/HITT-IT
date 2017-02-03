@@ -1,3 +1,4 @@
+/*
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.animation.Animator;
@@ -48,18 +49,17 @@ import com.wolffincdevelopment.hiit_it.util.InputManagerUtil;
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
 import static com.wolffincdevelopment.hiit_it.HiitItIntents.EXTRA_ITEM;
 import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.ADDED_TRACK;
 import static com.wolffincdevelopment.hiit_it.activity.HomeActivity.BROWSE_ACTIVITY_RESULT_CODE;
 
+*/
 /*
  * Add Track Activity Created by Kyle Wolff
  *
  * This is the activity for adding music
- */
+ *//*
+
 public class AddTrackActivity extends BaseMusicActivity {
 
     public static final int ADD_ACTIVITY_RESULT_CODE = 232;
@@ -82,6 +82,7 @@ public class AddTrackActivity extends BaseMusicActivity {
     private boolean retrievedXY;
     public boolean finish;
 
+    private int[] previewButtonCoordinates = new int[2];
     private int previewButtonX;
     private int previewButtonY;
 
@@ -135,18 +136,15 @@ public class AddTrackActivity extends BaseMusicActivity {
     @OnTouch(R.id.previewButton)
     protected boolean onTouch(View view, MotionEvent motionEvent) {
 
-        // Only retrieve the coordinates one time so the animation looks correct
+
         if(!retrievedXY) {
-
             retrievedXY = true;
-
-            previewButtonX = (int) motionEvent.getRawX();
-            previewButtonY = (int) motionEvent.getRawY();
+            previewButton.getLocationOnScreen(previewButtonCoordinates);
         }
 
         // On touch gets called three times setting this check fires playSong once
         if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-            playSong(previewButtonX, previewButtonY);
+            playSong(previewButtonCoordinates[0] + 14, previewButtonCoordinates[1]);
         }
 
         return false;
@@ -228,7 +226,6 @@ public class AddTrackActivity extends BaseMusicActivity {
 
         trackDBAdapter = new TrackDBAdapter(getBaseContext());
         inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-
     }
 
     @Override
@@ -291,9 +288,11 @@ public class AddTrackActivity extends BaseMusicActivity {
 
         trackItem = new TrackItem(data);
 
-                /*
+                */
+/*
                  * Greater than 1 hour in milliseconds
-                 */
+                 *//*
+
         if (trackItem.getDuration() >= 3600000) {
 
         } else {
@@ -338,10 +337,12 @@ public class AddTrackActivity extends BaseMusicActivity {
             previewMusicService.setMusicService(musicService);
         }
 
-        /*
+        */
+/*
          * This textWatcher is what handles the logic for the colon
          * We do not want the user to be able to select the colon so we will auto populate for them
-         */
+         *//*
+
         textWatcher = new TextWatcher() {
             private int delete;
 
@@ -643,34 +644,33 @@ public class AddTrackActivity extends BaseMusicActivity {
         // Default to zeros every time we start a new song
         timer.setText("00:00:00");
 
-        animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
+        //animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
 
+        if (trackItem != null) {
 
-//        if (item != null) {
-//
-//            checkStartAndStopTimeDurations();
-//
-//            item.startTime = startTime.getText().toString();
-//            item.stopTime = stopTime.getText().toString();
-//
-//            // Show start time asap
-//            timer.setText("00:"  + item.startTime);
-//
-//            if (musicBound) {
-//
-//                inPreviewMode = true;
-//                //hideAddTrack();
-//                animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
-//
-//                songAndArtist.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
-//                previewMusicService.playSong(trackItem);
-//
-//                startTimer();
-//            }
-//
-//        } else {
-//            Snackbar.make(addTrackContainer, "An issue occurred try to replay song...", Snackbar.LENGTH_SHORT).show();
-//        }
+            checkStartAndStopTimeDurations();
+
+            trackItem.getTrackData().startTime = startTime.getText().toString();
+            trackItem.getTrackData().stopTime = stopTime.getText().toString();
+
+            // Show start time asap
+            timer.setText("00:"  + trackItem.getStartTime());
+
+            if (musicBound) {
+
+                inPreviewMode = true;
+                //hideAddTrack();
+               animateCircularReveal(previewContainer, R.color.colorAccent, x, y);
+
+                songAndArtist.setText(trackItem.getSongName() + " - " + trackItem.getArtistName());
+                previewMusicService.playSong(trackItem);
+
+                startTimer();
+            }
+
+        } else {
+            Snackbar.make(addTrackContainer, "An issue occurred try to replay song...", Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     private void startTimer() {
@@ -691,8 +691,7 @@ public class AddTrackActivity extends BaseMusicActivity {
                 timer.setText("00:" + ConvertTimeUtils.convertMilliSecToStringWithColon(millis));
 
                 if(millis >= trackItem.getStopTimeInMilliseconds()) {
-                    countDownTimer.cancel();
-                    returnToAddTrack(true);
+                    cancelCounter();
                 }
             }
 
@@ -704,12 +703,12 @@ public class AddTrackActivity extends BaseMusicActivity {
         }.start();
     }
 
-    private void returnToAddTrack(boolean addOne) {
+    private void returnToAddTrack() {
 
         inPreviewMode = false;
 
         if (BuildSupportUtil.isLollipopAndUp()) {
-            animateReverseCircularReveal(previewContainer, R.color.colorAccent, previewButtonX, previewButtonY);
+            animateReverseCircularReveal(previewContainer, R.color.colorAccent, previewButtonCoordinates[0] + 14, previewButtonCoordinates[1]);
         } else {
 
             previewContainer.animate().alpha(0).setListener(new AnimatorListenerAdapter() {
@@ -721,12 +720,6 @@ public class AddTrackActivity extends BaseMusicActivity {
             });
         }
 
-        if(addOne) {
-            stopTime.setText(ConvertTimeUtils.convertMilliSecToStringWithColon(previewMusicService.getCurrentPosition() + 1));
-        } else {
-            stopTime.setText(ConvertTimeUtils.convertMilliSecToStringWithColon(previewMusicService.getCurrentPosition()));
-        }
-
         previewMusicService.stopPlayer();
     }
 
@@ -735,10 +728,10 @@ public class AddTrackActivity extends BaseMusicActivity {
         countDownTimer.cancel();
         countDownTimer = null;
 
-        returnToAddTrack(true);
+        returnToAddTrack();
 
         if (previewMusicService != null) {
             previewMusicService.stopPlayer();
         }
     }
-}
+}*/

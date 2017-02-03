@@ -12,7 +12,7 @@ public class MusicIndexManager {
     private int previousIndex;
     private int trackListLength;
 
-    private MusicIndexManager(){};
+    private MusicIndexManager(){}
 
     public static MusicIndexManager getInstance() {
 

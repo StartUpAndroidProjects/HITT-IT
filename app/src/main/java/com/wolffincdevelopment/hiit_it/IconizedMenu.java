@@ -38,7 +38,7 @@ public class IconizedMenu implements MenuBuilder.Callback, MenuPresenter.Callbac
          *
          * @param menu The PopupMenu that was dismissed.
          */
-        public void onDismiss(IconizedMenu menu);
+        void onDismiss(IconizedMenu menu);
     }
 
     /**
@@ -185,7 +185,7 @@ public class IconizedMenu implements MenuBuilder.Callback, MenuPresenter.Callbac
          * @param item {@link MenuItem} that was clicked
          * @return <code>true</code> if the event was handled, <code>false</code> otherwise.
          */
-        public boolean onMenuItemClick(MenuItem item);
+        boolean onMenuItemClick(MenuItem item);
     }
 
 

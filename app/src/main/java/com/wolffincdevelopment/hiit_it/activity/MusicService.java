@@ -1,3 +1,4 @@
+/*
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.app.Notification;
@@ -33,11 +34,12 @@ import java.util.concurrent.Executors;
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
-import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 
+*/
 /**
  * Created by kylewolff on 6/5/2016.
- */
+ *//*
+
 public class MusicService extends Service implements MusicPlayer.OnCompletionListener, MusicPlayer.OnPreparedListener,
         MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener {
 
@@ -260,7 +262,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
 
                         if (indexManager.getIndex() == songs.size() && !songs.isEmpty()) {
                             indexManager.prev();
-                        } else if(songs.isEmpty()) {
+                        } else if (songs.isEmpty()) {
                             stopPlayer();
                         }
 
@@ -279,14 +281,16 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
-    /**
+    */
+/**
      * Play song pass the Track for the song you want to play
      * Should only be used for the Base Adapter since we allow the user to TAP to play
      * <p>
      * We need to set the index based on the Track
      *
      * @param trackItem see {@link TrackData}
-     */
+     *//*
+
     public void playSong(TrackItem trackItem) {
 
         for (TrackItem item : songs) {
@@ -299,9 +303,11 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
-    /**
+    */
+/**
      * Play song knows what song your on and should just work
-     */
+     *//*
+
     public void playSong() {
 
         if (!songs.isEmpty()) {
@@ -349,9 +355,10 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     public int getPosn() {
         try {
             return player.getCurrentPosition();
-        }catch (IllegalStateException e) {
+        } catch (IllegalStateException e) {
             return trackToPlay.getStopTimeInMilliseconds();
-        }    }
+        }
+    }
 
     public boolean isPlaying() {
         return player.isPlaying();
@@ -536,3 +543,4 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         return super.onUnbind(intent);
     }
 }
+*/

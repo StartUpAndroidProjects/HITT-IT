@@ -1,3 +1,4 @@
+/*
 package com.wolffincdevelopment.hiit_it.adapter;
 
 import android.databinding.DataBindingUtil;
@@ -7,19 +8,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.wolffincdevelopment.hiit_it.BR;
+import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.listeners.BrowseTrackListener;
 import com.wolffincdevelopment.hiit_it.viewmodel.HeaderItem;
 import com.wolffincdevelopment.hiit_it.viewmodel.Item;
-import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
+*/
 /**
  * Created by kylewolff on 6/4/2016.
- */
+ *//*
+
 public class BrowseListAdapter extends RecyclerView.Adapter<BrowseListAdapter.BaseAdapterViewHolder> {
 
     private ArrayList<Item> itemArrayList;
@@ -118,3 +120,4 @@ public class BrowseListAdapter extends RecyclerView.Adapter<BrowseListAdapter.Ba
     }
 }
 
+*/

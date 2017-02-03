@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout>
+
+    <data>
+        <import type="android.view.View" />
+        <import type="com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem" />
+        <import type="com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener" />
+        <variable name="item" type="HomeListItem" />
+        <variable name="listener" type="HomeListItemListener"/>
+    </data>
+
+    <android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/track_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:id="@+id/track_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="60dp"
+            android:layout_marginStart="60dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/track_with_colon"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toLeftOf="parent" />
+
+        <TextView
+            android:id="@+id/track_song_textview"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginStart="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Maggots"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toRightOf="@+id/track_text_view"
+            tools:text="Hello" />
+
+        <TextView
+            android:id="@+id/start_time_placeholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="60dp"
+            android:layout_marginStart="60dp"
+            android:layout_marginTop="14dp"
+            android:text="@string/start_with_colon"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/track_text_view" />
+
+        <TextView
+            android:id="@+id/start_time_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="14dp"
+            android:text="00:02"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toRightOf="@+id/start_time_placeholder"
+            app:layout_constraintTop_toBottomOf="@+id/track_text_view" />
+
+        <TextView
+            android:id="@+id/stop_time_placeholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="44dp"
+            android:layout_marginStart="44dp"
+            android:layout_marginTop="14dp"
+            android:text="@string/stop_with_colon"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toRightOf="@+id/start_time_textview"
+            app:layout_constraintTop_toBottomOf="@+id/track_text_view" />
+
+        <TextView
+            android:id="@+id/stop_time_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="14dp"
+            android:text="12:20"
+            android:textColor="@android:color/black"
+            android:textSize="@dimen/base_activity_textSize"
+            app:layout_constraintLeft_toRightOf="@+id/stop_time_placeholder"
+            app:layout_constraintTop_toBottomOf="@+id/track_text_view" />
+        
+        <ImageButton
+            android:id="@+id/options_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="?android:selectableItemBackground"
+            android:onClick="showPopUp"
+            android:src="@drawable/ic_more_vert_black_48dp"
+            app:layout_constraintRight_toRightOf="parent" />
+
+        <ImageView
+            android:id="@+id/sound_icon_imageview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:selectableItemBackground"
+            android:src="@drawable/ic_volume_up_deep_orange_48dp" />
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:background="@drawable/divider"
+            android:layout_marginTop="4dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/stop_time_text_view"/>
+
+    </android.support.constraint.ConstraintLayout>
+
+</layout>

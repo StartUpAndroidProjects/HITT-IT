@@ -7,7 +7,7 @@
 
     <include
         android:id="@id/app_bar"
-        layout="@layout/default_toolbar"/>
+        layout="@layout/default_toolbar" />
 
     <TextView
         android:layout_below="@id/app_bar"
@@ -22,19 +22,11 @@
         android:id="@+id/title_no_media"
         android:visibility="invisible"/>
 
-    <View
-        android:layout_width="10dp"
-        android:layout_height="10dp"
-        android:layout_centerInParent="true"
-        android:visibility="invisible"
-        android:transitionName="browse_transition" />
-
-
     <android.support.v7.widget.RecyclerView
         android:layout_below="@id/app_bar"
         android:id="@+id/browse_list_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <TextView
         android:layout_width="wrap_content"

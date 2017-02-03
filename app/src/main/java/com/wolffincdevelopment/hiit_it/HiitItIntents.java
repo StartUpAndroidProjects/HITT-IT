@@ -3,9 +3,6 @@ package com.wolffincdevelopment.hiit_it;
 import android.content.Context;
 import android.content.Intent;
 
-import com.wolffincdevelopment.hiit_it.activity.AddTrackActivity;
-import com.wolffincdevelopment.hiit_it.activity.BrowseActivity;
-import com.wolffincdevelopment.hiit_it.model.TrackData;
 
 /**
  * Created by Kyle Wolff on 11/22/16.
@@ -20,7 +17,7 @@ public class HiitItIntents {
         return intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     }
 
-    public static Intent createAddTrackIntent(Context context) {
+    /*public static Intent createAddTrackIntent(Context context) {
         return new Intent(context, AddTrackActivity.class);
     }
 
@@ -29,10 +26,10 @@ public class HiitItIntents {
         intent.putExtra(EXTRA_ITEM, trackData);
         return intent;
     }
-
-    public static Intent createBrowseIntent(Context context, boolean finish) {
+*/
+    /*public static Intent createBrowseIntent(Context context, boolean finish) {
         Intent intent = new Intent(context, BrowseActivity.class);
         intent.putExtra(EXTRA_FINISH_ACTIVITY, finish);
         return intent;
-    }
+    }*/
 }

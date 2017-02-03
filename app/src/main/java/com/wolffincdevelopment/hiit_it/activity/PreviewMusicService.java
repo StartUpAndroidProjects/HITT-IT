@@ -1,3 +1,4 @@
+/*
 package com.wolffincdevelopment.hiit_it.activity;
 
 import android.app.Service;
@@ -15,9 +16,11 @@ import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 
 import java.io.IOException;
 
+*/
 /**
  * Created by Kyle Wolff on 11/26/16.
- */
+ *//*
+
 
 public class PreviewMusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
@@ -127,10 +130,12 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
         player.release();
     }
 
-    /**
+    */
+/**
      *
      * @return position of song in milliseconds
-     */
+     *//*
+
     public int getCurrentPosition() {
 
         try {
@@ -178,3 +183,4 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
         return super.onUnbind(intent);
     }
 }
+*/

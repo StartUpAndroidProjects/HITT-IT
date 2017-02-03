@@ -169,7 +169,7 @@
             android:id="@+id/pausePlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="36dp"
+            android:layout_marginTop="12dp"
             android:layout_gravity="center"
             android:background="@drawable/round_button_ripple"
             android:src="@drawable/ic_pause_circle_outline_white_48dp"/>

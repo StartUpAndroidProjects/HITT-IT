@@ -2,7 +2,6 @@ package com.wolffincdevelopment.hiit_it;
 
 import android.app.Application;
 
-import com.karumi.dexter.Dexter;
 import com.crashlytics.android.Crashlytics;
 import io.fabric.sdk.android.Fabric;
 
@@ -19,6 +18,5 @@ public class HIITITApplication extends Application
 	{
 		super.onCreate();
 		Fabric.with(this, new Crashlytics());
-		Dexter.initialize(getApplicationContext());
 	}
 }

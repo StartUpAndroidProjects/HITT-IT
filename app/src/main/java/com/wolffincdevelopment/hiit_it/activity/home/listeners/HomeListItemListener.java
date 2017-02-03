@@ -1,5 +1,7 @@
 package com.wolffincdevelopment.hiit_it.activity.home.listeners;
 
+import android.view.View;
+
 import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
 
 /**
@@ -8,5 +10,5 @@ import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
 
 public interface HomeListItemListener {
     void onItemClicked(HomeListItem listItem);
-    void onOptionsClicked(HomeListItem listItem);
+    void onOptionsClicked(View view, HomeListItem listItem);
 }

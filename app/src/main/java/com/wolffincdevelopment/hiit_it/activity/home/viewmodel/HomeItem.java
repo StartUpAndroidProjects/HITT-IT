@@ -2,6 +2,7 @@ package com.wolffincdevelopment.hiit_it.activity.home.viewmodel;
 
 import android.content.Context;
 import android.databinding.Bindable;
+import android.databinding.ViewDataBinding;
 import android.util.Log;
 import android.view.View;
 
@@ -12,6 +13,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wolffincdevelopment.hiit_it.BaseViewModel;
+import com.wolffincdevelopment.hiit_it.FireBaseHelper;
 import com.wolffincdevelopment.hiit_it.LifeCycle;
 import com.wolffincdevelopment.hiit_it.RxJavaBus;
 import com.wolffincdevelopment.hiit_it.TrackPlayEvent;
@@ -30,34 +32,35 @@ import java.util.Map;
 public class HomeItem extends BaseViewModel implements HomeListItemListener {
 
     private UserManager userManager;
+    private FireBaseHelper fireBaseHelper;
+
     private Context context;
     private RxJavaBus rxJavaBus;
     private List<TrackData> trackDataList;
     private String key;
     private String privateUserKey;
 
-    public HomeItem(Context context, UserManager userManager, RxJavaBus rxJavaBus) {
+    public HomeItem(Context context, UserManager userManager, RxJavaBus rxJavaBus, FireBaseHelper fireBaseHelper) {
         super();
 
         this.userManager = userManager;
         this.context = context;
         this.rxJavaBus = rxJavaBus;
+        this.fireBaseHelper = fireBaseHelper;
 
         trackDataList = new ArrayList<>();
-
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-
-        TrackData trackData = new TrackData(1001, "Song", "Artist", "Stop Time", "Stop Time", "Stream", 1111, 4400, 1);
-
-        key = databaseReference.push().getKey();
-
-        databaseReference.child("tracks").child(key).setValue(trackData);
     }
 
     public interface HomeItemCallback extends LifeCycle.LoadingView {
         void onDataReady(List<TrackData> trackDataList);
+
         void onFabMenuClicked();
+
         void onBrowseClicked();
+
+        void onOptionsClicked(View view, HomeListItem homeListItem);
+
+        void onItemClicked();
     }
 
     @Override
@@ -68,13 +71,14 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener {
     @Override
     protected void refreshData() {
 
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-        databaseReference.child("tracks").addValueEventListener(new ValueEventListener() {
+        // This will get called
+        fireBaseHelper.getTrackKeyChild().addValueEventListener(new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                TrackData trackData;
+                // Empty list for the new items
+                trackDataList.clear();
 
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 
@@ -111,15 +115,24 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener {
 
     @Override
     public void onItemClicked(HomeListItem listItem) {
-        //rxJavaBus.send(new TrackPlayEvent(listItem.isPlaying(), listItem.getId()));
+        if (hasViewCallback()) {
+            getViewCallback().onItemClicked();
+        }
     }
 
     @Override
-    public void onOptionsClicked(HomeListItem listItem) {
-
+    public void onOptionsClicked(View view, HomeListItem listItem) {
+        if (hasViewCallback()) {
+            getViewCallback().onOptionsClicked(view, listItem);
+        }
     }
 
     public void onBrowseClicked() {
+
+        TrackData trackData = new TrackData(1001, "Song", "Artist", "Stop Time", "Stop Time", "Stream", 1111, 4400, 1);
+
+        fireBaseHelper.setValue(fireBaseHelper.getRandomKey(), trackData);
+
         if (hasViewCallback()) {
             getViewCallback().onBrowseClicked();
         }

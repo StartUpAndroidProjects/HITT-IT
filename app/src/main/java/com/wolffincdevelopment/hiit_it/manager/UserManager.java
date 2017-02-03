@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 public class UserManager {
 
     private static final String PREF_USER_NAME = "user_name";
+    private static final String PREF_USER_KEY = "user_key";
     private static final String PREF_HAS_SPOTIFY_ACCOUNT = "has_spotify_account";
     private static final String PREF_HAS_SEEN_ADD_TRACK_IMAGE = "has_seen_ad_track_image";
 
@@ -27,6 +28,22 @@ public class UserManager {
         }
 
         return userManager;
+    }
+
+    /**
+     * Set FireBase User Key
+     * @param userKey
+     */
+    public void setUserKey(String userKey) {
+        prefManager.apply(PREF_USER_KEY, userKey);
+    }
+
+    /**
+     * Get the FireBase User Key
+     * @return the user key {@link String}
+     */
+    public String getPrefUserKey() {
+        return prefManager.getString(PREF_USER_KEY, null);
     }
 
     public void setSpotifyUserName(String userName) {

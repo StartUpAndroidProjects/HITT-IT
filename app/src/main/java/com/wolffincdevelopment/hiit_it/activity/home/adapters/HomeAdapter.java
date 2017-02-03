@@ -8,6 +8,7 @@ import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.RxJavaBus;
 import com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener;
 import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
+import com.wolffincdevelopment.hiit_it.databinding.ViewHomeListItemBinding;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.BaseDataBindingAdapter;
 import com.wolffincdevelopment.hiit_it.util.DataBoundViewHolder;
@@ -26,9 +27,10 @@ public class HomeAdapter extends BaseDataBindingAdapter {
 
     private Context context;
 
-    public HomeAdapter(Context context) {
+    public HomeAdapter(Context context, HomeListItemListener listener) {
 
         this.context = context;
+        this.listener = listener;
         homeListItems = new ArrayList<>();
     }
 
@@ -48,10 +50,13 @@ public class HomeAdapter extends BaseDataBindingAdapter {
     protected void bindItem(DataBoundViewHolder holder, int position, List payloads) {
 
         ViewDataBinding binding = holder.binding;
+        ViewHomeListItemBinding itemBinding = (ViewHomeListItemBinding) holder.binding;
 
         if (binding != null) {
             binding.setVariable(BR.item, homeListItems.get(position));
             binding.setVariable(BR.listener, listener);
+            binding.setVariable(BR.imageButton, itemBinding.optionsIcon);
+            binding.setVariable(BR.binding, binding);
             binding.executePendingBindings();
         }
     }

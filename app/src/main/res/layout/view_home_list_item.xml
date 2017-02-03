@@ -4,16 +4,21 @@
 
     <data>
         <import type="android.view.View" />
+        <import type="android.databinding.ViewDataBinding"/>
+        <import type="android.widget.ImageButton"/>
         <import type="com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem" />
         <import type="com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener" />
         <variable name="item" type="HomeListItem" />
         <variable name="listener" type="HomeListItemListener"/>
+        <variable name="binding" type="ViewDataBinding"/>
+        <variable name="imageButton" type="ImageButton"/>
     </data>
 
     <android.support.constraint.ConstraintLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
+        android:onClick="@{() -> listener.onItemClicked(item)}"
         android:id="@+id/track_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,7 +45,7 @@
             android:layout_marginStart="4dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Maggots"
+            android:text="@{item.name}"
             android:textColor="@android:color/black"
             android:textSize="@dimen/base_activity_textSize"
             app:layout_constraintLeft_toRightOf="@+id/track_text_view"
@@ -104,15 +109,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:background="?android:selectableItemBackground"
-            android:onClick="showPopUp"
+            android:onClick="@{() -> listener.onOptionsClicked(imageButton, item)}"
             android:src="@drawable/ic_more_vert_black_48dp"
             app:layout_constraintRight_toRightOf="parent" />
 
         <ImageView
             android:id="@+id/sound_icon_imageview"
-            android:layout_width="wrap_content"
+            android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:background="?android:selectableItemBackground"
+            android:background="@color/transparent"
             android:src="@drawable/ic_volume_up_deep_orange_48dp" />
 
         <View

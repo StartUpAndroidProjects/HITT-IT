@@ -6,7 +6,7 @@ package com.wolffincdevelopment.hiit_it.util;
 
 public class StringUtils {
 
-    public static boolean isNullOrEmpty(String s) {
+    public static boolean isEmptyOrNull(String s) {
         return s == null || s.isEmpty();
     }
 }

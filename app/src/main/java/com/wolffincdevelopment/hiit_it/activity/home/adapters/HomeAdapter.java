@@ -39,8 +39,8 @@ public class HomeAdapter extends BaseDataBindingAdapter {
         //ensure this starts from a clean list
         homeListItems.clear();
 
-        for (TrackData trackData : trackDataList) {
-            homeListItems.add(new HomeListItem(context, trackData, rxJavaBus));
+        for (TrackData track : trackDataList) {
+            homeListItems.add(new HomeListItem(context, track, rxJavaBus));
         }
 
         notifyDataSetChanged();

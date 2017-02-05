@@ -1,4 +1,4 @@
-/*
+package com.wolffincdevelopment.hiit_it.adapter;/*
 package com.wolffincdevelopment.hiit_it.adapter;
 
 import android.databinding.DataBindingUtil;

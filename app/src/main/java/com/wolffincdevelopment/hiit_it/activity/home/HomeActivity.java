@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.wolffincdevelopment.hiit_it.IconizedMenu;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.activity.HiitItActivity;
+import com.wolffincdevelopment.hiit_it.activity.HiitItIntent;
 import com.wolffincdevelopment.hiit_it.activity.home.adapters.HomeAdapter;
 import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeItem;
 import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
@@ -118,7 +119,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     }
 
     @Override
-    public void onOptionsClicked(View view, HomeListItem homeListItem) {
+    public void onOptionsClicked(View view, final HomeListItem homeListItem) {
 
         final IconizedMenu popup = new IconizedMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
@@ -135,7 +136,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
 
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-
+                homeItem.optionsItemSelected(item, homeListItem);
                 return true;
             }
         });
@@ -143,7 +144,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
 
     @Override
     public void onBrowseClicked() {
-        Toast.makeText(this, "Browse Was Clicked", Toast.LENGTH_SHORT).show();
+        startActivity(HiitItIntent.createBrowse(this));
     }
 
     @Override

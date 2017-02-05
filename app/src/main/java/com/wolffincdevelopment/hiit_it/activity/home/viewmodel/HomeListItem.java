@@ -27,6 +27,10 @@ public class HomeListItem {
         //rxJavaBus.subscribe(TrackPlayEvent.class, this::trackPlayEvent);
     }
 
+    public TrackData getTrackData() {
+        return trackData;
+    }
+
     private void trackPlayEvent(TrackPlayEvent trackPlayEvent) {
 
         if (trackPlayEvent.isPlaying) {

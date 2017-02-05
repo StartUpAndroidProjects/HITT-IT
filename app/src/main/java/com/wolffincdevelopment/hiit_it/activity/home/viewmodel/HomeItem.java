@@ -2,41 +2,37 @@ package com.wolffincdevelopment.hiit_it.activity.home.viewmodel;
 
 import android.content.Context;
 import android.databinding.Bindable;
-import android.databinding.ViewDataBinding;
-import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.android.databinding.library.baseAdapters.BR;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.wolffincdevelopment.hiit_it.BaseViewModel;
 import com.wolffincdevelopment.hiit_it.FireBaseHelper;
 import com.wolffincdevelopment.hiit_it.LifeCycle;
+import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.RxJavaBus;
-import com.wolffincdevelopment.hiit_it.TrackPlayEvent;
+import com.wolffincdevelopment.hiit_it.TrackDataList;
 import com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener;
 import com.wolffincdevelopment.hiit_it.manager.UserManager;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Kyle Wolff on 1/28/17.
  */
 
-public class HomeItem extends BaseViewModel implements HomeListItemListener {
+public class HomeItem extends BaseViewModel implements HomeListItemListener, ValueEventListener {
 
     private UserManager userManager;
     private FireBaseHelper fireBaseHelper;
 
     private Context context;
     private RxJavaBus rxJavaBus;
-    private List<TrackData> trackDataList;
+    private TrackDataList trackDataList;
     private String key;
     private String privateUserKey;
 
@@ -48,7 +44,12 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener {
         this.rxJavaBus = rxJavaBus;
         this.fireBaseHelper = fireBaseHelper;
 
-        trackDataList = new ArrayList<>();
+        trackDataList = TrackDataList.getInstance();
+
+        // The value event listener is always listening.
+        if (fireBaseHelper.getTracksAndUserKeyChild() != null) {
+            fireBaseHelper.getTracksAndUserKeyChild().addValueEventListener(this);
+        }
     }
 
     public interface HomeItemCallback extends LifeCycle.LoadingView {
@@ -69,37 +70,47 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener {
     }
 
     @Override
-    protected void refreshData() {
+    public void onDataChange(DataSnapshot dataSnapshot) {
 
-        // This will get called
-        fireBaseHelper.getTrackKeyChild().addValueEventListener(new ValueEventListener() {
+        // Empty list for the new items
+        trackDataList.clear();
 
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 
-                // Empty list for the new items
-                trackDataList.clear();
+            if (snapshot != null) {
 
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                TrackData trackData = snapshot.getValue(TrackData.class);
+                trackData.setKey(snapshot.getKey());
 
-                    if (snapshot != null) {
-                        trackDataList.add(snapshot.getValue(TrackData.class));
-                    }
-                }
-
-                if (hasViewCallback() && !trackDataList.isEmpty()) {
-                    getViewCallback().onDataReady(trackDataList);
-                }
+                trackDataList.add(trackData);
             }
+        }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        refreshData();
     }
 
-    public void hideTrackImage() {
+    @Override
+    public void onCancelled(DatabaseError databaseError) {
+
+    }
+
+    @Override
+    protected void refreshData() {
+        if (hasViewCallback() && !trackDataList.isEmpty()) {
+            getViewCallback().onDataReady(trackDataList);
+        }
+    }
+
+    public void optionsItemSelected(MenuItem menuItem, final HomeListItem homeListItem) {
+
+        if (menuItem.getItemId() == R.id.move_Up) {
+            trackDataList = trackDataList.moveItemUp(homeListItem.getTrackData());
+        }
+
+        refreshData();
+    }
+
+    private void hideTrackImage() {
 
         if (!userManager.getPrefHasSeenAddTrackImage()) {
             userManager.setSeenAddTrackImage(true);
@@ -131,7 +142,7 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener {
 
         TrackData trackData = new TrackData(1001, "Song", "Artist", "Stop Time", "Stop Time", "Stream", 1111, 4400, 1);
 
-        fireBaseHelper.setValue(fireBaseHelper.getRandomKey(), trackData);
+//        fireBaseHelper.setValue(fireBaseHelper.getRandomKey(), trackData);
 
         if (hasViewCallback()) {
             getViewCallback().onBrowseClicked();

@@ -9,6 +9,7 @@ import android.os.Parcelable;
 
 public class TrackData implements Parcelable {
 
+    private String key;
     private long id;
     private String song;
     private String artist;
@@ -32,6 +33,18 @@ public class TrackData implements Parcelable {
         this.mediaId = mediaId;
         this.duration = duration;
         this.orderId = orderId;
+    }
+
+    public TrackData(String artist, String title, String stream, long duration, long mediaId) {
+        this(0, title, artist, null, null, stream, mediaId, duration, 0);
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public long getId() {

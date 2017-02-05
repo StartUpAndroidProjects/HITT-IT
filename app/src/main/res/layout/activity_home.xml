@@ -17,6 +17,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/frame_controller"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/app_bar" />
+
         <include
             android:id="@id/app_bar"
             layout="@layout/toolbar_with_title"
@@ -28,9 +38,9 @@
             android:layout_width="0dp"
             android:layout_height="4dp"
             android:background="@drawable/drop_shadow"
-            app:layout_constraintTop_toBottomOf="@+id/app_bar"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent" />
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/app_bar" />
 
         <ImageView
             android:layout_width="wrap_content"
@@ -46,23 +56,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
-            android:layout_marginRight="24dp"
-            android:layout_marginTop="352dp"
             android:background="@drawable/add_track_image"
             android:visibility="@{item.hideAddToTrackImage}"
+            app:layout_constraintBottom_toTopOf="@+id/fab"
             app:layout_constraintRight_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_goneMarginEnd="24dp" />
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_view"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/frame_controller"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/app_bar" />
 
         <View
             android:layout_width="0dp"
@@ -93,7 +91,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
             android:layout_marginEnd="@dimen/fab_mini_margin_right"
-            android:layout_marginRight="@dimen/fab_mini_margin_right"
             android:src="@drawable/ic_spotify_icon"
             android:visibility="gone"
             app:backgroundTint="#1ED760"

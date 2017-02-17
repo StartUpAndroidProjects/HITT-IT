@@ -10,11 +10,15 @@ import android.view.inputmethod.InputMethodManager;
 
 /**
  * Support methods for the InputMethodManger
+ *
  * @see InputMethodManager
  */
 public class InputManagerUtil {
 
-    public static void dismissKeyboard(@NonNull View view, @NonNull InputMethodManager inputMethodManager) {
-        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    public static void dismissKeyboard(View view, @NonNull InputMethodManager inputMethodManager) {
+
+        if (view != null) {
+            inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

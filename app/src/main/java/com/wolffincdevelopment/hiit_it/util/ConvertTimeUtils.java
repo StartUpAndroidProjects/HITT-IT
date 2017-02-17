@@ -31,7 +31,7 @@ public class ConvertTimeUtils {
         return timeWithColon;
     }
 
-    public static double toMinutes(long milliseconds)
+    private static double toMinutes(long milliseconds)
     {
         double seconds =  ((milliseconds / 1000) % 60) * .01;
         double minutes = ((milliseconds / (1000 * 60)) % 60);
@@ -67,7 +67,7 @@ public class ConvertTimeUtils {
         return milli;
     }
 
-    public static String addColonFormat(double time, String unitOfMeasure)
+    private static String addColonFormat(double time, String unitOfMeasure)
     {
         String zeros = "00";
         String colon = ":";

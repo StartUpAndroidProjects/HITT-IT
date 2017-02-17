@@ -1,5 +1,6 @@
 /*
-package com.wolffincdevelopment.hiit_it.activity;
+
+package com.wolffincdevelopment.hiit_it.activity.addtrack.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -12,9 +13,8 @@ import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
-
 import java.io.IOException;
+
 
 */
 /**
@@ -22,12 +22,12 @@ import java.io.IOException;
  *//*
 
 
+
 public class PreviewMusicService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener {
 
     private MediaPlayer player;
-    private MusicService musicService;
-    private TrackItem trackToPlay;
+    //private MusicService musicService;
 
     private int startTime;
     private int stopTime;
@@ -61,9 +61,9 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
         player.setOnCompletionListener(this);
     }
 
-    public void setMusicService(MusicService musicService) {
-        this.musicService = musicService;
-    }
+//    public void setMusicService(MusicService musicService) {
+//        this.musicService = musicService;
+//    }
 
     public void playSong(TrackItem trackToPlay) {
 
@@ -71,9 +71,9 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
 
         if (trackToPlay != null) {
 
-            if(musicService != null) {
-                musicService.stop();
-            }
+//            if(musicService != null) {
+//                musicService.stop();
+//            }
 
             this.startTime = trackToPlay.getStartTimeInMilliseconds();
             this.stopTime = trackToPlay.getStopTimeInMilliseconds();
@@ -130,11 +130,13 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
         player.release();
     }
 
-    */
+
+*/
 /**
      *
      * @return position of song in milliseconds
      *//*
+
 
     public int getCurrentPosition() {
 
@@ -183,4 +185,5 @@ public class PreviewMusicService extends Service implements MediaPlayer.OnComple
         return super.onUnbind(intent);
     }
 }
+
 */

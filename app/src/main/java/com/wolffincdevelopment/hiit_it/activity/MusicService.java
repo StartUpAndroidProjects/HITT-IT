@@ -24,24 +24,27 @@ import com.wolffincdevelopment.hiit_it.Constant;
 import com.wolffincdevelopment.hiit_it.HiitBus;
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.SoundIcon;
-import com.wolffincdevelopment.hiit_it.model.TrackData;
+import com.wolffincdevelopment.hiit_it.TrackDataList;
+import com.wolffincdevelopment.hiit_it.activity.home.HomeActivity;
+import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.wolffincdevelopment.hiit_it.viewmodel.TrackItem;
 import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.util.SharedPreferencesUtil;
+import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
+
 
 */
 /**
  * Created by kylewolff on 6/5/2016.
  *//*
 
+
 public class MusicService extends Service implements MusicPlayer.OnCompletionListener, MusicPlayer.OnPreparedListener,
-        MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener {
+        MusicPlayer.OnErrorListener, MusicPlayer.OnSeekCompleteListener, TrackDataList.TrackDataListListener {
 
     private final int NOTIFICATION_ID = 1;
 
@@ -61,9 +64,9 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     private MusicPlayer player;
 
 
-    private ArrayList<TrackItem> songs;
+    private TrackDataList songs;
 
-    private TrackItem trackToPlay;
+    private TrackData trackToPlay;
 
     private MusicIndexManager indexManager;
 
@@ -78,8 +81,11 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
     public void onCreate() {
         super.onCreate();
 
+        songs = TrackDataList.getInstance();
+        songs.setListener(this);
+
         player = new MusicPlayer();
-        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        //notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         playerWatcher = Executors.newSingleThreadExecutor();
         indexManager = MusicIndexManager.getInstance();
@@ -87,7 +93,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         handler = new Handler(Looper.getMainLooper());
 
         initMusicPlayer();
-        initNotification();
+        //initNotification();
 
         bus = HiitBus.getInstance();
     }
@@ -209,7 +215,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
-    public void setList(ArrayList<TrackItem> songs, String action, TrackItem trackItem, boolean reorderTracks) {
+    public void setList(String action, TrackItem trackItem, boolean reorderTracks) {
 
         boolean currentSong = false;
         boolean previousSong = false;
@@ -225,7 +231,6 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
             }
         }
 
-        this.songs = songs;
         indexManager.setTrackListLength(songs.size());
 
         if (action != null && reorderTracks) {
@@ -281,6 +286,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
+
     */
 /**
      * Play song pass the Track for the song you want to play
@@ -290,6 +296,7 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
      *
      * @param trackItem see {@link TrackData}
      *//*
+
 
     public void playSong(TrackItem trackItem) {
 
@@ -303,10 +310,12 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         }
     }
 
+
     */
 /**
      * Play song knows what song your on and should just work
      *//*
+
 
     public void playSong() {
 
@@ -530,6 +539,21 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         updateNotificationView();
     }
 
+    @Override
+    public void onItemMovedUp(TrackData trackData) {
+
+    }
+
+    @Override
+    public void onItemMovedDown(TrackData trackData) {
+
+    }
+
+    @Override
+    public void onReorderItems(TrackData deletedItem) {
+
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -543,4 +567,5 @@ public class MusicService extends Service implements MusicPlayer.OnCompletionLis
         return super.onUnbind(intent);
     }
 }
+
 */

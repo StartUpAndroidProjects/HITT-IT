@@ -2,6 +2,7 @@ package com.wolffincdevelopment.hiit_it.activity.browse.viewmodel;
 
 import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
+import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 
 /**
  * Created by Kyle Wolff on 2/4/17.
@@ -23,6 +24,10 @@ public class ListItem extends Item {
 
     public String getSong() {
         return trackData.getSong();
+    }
+
+    public String getDuration() {
+        return ConvertTimeUtils.convertMilliSecToStringWithColon(trackData.getDuration());
     }
 
     public TrackData getTrackData() {

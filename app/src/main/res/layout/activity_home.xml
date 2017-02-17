@@ -3,12 +3,8 @@
 <layout>
 
     <data>
-
         <import type="com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeItem" />
-
-        <variable
-            name="item"
-            type="HomeItem" />
+        <variable name="item" type="HomeItem" />
     </data>
 
     <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -22,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:scrollbars="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/frame_controller"
+            app:layout_constraintBottom_toTopOf="@+id/replay_footer"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/app_bar" />
@@ -43,15 +39,6 @@
             app:layout_constraintTop_toBottomOf="@+id/app_bar" />
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="150dp"
-            android:background="@drawable/base_background_headset"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
             android:id="@+id/first_time_user_add_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -59,16 +46,71 @@
             android:background="@drawable/add_track_image"
             android:visibility="@{item.hideAddToTrackImage}"
             app:layout_constraintBottom_toTopOf="@+id/fab"
-            app:layout_constraintRight_toLeftOf="parent"
-            app:layout_goneMarginEnd="24dp" />
+            app:layout_constraintRight_toLeftOf="parent" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="4dp"
             android:background="@drawable/reverse_drop_shadow"
-            app:layout_constraintBottom_toTopOf="@+id/frame_controller"
+            app:layout_constraintBottom_toTopOf="@+id/replay_footer"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent" />
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/replay_footer"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@android:color/black"
+            android:longClickable="true"
+            android:onClick="@{() -> item.onFooterClicked()}"
+            app:layout_constraintBottom_toTopOf="@+id/frame_controller"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent">
+
+            <ImageButton
+                android:id="@+id/arrow"
+                android:layout_width="40dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="8dp"
+                android:background="@color/transparent"
+                android:onClick="@{() -> item.onFooterArrowClicked()}"
+                android:scaleType="fitStart"
+                android:src="@{item.footerArrow}"
+                app:layout_constraintLeft_toRightOf="parent" />
+
+            <TextView
+                android:id="@+id/current_set_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="44dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/currently_set_to_play"
+                android:textColor="@color/white"
+                app:layout_constraintLeft_toRightOf="@+id/arrow"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/current_set"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="4dp"
+                android:text="@{item.currentTrackCount}"
+                android:textColor="@color/colorAccent"
+                app:layout_constraintLeft_toRightOf="@+id/current_set_text"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="46dp"
+                android:text="Tap to add a set\nHold for continuous play"
+                android:textColor="@color/greyText"
+                app:layout_constraintLeft_toRightOf="@+id/arrow"
+                app:layout_constraintTop_toBottomOf="@+id/current_set" />
+
+        </android.support.constraint.ConstraintLayout>
 
         <FrameLayout
             android:id="@+id/frame_controller"

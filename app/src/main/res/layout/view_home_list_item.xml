@@ -18,11 +18,12 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
+        android:transitionName="card"
         android:onClick="@{() -> listener.onItemClicked(item)}"
         android:id="@+id/track_item"
+        android:background="@color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="8dp"
         android:paddingTop="8dp">
 
         <TextView
@@ -45,6 +46,7 @@
             android:layout_marginStart="4dp"
             android:ellipsize="end"
             android:maxLines="1"
+            android:transitionName="song"
             android:text="@{item.name}"
             android:textColor="@android:color/black"
             android:textSize="@dimen/base_activity_textSize"
@@ -55,9 +57,9 @@
             android:id="@+id/start_time_placeholder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="60dp"
             android:layout_marginStart="60dp"
             android:layout_marginTop="14dp"
+            android:transitionName="@string/start_with_colon"
             android:text="@string/start_with_colon"
             android:textColor="@android:color/black"
             android:textSize="@dimen/base_activity_textSize"
@@ -68,10 +70,10 @@
             android:id="@+id/start_time_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="14dp"
-            android:text="00:02"
+            android:text="@{item.startTime}"
+            android:transitionName="start_time"
             android:textColor="@android:color/black"
             android:textSize="@dimen/base_activity_textSize"
             app:layout_constraintLeft_toRightOf="@+id/start_time_placeholder"
@@ -83,6 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="44dp"
             android:layout_marginStart="44dp"
+            android:transitionName="@string/stop_with_colon"
             android:layout_marginTop="14dp"
             android:text="@string/stop_with_colon"
             android:textColor="@android:color/black"
@@ -97,7 +100,8 @@
             android:layout_marginLeft="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="14dp"
-            android:text="12:20"
+            android:transitionName="stop_time"
+            android:text="@{item.stopTime}"
             android:textColor="@android:color/black"
             android:textSize="@dimen/base_activity_textSize"
             app:layout_constraintLeft_toRightOf="@+id/stop_time_placeholder"
@@ -109,7 +113,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:background="?android:selectableItemBackground"
-            android:onClick="@{() -> listener.onOptionsClicked(imageButton, item)}"
+            android:onClick="@{() -> listener.onOptionsClicked(imageButton, item, binding)}"
             android:src="@drawable/ic_more_vert_black_48dp"
             app:layout_constraintRight_toRightOf="parent" />
 
@@ -118,12 +122,12 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
-            android:src="@drawable/ic_volume_up_deep_orange_48dp" />
+            android:src="@{item.soundIcon}" />
 
         <View
             android:layout_width="wrap_content"
             android:layout_height="1dp"
-            android:background="@drawable/divider"
+            android:background="@color/grey_line"
             android:layout_marginTop="4dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"

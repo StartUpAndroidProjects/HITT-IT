@@ -2,6 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/edit_item"
+        android:icon="@drawable/edit_black_48px"
+        android:title="@string/edit"
+        android:visible="true"/>
+
+    <item
         android:id="@+id/move_Up"
         android:icon="@drawable/ic_arrow_upward_black_48dp"
         android:title="@string/move_up"

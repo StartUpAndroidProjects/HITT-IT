@@ -1,36 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-        <import type="com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.ListItem"/>
-        <import type="com.wolffincdevelopment.hiit_it.activity.browse.listener.BrowseListener"/>
-        <variable name="item" type="ListItem"/>
-        <variable name="listener" type="BrowseListener"/>
+
+        <import type="com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.ListItem" />
+
+        <import type="com.wolffincdevelopment.hiit_it.activity.browse.listener.BrowseListener" />
+
+        <variable
+            name="item"
+            type="ListItem" />
+
+        <variable
+            name="listener"
+            type="BrowseListener" />
     </data>
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:onClick="@{() -> listener.onItemClicked(item)}"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/song_textview"
-        android:layout_width="wrap_content"
+    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:text="@{item.getSong()}"
-        android:textStyle="bold" />
+        android:layout_marginBottom="4dp"
+        android:onClick="@{() -> listener.onItemClicked(item)}">
 
-    <TextView
-        android:id="@+id/artist_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:text="@{item.getArtist()}" />
+        <TextView
+            android:id="@+id/song_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="8dp"
+            android:text="@{item.song}"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/duration"
+            app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/artist_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="@{item.artist}"
+            android:textSize="12sp"
+            app:layout_constraintLeft_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/song_textview" />
+
+        <TextView
+            android:id="@+id/duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="8dp"
+            android:text="@{item.duration}"
+            android:textSize="16sp"
+            app:layout_constraintRight_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </android.support.constraint.ConstraintLayout>
 
 </layout>

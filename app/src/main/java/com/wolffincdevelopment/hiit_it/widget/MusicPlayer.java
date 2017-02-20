@@ -10,8 +10,11 @@ public class MusicPlayer extends MediaPlayer {
 
     private MediaControllerView mediaControllerView;
 
-    public MusicPlayer(MediaControllerView mediaControllerView) {
+    public MusicPlayer() {
         super();
+    }
+
+    public void setMediaControllerView(MediaControllerView mediaControllerView) {
         this.mediaControllerView = mediaControllerView;
     }
 

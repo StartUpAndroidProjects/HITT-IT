@@ -16,7 +16,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
 
-import com.wolffincdevelopment.hiit_it.HiitItIntents;
 import com.wolffincdevelopment.hiit_it.activity.HiitItActivity;
 import com.wolffincdevelopment.hiit_it.activity.HiitItIntent;
 import com.wolffincdevelopment.hiit_it.activity.browse.adapter.BrowseAdapter;
@@ -31,12 +30,12 @@ import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
 
 import java.util.List;
 
+import static com.wolffincdevelopment.hiit_it.activity.HiitItIntent.ADD_TRACK_ACTIVITY_REQUEST_CODE;
 
 /*
  * Created by kylewolff on 6/4/2016.
  */
 public class BrowseActivity extends HiitItActivity implements BrowseItem.BrowseItemCallback {
-
 
     private ActivityBrowseBinding binding;
     private BrowseItem browseItem;
@@ -95,6 +94,15 @@ public class BrowseActivity extends HiitItActivity implements BrowseItem.BrowseI
     protected void onDestroy() {
         browseItem.onViewDetached();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == ADD_TRACK_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
+            finish();
+        }
     }
 
     @Override
@@ -159,13 +167,12 @@ public class BrowseActivity extends HiitItActivity implements BrowseItem.BrowseI
     @Override
     public void onItemClicked(ListItem listItem) {
 
-        if (getIntent().getBooleanExtra(HiitItIntents.EXTRA_FINISH_ACTIVITY, false)) {
-            setResult(RESULT_OK, new Intent().putExtra(HiitItIntents.EXTRA_ITEM, listItem.getTrackData()));
+        if (getIntent().getBooleanExtra(HiitItIntent.EXTRA_FINISH_ACTIVITY, false)) {
+            setResult(RESULT_OK, new Intent().putExtra(HiitItIntent.EXTRA_TRACK_DATA, listItem.getTrackData()));
             finish();
         } else {
-            //startActivity(HiitItIntents.createAddTrackIntent(this, data));
+            startActivityForResult(HiitItIntent.createAddTrack(this, listItem.getTrackData()), ADD_TRACK_ACTIVITY_REQUEST_CODE);
         }
-
     }
 
     @Override

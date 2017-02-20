@@ -36,16 +36,6 @@
         <!--<service android:name=".activity.MusicService" />-->
         <!--<service android:name=".activity.PreviewMusicService" />-->
 
-        <!--<activity-->
-        <!--android:name=".activity.AddTrackActivity"-->
-        <!--android:label="@string/add_track"-->
-        <!--android:parentActivityName=".activity.home.HomeActivity"-->
-        <!--android:screenOrientation="portrait">-->
-        <!--<meta-data-->
-        <!--android:name="android.support.PARENT_ACTIVITY"-->
-        <!--android:value=".activity.home.HomeActivity" />-->
-        <!--</activity>-->
-
         <activity
             android:name=".activity.browse.BrowseActivity"
             android:label="@string/browse_title"
@@ -56,10 +46,24 @@
                 android:value=".activity.home.HomeActivity" />
         </activity>
 
+        <activity
+            android:name=".activity.addtrack.AddTrackActivity"
+            android:label="@string/add_track"
+            android:parentActivityName=".activity.home.HomeActivity"
+            android:screenOrientation="portrait">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activity.home.HomeActivity" />
+        </activity>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="81d2317c11f82156e5a13b0db54a72a639b3ca72" />
+
+        <service android:name=".service.HomeMusicService" />
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>

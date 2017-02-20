@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#F57C00</color>
     <color name="colorAccent">#FF3D00</color>
     <color name="colorPreviewHeader">#DA3103</color>
+    <color name="gray">#999290</color>
     <color name="greyText">#b1a7a4</color>
     <color name="grey_line">#aba7a6a5</color>
     <color name="white">#FFFFFF</color>

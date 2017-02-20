@@ -1,7 +1,7 @@
 <resources>
-    <dimen name="fab_margin_bottom">52dp</dimen>
+    <dimen name="fab_margin_bottom">50dp</dimen>
     <dimen name="fab_margin_right">16dp</dimen>
-    <dimen name="fab_mini_margin_bottom">52dp</dimen>
+    <dimen name="fab_mini_margin_bottom">50dp</dimen>
     <dimen name="fab_mini_margin_right">16dp</dimen>
     <dimen name="base_activity_textSize">15sp</dimen>
     <dimen name="notification_margin_top">10dp</dimen>

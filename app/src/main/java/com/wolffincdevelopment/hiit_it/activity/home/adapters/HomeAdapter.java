@@ -22,7 +22,7 @@ import java.util.List;
 
 public class HomeAdapter extends BaseDataBindingAdapter {
 
-    private ArrayList<HomeListItem> homeListItems;
+    private List<HomeListItem> homeListItems;
     private HomeListItemListener listener;
 
     private Context context;
@@ -34,14 +34,9 @@ public class HomeAdapter extends BaseDataBindingAdapter {
         homeListItems = new ArrayList<>();
     }
 
-    public void updateData(List<TrackData> trackDataList, RxJavaBus rxJavaBus) {
+    public void updateData(List<HomeListItem> homeListItems) {
 
-        //ensure this starts from a clean list
-        homeListItems.clear();
-
-        for (TrackData track : trackDataList) {
-            homeListItems.add(new HomeListItem(context, track, rxJavaBus));
-        }
+        this.homeListItems = homeListItems;
 
         notifyDataSetChanged();
     }

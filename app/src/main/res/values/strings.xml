@@ -13,6 +13,7 @@
     <string name="move_up">Move Up</string>
     <string name="move_down">Move Down</string>
     <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
     <string name="firstTimeFabPressed">firstTimeFabPress</string>
     <string name="replay">Replay:</string>
     <string name="tap_to_toggle_on_off">Tap to Toggle ON/OFF</string>
@@ -29,4 +30,7 @@
     <string name="start_with_colon">Start:</string>
     <string name="stop_with_colon">Stop:</string>
     <string name="track_with_colon">Track:</string>
+
+    <string name="currently_set_to_play">Currently set to play</string>
+
 </resources>

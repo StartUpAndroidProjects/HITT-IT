@@ -8,8 +8,6 @@ import android.support.v4.content.ContextCompat;
 import com.wolffincdevelopment.hiit_it.BR;
 import com.wolffincdevelopment.hiit_it.BaseViewModel;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.RxJavaBus;
-import com.wolffincdevelopment.hiit_it.TrackPlayEvent;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 
 /**
@@ -22,7 +20,6 @@ public class HomeListItem extends BaseViewModel {
     private Context context;
     private boolean isPlaying;
     private boolean showIcon;
-    private boolean wasPlaying;
 
     public HomeListItem(Context context, TrackData trackData) {
         this.trackData = trackData;
@@ -33,7 +30,7 @@ public class HomeListItem extends BaseViewModel {
 
     @Override
     protected void refreshData() {
-        // Do not need to anything
+        // Do not need to do anything
     }
 
     public TrackData getTrackData() {
@@ -53,10 +50,6 @@ public class HomeListItem extends BaseViewModel {
     public void setShowIcon(boolean showIcon) {
         this.showIcon = showIcon;
         notifyPropertyChanged(BR.soundIcon);
-    }
-
-    public boolean wasPlaying() {
-        return wasPlaying;
     }
 
     public String getName() {

@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -56,23 +55,24 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
 
     public interface MusicPlayerListener {
         void onSongPlaying(HomeListItem listItem);
+
         void onSongPaused(HomeListItem listItem);
+
         void onStopMusic();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onCreate() {
+        super.onCreate();
 
         playerWatcher = Executors.newSingleThreadExecutor();
-        handler = new Handler(Looper.getMainLooper());
+        handler = new Handler(getMainLooper());
 
         indexManager = MusicIndexManager.getInstance();
 
         loopedCount = 0;
 
         initMusicPlayer();
-
-        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -182,11 +182,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
     }
 
     public int getPosn() {
-        try {
-            return musicPlayer.getCurrentPosition();
-        } catch (IllegalStateException e) {
-            return trackToPlay.getStopTimeInMilliseconds();
-        }
+        return musicPlayer.getCurrentPosition();
     }
 
     public TrackData getCurrentSong() {
@@ -322,9 +318,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                         if (currentPosition >= stopTime) {
 
                             // Loop Check
-                            if (indexManager.getIndex() == trackDataList.size() - 1 ) {
+                            if (indexManager.getIndex() == trackDataList.size() - 1) {
                                 loopedCount++;
-                                Log.i("Increase Count for Loop", String.valueOf(loopedCount));
                             }
                             checkForNextSongDuringPlay();
                         }
@@ -342,9 +337,17 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
     }
 
     public void checkForNextSongDuringPlay() {
-        if (!(indexManager.getIndex() > trackDataList.size()) && !(indexManager.getIndex() < 0)) {
-            playNext();
-        }
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                if (!(indexManager.getIndex() > trackDataList.size()) && !(indexManager.getIndex() < 0)) {
+                    Log.e("Playe Next", "true");
+                    playNext();
+                }
+            }
+        });
     }
 
     public void resetSongs() {

@@ -32,7 +32,7 @@ configurations {
 
 //adding this since ALL appcompat subs have to have the same version number
 ext {
-    appCompatVersion = "25.1.0"
+    appCompatVersion = "25.1.1"
     okhttpVersion = "3.4.1"
     playServicesVersion = "10.0.1"
 }

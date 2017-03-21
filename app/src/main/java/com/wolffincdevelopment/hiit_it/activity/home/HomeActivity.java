@@ -59,9 +59,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
 
     private ViewHomeListItemBinding layoutBinding;
     private List<HomeListItem> homeListItems;
+    private HomeListItem itemPlayingOrPaused;
 
     private HomeMusicService musicService;
-    private Intent playIntent;
     private boolean serviceBound;
 
     private HomeActivity activity;
@@ -69,6 +69,8 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        serviceBound = false;
 
         homeItem = new HomeItem(this, userManager, getRxJavaBus(), fireBaseManager);
 
@@ -119,7 +121,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
         super.onStart();
         homeItem.onViewAttached(this);
 
-        playIntent = new Intent(this, HomeMusicService.class);
+        Intent playIntent = new Intent(this, HomeMusicService.class);
         bindService(playIntent, serviceConnection, Context.BIND_AUTO_CREATE);
         startService(playIntent);
     }
@@ -158,10 +160,28 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     @Override
     public void onDataReady(List<TrackData> trackDataList) {
 
+        HomeListItem listItem;
+
         homeListItems.clear();
 
         for (TrackData trackData : trackDataList) {
-            homeListItems.add(new HomeListItem(this, trackData));
+
+            listItem = new HomeListItem(this, trackData);
+
+            if (musicService != null) {
+
+                if (musicService.isPlaying() || musicService.isPaused()) {
+
+                    if (itemPlayingOrPaused.getTrackData().getKey().equals(trackData.getKey())) {
+                        listItem = new HomeListItem(this, trackData);
+                        listItem.setIsPlaying(musicService.isPlaying());
+                        listItem.setShowIcon(true);
+                    }
+
+                }
+            }
+
+            homeListItems.add(listItem);
         }
 
         homeAdapter.updateData(homeListItems);
@@ -442,6 +462,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
             if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
                 homeListItem.setIsPlaying(true);
                 homeListItem.setShowIcon(true);
+                itemPlayingOrPaused = homeListItem;
             } else {
                 homeListItem.setShowIcon(false);
                 homeListItem.setIsPlaying(false);
@@ -457,6 +478,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
             if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
                 homeListItem.setIsPlaying(false);
                 homeListItem.setShowIcon(true);
+                itemPlayingOrPaused = homeListItem;
             } else {
                 homeListItem.setShowIcon(false);
                 homeListItem.setIsPlaying(false);

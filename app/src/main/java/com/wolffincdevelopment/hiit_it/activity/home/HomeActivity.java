@@ -45,8 +45,6 @@ import java.util.List;
 
 public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCallback, HomeMusicService.MusicPlayerListener {
 
-    private int EDIT_REQUEST_CODE = 100;
-
     private ActivityHomeBinding binding;
     private HomeItem homeItem;
     private HomeAdapter homeAdapter;
@@ -67,13 +65,10 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     private boolean serviceBound;
 
     private HomeActivity activity;
-    private boolean itemEdited;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        itemEdited = false;
 
         serviceBound = false;
 
@@ -165,9 +160,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     @Override
     public void onDataReady(List<TrackData> trackDataList) {
 
-        HomeListItem listItem;
-
         homeListItems.clear();
+
+        HomeListItem listItem;
 
         for (TrackData trackData : trackDataList) {
 
@@ -193,12 +188,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
         if (serviceBound && musicService != null) {
             musicService.setAudioList(homeListItems);
         }
-    }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        itemEdited = requestCode == EDIT_REQUEST_CODE && resultCode == RESULT_OK;
     }
 
     @Override
@@ -207,7 +197,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
         layoutBinding = (ViewHomeListItemBinding) binding;
         Intent intent = HiitItIntent.createAddTrackEdit(this, trackData);
 
-        ActivityTransitionUtil.startActivityForResult(this, intent, EDIT_REQUEST_CODE, gatherTransitionViews(layoutBinding));
+        ActivityTransitionUtil.startActivity(this, intent, gatherTransitionViews(layoutBinding));
     }
 
     @NonNull

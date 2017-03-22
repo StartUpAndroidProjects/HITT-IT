@@ -89,7 +89,7 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
 
     @Bindable
     public String getName() {
-        return trackData.getName();
+        return trackData.getSong();
     }
 
     @Bindable

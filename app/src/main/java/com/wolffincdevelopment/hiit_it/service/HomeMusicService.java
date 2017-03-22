@@ -206,6 +206,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
 
     public void pausePlayer() {
 
+        stopThread = true;
+
         if (listener != null) {
             listener.onSongPaused(trackDataList.get(indexManager.getIndex()));
         }
@@ -215,6 +217,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
     }
 
     public void resume() {
+
+        stopThread = false;
 
         if (listener != null) {
             listener.onSongPlaying(trackDataList.get(indexManager.getIndex()));
@@ -311,7 +315,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                     try {
                         Thread.sleep(1000);
                         currentPosition = getPosn();
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         return;
                     }
 

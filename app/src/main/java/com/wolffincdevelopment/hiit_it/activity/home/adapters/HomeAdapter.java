@@ -5,11 +5,9 @@ import android.databinding.ViewDataBinding;
 
 import com.wolffincdevelopment.hiit_it.BR;
 import com.wolffincdevelopment.hiit_it.R;
-import com.wolffincdevelopment.hiit_it.RxJavaBus;
 import com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener;
 import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
 import com.wolffincdevelopment.hiit_it.databinding.ViewHomeListItemBinding;
-import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.BaseDataBindingAdapter;
 import com.wolffincdevelopment.hiit_it.util.DataBoundViewHolder;
 
@@ -35,9 +33,7 @@ public class HomeAdapter extends BaseDataBindingAdapter {
     }
 
     public void updateData(List<HomeListItem> homeListItems) {
-
         this.homeListItems = homeListItems;
-
         notifyDataSetChanged();
     }
 

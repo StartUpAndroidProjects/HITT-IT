@@ -5,6 +5,7 @@ import android.databinding.Bindable;
 import android.databinding.ViewDataBinding;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
@@ -190,7 +191,9 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
         }
 
         if (isPlaying) {
-            Toast.makeText(context, "Please pause music to edit", Toast.LENGTH_LONG).show();
+            Toast toast = Toast.makeText(context, "Please pause music to edit", Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
         }
     }
 

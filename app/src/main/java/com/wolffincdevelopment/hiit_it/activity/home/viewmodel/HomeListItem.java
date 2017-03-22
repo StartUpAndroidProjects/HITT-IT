@@ -4,6 +4,7 @@ import android.content.Context;
 import android.databinding.Bindable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
 
 import com.wolffincdevelopment.hiit_it.BR;
 import com.wolffincdevelopment.hiit_it.BaseViewModel;
@@ -43,13 +44,13 @@ public class HomeListItem extends BaseViewModel {
     }
 
     @Bindable
-    public boolean getShowIcon() {
-        return showIcon;
+    public int getShowIcon() {
+        return showIcon ? View.VISIBLE : View.INVISIBLE;
     }
 
     public void setShowIcon(boolean showIcon) {
         this.showIcon = showIcon;
-        notifyPropertyChanged(BR.soundIcon);
+        notifyPropertyChanged(BR.showIcon);
     }
 
     public String getName() {

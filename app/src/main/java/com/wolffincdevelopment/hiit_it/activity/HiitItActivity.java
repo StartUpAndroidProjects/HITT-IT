@@ -1,15 +1,13 @@
 package com.wolffincdevelopment.hiit_it.activity;
 
-import android.animation.ValueAnimator;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.wolffincdevelopment.hiit_it.FireBaseManager;
 import com.wolffincdevelopment.hiit_it.RxJavaBus;
@@ -18,9 +16,6 @@ import com.wolffincdevelopment.hiit_it.manager.UserManager;
 import com.wolffincdevelopment.hiit_it.service.HomeMusicService;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.StringUtils;
-
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Created by Kyle Wolff on 1/28/17.
@@ -82,16 +77,16 @@ public class HiitItActivity extends AppCompatActivity {
                             }
                         }
                     }
-
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
                 }
 
             });
         }
+
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     public void setCallBack(HiitItActivityCallBack callBack) {

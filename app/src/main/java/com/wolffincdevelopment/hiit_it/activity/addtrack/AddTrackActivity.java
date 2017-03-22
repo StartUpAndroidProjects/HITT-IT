@@ -5,9 +5,11 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.annotation.StringRes;
 import android.os.Bundle;
+import android.support.annotation.StringRes;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.transition.Transition;
 import android.view.MenuItem;
@@ -21,7 +23,6 @@ import com.wolffincdevelopment.hiit_it.activity.HiitItIntent;
 import com.wolffincdevelopment.hiit_it.activity.addtrack.viewmodel.AddTrackItem;
 import com.wolffincdevelopment.hiit_it.databinding.ActivityAddTrackBinding;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
-
 import com.wolffincdevelopment.hiit_it.util.ActionBarUtils;
 import com.wolffincdevelopment.hiit_it.util.ActivityTransitionUtil;
 import com.wolffincdevelopment.hiit_it.util.InputManagerUtil;
@@ -46,6 +47,9 @@ public class AddTrackActivity extends HiitItActivity implements AddTrackItem.Add
 
     private TrackData trackData;
     private boolean inEditMode;
+
+    private Drawable defaultBackground;
+    private Drawable emptyBackground;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +76,9 @@ public class AddTrackActivity extends HiitItActivity implements AddTrackItem.Add
         if (ActivityTransitionUtil.supportsTransitions()) {
             handleTransitions();
         }
+
+        defaultBackground = ContextCompat.getDrawable(this, R.drawable.edittext_underline);
+        emptyBackground = ContextCompat.getDrawable(this, R.drawable.edittext_remove_underline);
     }
 
     @Override
@@ -205,11 +212,13 @@ public class AddTrackActivity extends HiitItActivity implements AddTrackItem.Add
         int duration = 200;
 
         if(isVisible) {
+            binding.browseTextField.setBackground(defaultBackground);
             binding.radioSongButton.animate().alpha(1).setDuration(duration);
             binding.previewButton.animate().alpha(1).setDuration(duration);
             binding.addTrackButton.animate().alpha(1).setDuration(duration);
             binding.addTrackButtonView.animate().alpha(1).setDuration(duration);
         } else {
+            binding.browseTextField.setBackground(emptyBackground);
             binding.radioSongButton.setAlpha(0f);
             binding.previewButton.setAlpha(0f);
             binding.addTrackButton.setAlpha(0f);

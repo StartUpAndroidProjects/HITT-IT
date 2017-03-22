@@ -58,7 +58,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
 
         void onSongPaused(HomeListItem listItem);
 
-        void onStopMusic();
+        void onStopMusic(HomeListItem listItem);
     }
 
     @Override
@@ -220,14 +220,26 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             listener.onSongPlaying(trackDataList.get(indexManager.getIndex()));
         }
 
-        musicPlayer.start();
+        // We need to check if the song was edited
+        if (trackToPlay.getMediaId() != trackDataList.get(indexManager.getIndex()).getTrackData().getMediaId()) {
+            trackToPlay = trackDataList.get(indexManager.getIndex()).getTrackData();
+            playSong();
+        } else {
+            musicPlayer.start();
+        }
+
         paused = false;
     }
 
     public void stop() {
 
-        // ToDo Might no need this depending on how the UI and service talk to on another
-        // Need to stop the player and update UI on the main thread
+        paused = false;
+
+        stopThread = true;
+
+        if (listener != null) {
+            listener.onStopMusic(trackDataList.get(indexManager.getIndex()));
+        }
 
         handler.post(new Runnable() {
             @Override
@@ -235,14 +247,6 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                 musicPlayer.stop();
             }
         });
-
-        paused = false;
-
-        stopThread = true;
-
-        if (listener != null) {
-            listener.onStopMusic();
-        }
 
         loopedCount = 0;
     }
@@ -285,6 +289,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             listener.onSongPlaying(trackDataList.get(indexManager.getIndex()));
         }
 
+        stopThread = false;
+
         musicPlayer.start();
         musicPlayer.seekTo(startTime);
     }
@@ -309,27 +315,22 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                         return;
                     }
 
-                    if (loopedCount < userManager.getCurrenTrackCount() || userManager.getCurrentTrackContinuous()) {
+                    if (staticTime != 0 && staticTime == currentPosition) {
+                        currentPosition = stopTime;
+                    }
 
-                        if (staticTime != 0 && staticTime == currentPosition) {
-                            currentPosition = stopTime;
+                    if (currentPosition >= stopTime) {
+
+                        // Loop Check
+                        if (indexManager.getIndex() == trackDataList.size() - 1) {
+                            loopedCount++;
                         }
 
-                        if (currentPosition >= stopTime) {
+                        checkForNextSongDuringPlay();
+                    }
 
-                            // Loop Check
-                            if (indexManager.getIndex() == trackDataList.size() - 1) {
-                                loopedCount++;
-                            }
-                            checkForNextSongDuringPlay();
-                        }
-
-                        if (!paused) {
-                            staticTime = currentPosition;
-                        }
-
-                    } else {
-                        stop();
+                    if (!paused) {
+                        staticTime = currentPosition;
                     }
                 }
             }
@@ -338,16 +339,16 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
 
     public void checkForNextSongDuringPlay() {
 
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
+        if (loopedCount < userManager.getCurrenTrackCount() || userManager.getCurrentTrackContinuous()) {
 
-                if (!(indexManager.getIndex() > trackDataList.size()) && !(indexManager.getIndex() < 0)) {
-                    Log.e("Playe Next", "true");
-                    playNext();
-                }
+            if (!(indexManager.getIndex() > trackDataList.size()) && !(indexManager.getIndex() < 0)) {
+                playNext();
             }
-        });
+
+        } else {
+            Log.v("Stop","Stopping Song");
+            stop();
+        }
     }
 
     public void resetSongs() {

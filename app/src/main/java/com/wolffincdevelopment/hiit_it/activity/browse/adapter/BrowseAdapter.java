@@ -64,6 +64,7 @@ public class BrowseAdapter extends BaseDataBindingAdapter {
         ViewDataBinding binding = holder.binding;
 
         if (binding != null) {
+            binding.setVariable(BR.binding, binding);
             binding.setVariable(BR.item, browseListItems.get(position));
             binding.setVariable(BR.listener, listener);
         }

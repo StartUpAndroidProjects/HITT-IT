@@ -93,7 +93,10 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
 
     @Override
     protected void refreshData() {
-        if (hasViewCallback() && !trackDataList.isEmpty()) {
+
+        state = NetworkState.IDLE;
+
+        if (hasViewCallback()) {
             getViewCallback().onDataReady(trackDataList);
         }
     }
@@ -149,7 +152,13 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
             }
 
         } else {
+
             fireBaseManager.deleteTrack(homeListItem.getTrackData().getKey());
+
+            if (trackDataList.size() == 1) {
+                trackDataList.clear();
+            }
+
             hashMap = trackDataList.reorderItems(homeListItem.getTrackData());
         }
 

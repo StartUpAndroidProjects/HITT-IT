@@ -122,6 +122,7 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
+            android:visibility="@{item.showIcon}"
             android:src="@{item.soundIcon}" />
 
         <View

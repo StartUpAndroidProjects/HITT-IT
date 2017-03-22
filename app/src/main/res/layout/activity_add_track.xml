@@ -69,6 +69,7 @@
 
                 <EditText
                     android:id="@+id/browse_text_field"
+                    android:background="@drawable/edittext_underline"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"

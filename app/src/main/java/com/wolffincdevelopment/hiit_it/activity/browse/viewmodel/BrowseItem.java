@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.databinding.Bindable;
+import android.databinding.ViewDataBinding;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.view.View;
@@ -47,7 +48,7 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
     }
 
     public interface BrowseItemCallback extends LifeCycle.LoadingView {
-        void onItemClicked(ListItem listItem);
+        void onItemClicked(ListItem listItem, ViewDataBinding viewDataBinding);
 
         void onVerifyPermissions();
 
@@ -150,9 +151,9 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
     }
 
     @Override
-    public void onItemClicked(ListItem listItem) {
+    public void onItemClicked(ListItem listItem, ViewDataBinding viewDataBinding) {
         if (hasViewCallback()) {
-            getViewCallback().onItemClicked(listItem);
+            getViewCallback().onItemClicked(listItem, viewDataBinding);
         }
     }
 }

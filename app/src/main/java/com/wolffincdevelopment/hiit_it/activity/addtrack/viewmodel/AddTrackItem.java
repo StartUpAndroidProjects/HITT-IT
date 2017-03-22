@@ -41,6 +41,9 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
 
     private int delete;
 
+    private long startTimeStaticSec = 0;
+    private long startTimeStaticMin = 0;
+
     public AddTrackItem(Context context, InputMethodManager inputManager, TrackData trackData, boolean inEditMode) {
         super();
 
@@ -276,9 +279,6 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
         long secMilli;
         long minMilli;
 
-        long startTimeStaticSec = 0;
-        long startTimeStaticMin = 0;
-
         boolean checked = false;
 
         if (timeField.getText().toString().length() >= 5) {
@@ -328,7 +328,46 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
 
             } else {
 
-                if (minMilli >= startTimeStaticMin && minMilli <= maxMillMin) {
+                if (timeField == binding.stopTime && (startTimeStaticMin + startTimeStaticSec) >= (secMilli + minMilli)) {
+                    startTimeSucceeded = false;
+                } else {
+                    startTimeSucceeded = true;
+                }
+
+                if (startTimeSucceeded) {
+
+                    if (minMilli >= startTimeStaticMin && minMilli <= maxMillMin) {
+
+                        if (minMilli == maxMillMin) {
+
+                            if (secMilli <= maxMilliSec) {
+                                checked = true;
+                            } else {
+                                checked = false;
+                            }
+
+                        } else if (minMilli == startTimeStaticMin) {
+
+                            if (secMilli >= startTimeStaticSec) {
+                                checked = true;
+                            } else {
+                                checked = false;
+                            }
+
+                        } else if (minMilli < maxMillMin && minMilli > startTimeStaticMin) {
+
+                            if (secMilli < 59000) {
+                                checked = true;
+                            } else {
+                                checked = false;
+                            }
+                        }
+
+                    } else {
+                        checked = false;
+                    }
+
+                } else {
 
                     if (minMilli == maxMillMin) {
 
@@ -338,34 +377,12 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
                             checked = false;
                         }
 
-                    } else if (minMilli == startTimeStaticMin) {
-
-                        if (secMilli >= startTimeStaticSec) {
-                            checked = true;
-                        } else {
-                            checked = false;
-                        }
-
-                    } else if (minMilli < maxMillMin && minMilli > startTimeStaticMin) {
-
-                        if (secMilli < 59000) {
-                            checked = true;
-                        } else {
-                            checked = false;
-                        }
+                    } else if (minMilli < maxMillMin) {
+                        checked = true;
                     }
-
-                } else {
-                    checked = false;
                 }
             }
 
-            if (timeField == binding.stopTime && (startTimeStaticMin + startTimeStaticSec) == (secMilli + minMilli)) {
-                checked = false;
-                startTimeSucceeded = false;
-            } else {
-                startTimeSucceeded = true;
-            }
         } else {
             checked = false;
         }

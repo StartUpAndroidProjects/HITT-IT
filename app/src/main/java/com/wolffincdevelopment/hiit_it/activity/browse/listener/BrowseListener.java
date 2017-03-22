@@ -1,5 +1,7 @@
 package com.wolffincdevelopment.hiit_it.activity.browse.listener;
 
+import android.databinding.ViewDataBinding;
+
 import com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.ListItem;
 
 /**
@@ -7,5 +9,5 @@ import com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.ListItem;
  */
 
 public interface BrowseListener {
-    void onItemClicked(ListItem listItem);
+    void onItemClicked(ListItem listItem, ViewDataBinding viewDataBinding);
 }

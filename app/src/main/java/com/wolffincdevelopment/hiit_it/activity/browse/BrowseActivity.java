@@ -5,9 +5,8 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-
 import android.databinding.DataBindingUtil;
-
+import android.databinding.ViewDataBinding;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -15,19 +14,23 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 
+import com.wolffincdevelopment.hiit_it.R;
 import com.wolffincdevelopment.hiit_it.activity.HiitItActivity;
 import com.wolffincdevelopment.hiit_it.activity.HiitItIntent;
 import com.wolffincdevelopment.hiit_it.activity.browse.adapter.BrowseAdapter;
 import com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.BrowseItem;
 import com.wolffincdevelopment.hiit_it.activity.browse.viewmodel.ListItem;
 import com.wolffincdevelopment.hiit_it.databinding.ActivityBrowseBinding;
+import com.wolffincdevelopment.hiit_it.databinding.ViewBrowseListItemBinding;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.ActionBarUtils;
-import com.wolffincdevelopment.hiit_it.R;
+import com.wolffincdevelopment.hiit_it.util.ActivityTransitionUtil;
 import com.wolffincdevelopment.hiit_it.util.DialogBuilder;
 import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.wolffincdevelopment.hiit_it.activity.HiitItIntent.ADD_TRACK_ACTIVITY_REQUEST_CODE;
@@ -165,13 +168,15 @@ public class BrowseActivity extends HiitItActivity implements BrowseItem.BrowseI
     }
 
     @Override
-    public void onItemClicked(ListItem listItem) {
+    public void onItemClicked(ListItem listItem, ViewDataBinding viewDataBinding) {
+
+        ViewBrowseListItemBinding binding = (ViewBrowseListItemBinding) viewDataBinding;
 
         if (getIntent().getBooleanExtra(HiitItIntent.EXTRA_FINISH_ACTIVITY, false)) {
             setResult(RESULT_OK, new Intent().putExtra(HiitItIntent.EXTRA_TRACK_DATA, listItem.getTrackData()));
             finish();
         } else {
-            startActivityForResult(HiitItIntent.createAddTrack(this, listItem.getTrackData()), ADD_TRACK_ACTIVITY_REQUEST_CODE);
+            ActivityTransitionUtil.startActivityForResult(this, HiitItIntent.createAddTrack(this, listItem.getTrackData()), ADD_TRACK_ACTIVITY_REQUEST_CODE, gatherTransitionViews(binding));
         }
     }
 
@@ -184,5 +189,20 @@ public class BrowseActivity extends HiitItActivity implements BrowseItem.BrowseI
     @Override
     public void onDataReady(List<TrackData> trackDataList) {
         browseAdapter.updateData(trackDataList);
+    }
+
+    @NonNull
+    private List<View> gatherTransitionViews(ViewBrowseListItemBinding layoutBinding) {
+
+        List<View> transitionViews = new ArrayList<>();
+
+        if (ActivityTransitionUtil.includeContainer()) {
+            transitionViews.add(layoutBinding.container);
+        }
+
+        transitionViews.add(layoutBinding.songTextview);
+        transitionViews.add(layoutBinding.duration);
+
+        return transitionViews;
     }
 }

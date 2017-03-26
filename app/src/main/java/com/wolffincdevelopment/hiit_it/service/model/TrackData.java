@@ -100,10 +100,6 @@ public class TrackData implements Parcelable {
         return orderId;
     }
 
-    public String getName() {
-        return String.format("%s - %s", getArtist(), getSong());
-    }
-
     public void setStartTime(String startTime) {
         this.startTime = startTime;
     }

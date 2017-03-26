@@ -183,11 +183,8 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
             transitionViews.add(layoutBinding.trackItem);
         }
 
-        transitionViews.add(layoutBinding.startTimePlaceholder);
-        transitionViews.add(layoutBinding.startTimeTextview);
-        transitionViews.add(layoutBinding.stopTimePlaceholder);
-        transitionViews.add(layoutBinding.stopTimeTextView);
         transitionViews.add(layoutBinding.trackSongTextview);
+        transitionViews.add(layoutBinding.trackTextView);
 
         return transitionViews;
     }
@@ -214,11 +211,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
         if (isVisible) {
             layoutBinding.soundIconImageview.animate().alpha(1).setDuration(duration);
             layoutBinding.optionsIcon.animate().alpha(1).setDuration(duration);
-            layoutBinding.trackTextView.animate().alpha(1).setDuration(duration);
         } else {
             layoutBinding.soundIconImageview.setAlpha(0f);
             layoutBinding.optionsIcon.setAlpha(0f);
-            layoutBinding.trackTextView.setAlpha(0f);
         }
     }
 
@@ -440,5 +435,10 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     @Override
     public void onStopMusic(HomeListItem listItem) {
         homeItem.onStopMusic(listItem);
+    }
+
+    @Override
+    public void onCountDown(HomeListItem listItem, String time) {
+        homeItem.onStartCountDown(listItem, time);
     }
 }

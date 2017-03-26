@@ -181,6 +181,16 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener,
         }
     }
 
+    public void onStartCountDown(HomeListItem listItem, String countDown) {
+
+        for (HomeListItem homeListItem : homeListItems) {
+
+            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+                homeListItem.setCountDown(countDown);
+            }
+        }
+    }
+
     @Bindable
     public String getCurrentTrackCount() {
 

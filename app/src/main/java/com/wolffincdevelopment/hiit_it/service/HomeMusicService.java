@@ -16,6 +16,7 @@ import com.wolffincdevelopment.hiit_it.activity.home.viewmodel.HomeListItem;
 import com.wolffincdevelopment.hiit_it.manager.MusicIndexManager;
 import com.wolffincdevelopment.hiit_it.manager.UserManager;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
+import com.wolffincdevelopment.hiit_it.util.ConvertTimeUtils;
 import com.wolffincdevelopment.hiit_it.widget.MediaControllerView;
 import com.wolffincdevelopment.hiit_it.widget.MusicPlayer;
 
@@ -59,6 +60,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         void onSongPaused(HomeListItem listItem);
 
         void onStopMusic(HomeListItem listItem);
+
+        void onCountDown(HomeListItem listItem, String time);
     }
 
     @Override
@@ -196,6 +199,10 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         return null;
     }
 
+    public long getDuration() {
+        return trackToPlay.getStopTimeInMilliseconds();
+    }
+
     public boolean isPlaying() {
         return musicPlayer.isPlaying();
     }
@@ -233,6 +240,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         }
 
         paused = false;
+
+        startProgressTimer();
     }
 
     public void stop() {
@@ -302,6 +311,10 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
+        startProgressTimer();
+    }
+
+    private void startProgressTimer() {
 
         playerWatcher.execute(new Runnable() {
 
@@ -319,6 +332,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                     } catch (Exception e) {
                         return;
                     }
+
+                    getCountDown(getDuration(), currentPosition);
 
                     if (staticTime != 0 && staticTime == currentPosition) {
                         currentPosition = stopTime;
@@ -342,6 +357,18 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         });
     }
 
+    private void getCountDown(long duration, long millisecond) {
+
+        final String time = ConvertTimeUtils.convertMilliSecToString(duration - millisecond);
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                listener.onCountDown(trackDataList.get(indexManager.getIndex()), time);
+            }
+        });
+    }
+
     public void checkForNextSongDuringPlay() {
 
         if (loopedCount < userManager.getCurrenTrackCount() || userManager.getCurrentTrackContinuous()) {
@@ -351,7 +378,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             }
 
         } else {
-            Log.v("Stop","Stopping Song");
+            Log.v("Stop", "Stopping Song");
             stop();
         }
     }

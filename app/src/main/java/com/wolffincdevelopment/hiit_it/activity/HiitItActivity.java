@@ -23,12 +23,12 @@ import com.wolffincdevelopment.hiit_it.util.StringUtils;
 
 public class HiitItActivity extends AppCompatActivity {
 
+    protected HiitItActivityCallBack callBack;
     private final String USER_MANAGER_PREF = "user_manager_pref";
 
     private SharedPreferences sharedPreferences;
     private HomeMusicService homeMusicService;
     private TrackDataList trackDataList;
-    private HiitItActivityCallBack callBack;
 
     public UserManager userManager;
     public FireBaseManager fireBaseManager;

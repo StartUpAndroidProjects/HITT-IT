@@ -20,9 +20,11 @@ import com.wolffincdevelopment.hiit_it.TrackDataList;
 import com.wolffincdevelopment.hiit_it.activity.HiitItActivity;
 import com.wolffincdevelopment.hiit_it.activity.home.listeners.HomeListItemListener;
 import com.wolffincdevelopment.hiit_it.manager.UserManager;
+import com.wolffincdevelopment.hiit_it.service.HomeMusicService;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.widget.MediaControllerView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -30,30 +32,30 @@ import java.util.List;
  * Created by Kyle Wolff on 1/28/17.
  */
 
-public class HomeItem extends BaseViewModel implements HomeListItemListener, HiitItActivity.HiitItActivityCallBack,
-        View.OnLongClickListener, MediaControllerView.MediaControllerListener {
+public class HomeItem extends BaseViewModel implements HomeListItemListener,
+        View.OnLongClickListener, MediaControllerView.MediaControllerListener, HiitItActivity.HiitItActivityCallBack {
 
     private UserManager userManager;
     private FireBaseManager fireBaseManager;
+    private HomeMusicService musicService;
 
     private Context context;
-    private RxJavaBus rxJavaBus;
     private TrackDataList trackDataList;
+    private List<HomeListItem> homeListItems;
 
+    private HomeListItem itemPlayingOrPaused;
     private int currentTrackSetCount;
     private boolean footerOpen;
     private boolean continuousPlay;
-
-    private boolean isPlaying;
 
     public HomeItem(Context context, UserManager userManager, RxJavaBus rxJavaBus, FireBaseManager fireBaseManager) {
         super();
 
         this.userManager = userManager;
         this.context = context;
-        this.rxJavaBus = rxJavaBus;
         this.fireBaseManager = fireBaseManager;
 
+        homeListItems = new ArrayList<>();
         trackDataList = TrackDataList.getInstance();
 
         footerOpen = true;
@@ -62,7 +64,7 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
     }
 
     public interface HomeItemCallback extends LifeCycle.LoadingView {
-        void onDataReady(List<TrackData> trackDataList);
+        void onDataReady(List<HomeListItem> homeListItems);
 
         void onFabMenuClicked();
 
@@ -92,19 +94,91 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
         return (HomeItemCallback) super.getViewCallback();
     }
 
+    public void setMusicService(HomeMusicService musicService) {
+        this.musicService = musicService;
+    }
+
+    public List<HomeListItem> getHomeListItems() {
+        return homeListItems;
+    }
+
     @Override
     protected void refreshData() {
 
         state = NetworkState.IDLE;
 
+        homeListItems.clear();
+
+        HomeListItem listItem;
+
+        for (TrackData trackData : trackDataList) {
+
+            listItem = new HomeListItem(context, trackData);
+
+            if (musicService != null) {
+
+                if (musicService.isPlaying() || musicService.isPaused()) {
+
+                    if (itemPlayingOrPaused.getTrackData().getKey().equals(trackData.getKey())) {
+                        listItem = new HomeListItem(context, trackData);
+                        listItem.setIsPlaying(musicService.isPlaying());
+                        listItem.setShowIcon(true);
+                    }
+                }
+            }
+
+            homeListItems.add(listItem);
+        }
+
         if (hasViewCallback()) {
-            getViewCallback().onDataReady(trackDataList);
+            getViewCallback().onDataReady(homeListItems);
         }
     }
 
     @Override
     public void onDataChanged() {
         refreshData();
+    }
+
+    public void onSongPlaying(HomeListItem listItem) {
+
+        for (HomeListItem homeListItem : homeListItems) {
+
+            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+                homeListItem.setIsPlaying(true);
+                homeListItem.setShowIcon(true);
+                itemPlayingOrPaused = homeListItem;
+            } else {
+                homeListItem.setShowIcon(false);
+                homeListItem.setIsPlaying(false);
+            }
+        }
+    }
+
+    public void onSongPaused(HomeListItem listItem) {
+
+        for (HomeListItem homeListItem : homeListItems) {
+
+            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+                homeListItem.setIsPlaying(false);
+                homeListItem.setShowIcon(true);
+                itemPlayingOrPaused = homeListItem;
+            } else {
+                homeListItem.setShowIcon(false);
+                homeListItem.setIsPlaying(false);
+            }
+        }
+    }
+
+    public void onStopMusic(HomeListItem listItem) {
+
+        for (HomeListItem homeListItem : homeListItems) {
+
+            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+                homeListItem.setShowIcon(false);
+                homeListItem.setIsPlaying(false);
+            }
+        }
     }
 
     @Bindable
@@ -132,10 +206,6 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
     private void setFooterOpen(boolean footerOpen) {
         this.footerOpen = footerOpen;
         notifyPropertyChanged(BR.footerArrow);
-    }
-
-    public void setPlaying(boolean playing) {
-        isPlaying = playing;
     }
 
     public void optionsItemSelected(MenuItem menuItem, final HomeListItem homeListItem, ViewDataBinding binding) {
@@ -186,11 +256,11 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener, Hii
 
     @Override
     public void onOptionsClicked(View view, HomeListItem listItem, ViewDataBinding binding) {
-        if (hasViewCallback() && !isPlaying) {
+        if (hasViewCallback() && musicService != null && !musicService.isPlaying()) {
             getViewCallback().onOptionsClicked(view, listItem, binding);
         }
 
-        if (isPlaying) {
+        if (musicService != null && musicService.isPlaying()) {
             Toast toast = Toast.makeText(context, "Please pause music to edit", Toast.LENGTH_LONG);
             toast.setGravity(Gravity.CENTER, 0, 0);
             toast.show();

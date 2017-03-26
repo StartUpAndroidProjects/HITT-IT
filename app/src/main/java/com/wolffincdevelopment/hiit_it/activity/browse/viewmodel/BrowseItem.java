@@ -89,6 +89,7 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
 
                         String artist = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                         String title = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                        String album = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                         long duration = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media.DURATION));
                         String stream = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.DATA));
                         long mediaId = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media._ID));
@@ -98,7 +99,7 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
                         }
 
                         if (duration <= 3540000) {
-                            trackDataList.add(new TrackData(artist, title, stream, duration, mediaId));
+                            trackDataList.add(new TrackData(artist, title, stream, album, duration, mediaId));
                         }
                     }
                 }
@@ -115,7 +116,7 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
             });
 
             if (trackDataList.isEmpty()) {
-                state = NetworkState.NO_DATA;
+                state = NetworkState.SHOULD_REFRESH;
                 showError(true);
             } else {
 
@@ -129,7 +130,7 @@ public class BrowseItem extends BaseViewModel implements BrowseListener {
             }
         } else {
             showError(true);
-            state = NetworkState.NO_DATA;
+            state = NetworkState.SHOULD_REFRESH;
         }
 
     }

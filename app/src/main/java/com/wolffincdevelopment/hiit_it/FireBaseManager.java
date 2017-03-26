@@ -4,7 +4,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.wolffincdevelopment.hiit_it.manager.UserManager;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
@@ -30,13 +29,13 @@ public class FireBaseManager {
     public static String STARTTIME = "startTime";
     public static String STOPTIME = "stopTime";
     public static String STREAM = "stream";
+    public static String ALBUM = "album";
     public static String MEDIAID = "mediaId";
     public static String DURATION = "duration";
     public static String ORDERID = "orderId";
 
     private int dayOfLogin = 100;
 
-    private boolean peristenceEnabled;
     private static FireBaseManager fireBaseManager;
 
     private UserManager userManager;
@@ -58,12 +57,6 @@ public class FireBaseManager {
     private DatabaseReference getDatabaseReference() {
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-
-        if (!peristenceEnabled) {
-            firebaseDatabase.setPersistenceEnabled(true);
-            peristenceEnabled = true;
-        }
-
         return firebaseDatabase.getReference();
     }
 

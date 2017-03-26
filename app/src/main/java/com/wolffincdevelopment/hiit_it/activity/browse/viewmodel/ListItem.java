@@ -19,7 +19,7 @@ public class ListItem extends Item {
     }
 
     public String getArtist() {
-        return trackData.getArtist();
+        return String.format("%s \u2022 %s", trackData.getAlbum(), trackData.getArtist());
     }
 
     public String getSong() {

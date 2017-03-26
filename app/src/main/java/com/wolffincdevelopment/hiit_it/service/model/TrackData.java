@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.wolffincdevelopment.hiit_it.FireBaseManager.ALBUM;
 import static com.wolffincdevelopment.hiit_it.FireBaseManager.ARTIST;
 import static com.wolffincdevelopment.hiit_it.FireBaseManager.DURATION;
 import static com.wolffincdevelopment.hiit_it.FireBaseManager.KEY;
@@ -31,6 +32,7 @@ public class TrackData implements Parcelable {
     private String startTime;
     private String stopTime;
     private String stream;
+    private String album;
     private long mediaId;
     private long duration;
     private int orderId;
@@ -38,19 +40,20 @@ public class TrackData implements Parcelable {
     public TrackData() {
     }
 
-    public TrackData(String song, String artist, String startTime, String stopTime, String stream, long mediaId, long duration, int orderId) {
+    public TrackData(String song, String artist, String startTime, String stopTime, String stream, String album, long mediaId, long duration, int orderId) {
         this.song = song;
         this.artist = artist;
         this.startTime = startTime;
         this.stopTime = stopTime;
         this.stream = stream;
+        this.album = album;
         this.mediaId = mediaId;
         this.duration = duration;
         this.orderId = orderId;
     }
 
-    public TrackData(String artist, String title, String stream, long duration, long mediaId) {
-        this(title, artist, null, null, stream, mediaId, duration, 0);
+    public TrackData(String artist, String title, String stream, String album, long duration, long mediaId) {
+        this(title, artist, null, null, stream, album, mediaId, duration, 0);
     }
 
     public String getKey() {
@@ -67,6 +70,10 @@ public class TrackData implements Parcelable {
 
     public String getArtist() {
         return artist;
+    }
+
+    public String getAlbum() {
+        return album;
     }
 
     public String getStartTime() {
@@ -151,6 +158,7 @@ public class TrackData implements Parcelable {
         result.put(STARTTIME, startTime);
         result.put(STOPTIME, stopTime);
         result.put(STREAM, stream);
+        result.put(ALBUM, album);
         result.put(MEDIAID, mediaId);
         result.put(DURATION, duration);
         result.put(ORDERID, orderId);
@@ -170,6 +178,7 @@ public class TrackData implements Parcelable {
         dest.writeString(this.startTime);
         dest.writeString(this.stopTime);
         dest.writeString(this.stream);
+        dest.writeString(this.album);
         dest.writeString(this.key);
         dest.writeLong(this.mediaId);
         dest.writeLong(this.duration);
@@ -182,6 +191,7 @@ public class TrackData implements Parcelable {
         this.startTime = in.readString();
         this.stopTime = in.readString();
         this.stream = in.readString();
+        this.album = in.readString();
         this.key = in.readString();
         this.mediaId = in.readLong();
         this.duration = in.readLong();

@@ -30,6 +30,10 @@ public class TrackDataList extends ArrayList<TrackData> {
         return trackDataList;
     }
 
+    private TrackDataList() {
+        super();
+    }
+
     private void setHashMap(HashMap<String, Object> hashMap) {
         hashMap.put(firstObject.getKey(), firstObject.toMap());
         hashMap.put(secondObject.getKey(), secondObject.toMap());

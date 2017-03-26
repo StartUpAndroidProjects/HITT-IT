@@ -14,19 +14,19 @@ public abstract class BaseViewModel extends BaseObservable implements LifeCycle.
     private LifeCycle.View viewCallback;
 
     protected enum NetworkState {
-        NO_DATA,
+        SHOULD_REFRESH,
         IDLE,
         REFRESHING_DATA,
         SAVING_DATA,
         FINISH_ACTIVITY;
 
         public boolean shouldRefresh() {
-            return this == NO_DATA;
+            return this == SHOULD_REFRESH;
         }
     }
 
     public BaseViewModel() {
-        state = NetworkState.NO_DATA;
+        state = NetworkState.SHOULD_REFRESH;
     }
 
     /**

@@ -249,6 +249,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             @Override
             public void run() {
                 musicPlayer.stop();
+                musicPlayer.release();
             }
         });
 

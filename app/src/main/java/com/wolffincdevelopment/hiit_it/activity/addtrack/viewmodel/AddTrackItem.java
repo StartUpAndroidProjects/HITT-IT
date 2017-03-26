@@ -206,6 +206,11 @@ public class AddTrackItem extends BaseViewModel implements TextWatcher {
                 STOP_TIME_MAX = null;
 
             } else {
+
+                if (!startTimeSucceeded) {
+                    setStartTime("00:00");
+                }
+
                 setStopTime(binding.stopTime.getText().toString());
             }
         }

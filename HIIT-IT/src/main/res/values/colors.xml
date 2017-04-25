@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FF9800</color>
+    <color name="colorPrimaryDark">#F57C00</color>
+    <color name="colorAccent">#FF3D00</color>
+    <color name="colorPreviewHeader">#DA3103</color>
+    <color name="gray">#999290</color>
+    <color name="greyText">#b1a7a4</color>
+    <color name="grey_line">#aba7a6a5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black_opacity_80">#50000000</color>
+    <color name="footer_background">#212121</color>
+    <color name="shadow_start">#40000000</color>
+    <color name="transparent">@android:color/transparent</color>
+    <color name="white_26">#BFFFFFFF</color>
+    <color name="round_button_cb">#80535252</color>
+    <color name="fab_shadow">#6b000000</color>
+    <color name="fab_tint">#ffffff</color>
+</resources>

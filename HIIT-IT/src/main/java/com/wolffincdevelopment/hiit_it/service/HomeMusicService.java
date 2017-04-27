@@ -49,6 +49,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
     private boolean stopped;
     private boolean paused;
 
+    private TrackData loopedTrackDataToTrack;
     private int loopedCount;
 
     private MusicPlayerListener listener;
@@ -137,6 +138,8 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             if (listItem.getTrackData().getKey().equals(trackData.getKey())) {
                 indexManager.setIndex(trackDataList.indexOf(listItem));
                 trackToPlay = listItem.getTrackData();
+	            loopedTrackDataToTrack = trackToPlay;
+	            loopedCount = 0;
                 playSong();
             }
         }
@@ -149,6 +152,7 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
             // If a song has not been initialized we must initialize
             if (trackToPlay == null) {
                 setTrackToPlayWithCurrentIndex();
+	            loopedTrackDataToTrack = trackToPlay;
             }
 
             this.startTime = trackToPlay.getStartTimeInMilliseconds();
@@ -209,7 +213,12 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         if (stopped) {
             return false;
         } else {
-            return musicPlayer.isPlaying();
+
+            try {
+                return musicPlayer.isPlaying();
+            } catch (IllegalStateException e) {
+                return false;
+            }
         }
     }
 
@@ -293,6 +302,24 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
         }
     }
 
+    public TrackData getNextSongToPlay() {
+
+        TrackData nextSong = null;
+
+        int nextIndex = indexManager.getIndex() + 1;
+
+        if (!trackDataList.isEmpty()) {
+
+            if (nextIndex < trackDataList.size()) {
+                nextSong = trackDataList.get(nextIndex).getTrackData();
+            } else {
+                nextSong = trackDataList.get(0).getTrackData();
+            }
+        }
+
+        return nextSong;
+    }
+
     @Override
     public void onCompletion(MediaPlayer mp) {
 
@@ -348,12 +375,6 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
                     }
 
                     if (currentPosition >= stopTime) {
-
-                        // Loop Check
-                        if (indexManager.getIndex() == trackDataList.size() - 1) {
-                            loopedCount++;
-                        }
-
                         checkForNextSongDuringPlay();
                     }
 
@@ -378,6 +399,10 @@ public class HomeMusicService extends Service implements MusicPlayer.OnCompletio
     }
 
     public void checkForNextSongDuringPlay() {
+
+        if (getNextSongToPlay() != null && loopedTrackDataToTrack.getKey().equals(getNextSongToPlay().getKey())) {
+            loopedCount++;
+        }
 
         if (loopedCount < userManager.getCurrenTrackCount() || userManager.getCurrentTrackContinuous()) {
 

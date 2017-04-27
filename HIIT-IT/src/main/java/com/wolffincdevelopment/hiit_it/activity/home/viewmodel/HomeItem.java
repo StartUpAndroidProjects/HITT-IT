@@ -63,7 +63,7 @@ public class HomeItem extends BaseViewModel implements HomeListItemListener,
 
         footerOpen = true;
 
-        currentTrackSetCount = 1;
+        currentTrackSetCount = userManager.getCurrenTrackCount();
     }
 
     public interface HomeItemCallback extends LifeCycle.LoadingView {

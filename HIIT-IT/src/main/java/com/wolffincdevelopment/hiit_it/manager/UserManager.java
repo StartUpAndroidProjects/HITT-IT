@@ -8,6 +8,26 @@ import android.content.SharedPreferences;
 
 public class UserManager {
 
+    public enum FooterPosition {
+        UP("up"),
+        DOWN("down");
+
+        public final String value;
+
+        private FooterPosition(String value) {
+            this.value = value;
+        }
+
+        public static FooterPosition getFooterPosition(String value) {
+
+            if (value.equals(UP.value)) {
+                return UP;
+            }
+
+            return DOWN;
+        }
+    }
+
     private static final String PREF_USER_NAME = "user_name";
     private static final String PREF_USER_KEY = "user_key";
     private static final String PREF_LAST_LOGIN = "last_login";
@@ -16,6 +36,7 @@ public class UserManager {
     private static final String PREF_HAS_SEEN_ADD_TRACK_IMAGE = "has_seen_ad_track_image";
     private static final String PREF_TRACK_SET_COUNT = "track_set_count";
     private static final String PREF_TRACK_SET_CONTINUOUS = "track_set_continuous";
+    private static final String PREF_FOOTER_POSITION = "footer_position";
 
     private static UserManager userManager;
 
@@ -58,6 +79,10 @@ public class UserManager {
         prefManager.apply(PREF_TRACK_SET_CONTINUOUS, continuous);
     }
 
+    public void setFooterPosition(FooterPosition position) {
+        prefManager.apply(PREF_FOOTER_POSITION, position.value);
+    }
+
     /**
      * Get the FireBase User Key
      * @return the user key {@link String}
@@ -96,5 +121,9 @@ public class UserManager {
 
     public boolean getPrefHasSeenAddTrackImage() {
         return prefManager.getBoolean(PREF_HAS_SEEN_ADD_TRACK_IMAGE, false);
+    }
+
+    public FooterPosition getPrefFooterPosition() {
+        return FooterPosition.getFooterPosition(prefManager.getString(PREF_FOOTER_POSITION, FooterPosition.DOWN.value));
     }
 }

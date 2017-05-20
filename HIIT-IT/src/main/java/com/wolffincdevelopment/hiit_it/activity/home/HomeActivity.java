@@ -58,6 +58,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     private boolean serviceBound;
 
     private HomeActivity activity;
+    private IconizedMenu popup;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -215,7 +216,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     @Override
     public void onOptionsClicked(View view, final HomeListItem homeListItem, final ViewDataBinding binding) {
 
-        final IconizedMenu popup = new IconizedMenu(this, view);
+        popup = new IconizedMenu(this, view);
         MenuInflater inflater = popup.getMenuInflater();
         inflater.inflate(R.menu.pop_up_menu, popup.getMenu());
         popup.show();
@@ -265,19 +266,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
         }
     }
 
-    @Override
-    public void onFooterClicked() {
-
-    }
-
-    @Override
-    public void onFooterLongPress() {
-
-    }
-
     private void openFooter() {
 
-        animator = ValueAnimator.ofInt(initalHeight - 94, initalHeight);
+        animator = ValueAnimator.ofInt(initalHeight - 100, initalHeight);
         animator.setDuration(300);
         addListener();
         animator.start();
@@ -285,7 +276,7 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
 
     private void closeFooter() {
 
-        animator = ValueAnimator.ofInt(initalHeight, initalHeight - 94);
+        animator = ValueAnimator.ofInt(initalHeight, initalHeight - 100);
         animator.setDuration(300);
         addListener();
         animator.start();
@@ -367,6 +358,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     public void onNext() {
         if (serviceBound) {
             musicService.playNext();
+            if (popup != null && popup.isShowing()) {
+                popup.dismiss();
+            }
         }
     }
 
@@ -374,6 +368,9 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     public void onPrev() {
         if (serviceBound) {
             musicService.playPrev();
+            if (popup != null && popup.isShowing()) {
+                popup.dismiss();
+            }
         }
     }
 
@@ -382,6 +379,10 @@ public class HomeActivity extends HiitItActivity implements HomeItem.HomeItemCal
     }
 
     private void play(HomeListItem homeListItem) {
+
+        if (popup != null && popup.isShowing()) {
+            popup.dismiss();
+        }
 
         if (serviceBound) {
 

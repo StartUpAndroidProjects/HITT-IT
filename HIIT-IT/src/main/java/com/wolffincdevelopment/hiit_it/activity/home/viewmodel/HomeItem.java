@@ -37,361 +37,359 @@ import java.util.List;
  */
 
 public class HomeItem extends BaseViewModel implements HomeListItemListener,
-        View.OnLongClickListener, MediaControllerView.MediaControllerListener, HiitItActivity.HiitItActivityCallBack {
+		View.OnLongClickListener, MediaControllerView.MediaControllerListener, HiitItActivity.HiitItActivityCallBack {
 
-    private UserManager userManager;
-    private FireBaseManager fireBaseManager;
-    private HomeMusicService musicService;
+	private UserManager userManager;
+	private FireBaseManager fireBaseManager;
+	private HomeMusicService musicService;
 
-    private Context context;
-    private TrackDataList trackDataList;
-    private List<HomeListItem> homeListItems;
+	private Context context;
+	private TrackDataList trackDataList;
+	private List<HomeListItem> homeListItems;
 
-    private HomeListItem itemPlayingOrPaused;
-    private int currentTrackSetCount;
-    private boolean footerOpen;
+	private HomeListItem itemPlayingOrPaused;
+	private int currentTrackSetCount;
+	private boolean footerOpen;
 
-    public HomeItem(Context context, UserManager userManager, RxJavaBus rxJavaBus, FireBaseManager fireBaseManager) {
-        super();
+	public HomeItem(Context context, UserManager userManager, RxJavaBus rxJavaBus, FireBaseManager fireBaseManager) {
+		super();
 
-        this.userManager = userManager;
-        this.context = context;
-        this.fireBaseManager = fireBaseManager;
+		this.userManager = userManager;
+		this.context = context;
+		this.fireBaseManager = fireBaseManager;
 
-        homeListItems = new ArrayList<>();
-        trackDataList = TrackDataList.getInstance();
+		homeListItems = new ArrayList<>();
+		trackDataList = TrackDataList.getInstance();
 
-        footerOpen = true;
+		footerOpen = true;
 
-        currentTrackSetCount = userManager.getCurrenTrackCount();
-    }
+		currentTrackSetCount = userManager.getCurrenTrackCount();
+	}
 
-    public interface HomeItemCallback extends LifeCycle.LoadingView {
-        void onDataReady(List<HomeListItem> homeListItems);
+	public interface HomeItemCallback extends LifeCycle.LoadingView {
+		void onDataReady(List<HomeListItem> homeListItems);
 
-        void onFabMenuClicked();
+		void onFabMenuClicked();
 
-        void onBrowseClicked();
+		void onBrowseClicked();
 
-        void onOptionsClicked(View view, HomeListItem homeListItem, ViewDataBinding binding);
+		void onOptionsClicked(View view, HomeListItem homeListItem, ViewDataBinding binding);
 
-        void onFooterArrowClicked(boolean footerOpen);
+		void onFooterArrowClicked(boolean footerOpen);
 
-        void onItemClicked(HomeListItem listItem);
+		void onItemClicked(HomeListItem listItem);
 
-        void onFooterClicked();
+		void onEditItem(TrackData trackData, ViewDataBinding binding);
 
-        void onFooterLongPress();
+		void onPlay();
 
-        void onEditItem(TrackData trackData, ViewDataBinding binding);
+		void onNext();
 
-        void onPlay();
+		void onPrev();
+	}
 
-        void onNext();
+	@Override
+	protected HomeItemCallback getViewCallback() {
+		return (HomeItemCallback) super.getViewCallback();
+	}
 
-        void onPrev();
-    }
+	public void setMusicService(HomeMusicService musicService) {
+		this.musicService = musicService;
+	}
 
-    @Override
-    protected HomeItemCallback getViewCallback() {
-        return (HomeItemCallback) super.getViewCallback();
-    }
+	public List<HomeListItem> getHomeListItems() {
+		return homeListItems;
+	}
 
-    public void setMusicService(HomeMusicService musicService) {
-        this.musicService = musicService;
-    }
+	@Override
+	protected void refreshData() {
 
-    public List<HomeListItem> getHomeListItems() {
-        return homeListItems;
-    }
+		state = NetworkState.IDLE;
 
-    @Override
-    protected void refreshData() {
+		homeListItems.clear();
 
-        state = NetworkState.IDLE;
+		HomeListItem listItem;
 
-        homeListItems.clear();
+		for (TrackData trackData : trackDataList) {
 
-        HomeListItem listItem;
+			listItem = new HomeListItem(context, trackData);
 
-        for (TrackData trackData : trackDataList) {
+			if (musicService != null) {
 
-            listItem = new HomeListItem(context, trackData);
+				if (musicService.isPaused() || musicService.isPlaying()) {
 
-            if (musicService != null) {
+					if (itemPlayingOrPaused.getTrackData().getKey().equals(trackData.getKey())) {
+						listItem = new HomeListItem(context, trackData);
+						listItem.setIsPlaying(musicService.isPlaying());
+						listItem.setShowIcon(true);
+					}
+				}
+			}
 
-                if (musicService.isPaused() || musicService.isPlaying()) {
+			homeListItems.add(listItem);
+		}
 
-                    if (itemPlayingOrPaused.getTrackData().getKey().equals(trackData.getKey())) {
-                        listItem = new HomeListItem(context, trackData);
-                        listItem.setIsPlaying(musicService.isPlaying());
-                        listItem.setShowIcon(true);
-                    }
-                }
-            }
+		if (hasViewCallback()) {
+			getViewCallback().onDataReady(homeListItems);
+		}
+	}
 
-            homeListItems.add(listItem);
-        }
+	@Override
+	public void onDataChanged() {
+		refreshData();
+	}
+
+	public void onSongPlaying(HomeListItem listItem) {
+
+		for (HomeListItem homeListItem : homeListItems) {
+
+			if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+				homeListItem.setIsPlaying(true);
+				homeListItem.setShowIcon(true);
+				itemPlayingOrPaused = homeListItem;
+			} else {
+				homeListItem.setShowIcon(false);
+				homeListItem.setIsPlaying(false);
+			}
+		}
+	}
 
-        if (hasViewCallback()) {
-            getViewCallback().onDataReady(homeListItems);
-        }
-    }
+	public void onSongPaused(HomeListItem listItem) {
 
-    @Override
-    public void onDataChanged() {
-        refreshData();
-    }
-
-    public void onSongPlaying(HomeListItem listItem) {
-
-        for (HomeListItem homeListItem : homeListItems) {
-
-            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
-                homeListItem.setIsPlaying(true);
-                homeListItem.setShowIcon(true);
-                itemPlayingOrPaused = homeListItem;
-            } else {
-                homeListItem.setShowIcon(false);
-                homeListItem.setIsPlaying(false);
-            }
-        }
-    }
+		for (HomeListItem homeListItem : homeListItems) {
 
-    public void onSongPaused(HomeListItem listItem) {
+			if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+				homeListItem.setIsPlaying(false);
+				homeListItem.setShowIcon(true);
+				itemPlayingOrPaused = homeListItem;
+			} else {
+				homeListItem.setShowIcon(false);
+				homeListItem.setIsPlaying(false);
+			}
+		}
+	}
 
-        for (HomeListItem homeListItem : homeListItems) {
+	public void onStopMusic(HomeListItem listItem) {
 
-            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
-                homeListItem.setIsPlaying(false);
-                homeListItem.setShowIcon(true);
-                itemPlayingOrPaused = homeListItem;
-            } else {
-                homeListItem.setShowIcon(false);
-                homeListItem.setIsPlaying(false);
-            }
-        }
-    }
+		for (HomeListItem homeListItem : homeListItems) {
 
-    public void onStopMusic(HomeListItem listItem) {
+			if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+				homeListItem.setShowIcon(false);
+				homeListItem.setIsPlaying(false);
+			}
+		}
+	}
 
-        for (HomeListItem homeListItem : homeListItems) {
+	public void onStartCountDown(HomeListItem listItem, String countDown) {
 
-            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
-                homeListItem.setShowIcon(false);
-                homeListItem.setIsPlaying(false);
-            }
-        }
-    }
+		for (HomeListItem homeListItem : homeListItems) {
 
-    public void onStartCountDown(HomeListItem listItem, String countDown) {
+			if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
+				homeListItem.setCountDown(countDown);
+			}
+		}
+	}
 
-        for (HomeListItem homeListItem : homeListItems) {
+	@Bindable
+	public SpannableString getCurrentTrackCount() {
 
-            if (listItem.getTrackData().getKey().equals(homeListItem.getTrackData().getKey())) {
-                homeListItem.setCountDown(countDown);
-            }
-        }
-    }
+		String currentCount = (currentTrackSetCount == 1 ? "Set " : "Sets ").concat(String.valueOf(currentTrackSetCount));
 
-    @Bindable
-    public SpannableString getCurrentTrackCount() {
+		String currentSetToPlay = context.getResources().getString(R.string.currently_set_to_play);
 
-        String currentCount = (currentTrackSetCount == 1 ? "Set " : "Sets ").concat(String.valueOf(currentTrackSetCount));
-
-        String currentSetToPlay = context.getResources().getString(R.string.currently_set_to_play);
+		if (userManager.getCurrentTrackContinuous()) {
+			return tintText(ContextCompat.getColor(context, R.color.colorAccent), 21, currentSetToPlay.length() + " Continuous".length(), currentSetToPlay + " Continuous");
+		} else {
+			return tintText(ContextCompat.getColor(context, R.color.colorAccent), 21, currentSetToPlay.length() + currentCount.length() + 1, currentSetToPlay + " " + currentCount);
+		}
+	}
 
-        if (userManager.getCurrentTrackContinuous()) {
-            return tintText(ContextCompat.getColor(context, R.color.colorAccent), 21, currentSetToPlay.length() + " Continuous".length(), currentSetToPlay + " Continuous");
-        } else {
-            return tintText(ContextCompat.getColor(context, R.color.colorAccent), 21, currentSetToPlay.length() + currentCount.length() + 1, currentSetToPlay + " " + currentCount);
-        }
-    }
-
-    private SpannableString tintText(int color, int startIndex, int endInedx, String string) {
-        SpannableStringBuilder stringBuilder = new SpannableStringBuilder(string);
-        stringBuilder.setSpan(new ForegroundColorSpan(color), startIndex,
-                endInedx, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+	private SpannableString tintText(int color, int startIndex, int endInedx, String string) {
+		SpannableStringBuilder stringBuilder = new SpannableStringBuilder(string);
+		stringBuilder.setSpan(new ForegroundColorSpan(color), startIndex,
+				endInedx, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
 
-        return new SpannableString(stringBuilder);
-    }
-
-    @Bindable
-    public Drawable getFooterArrow() {
-
-        if (footerOpen) {
-            return ContextCompat.getDrawable(context, R.drawable.arrow_down_white_48dp);
-        } else {
-            return ContextCompat.getDrawable(context, R.drawable.arrow_up_white_48dp);
-        }
-    }
+		return new SpannableString(stringBuilder);
+	}
+
+	@Bindable
+	public Drawable getFooterArrow() {
+
+		if (footerOpen) {
+			return ContextCompat.getDrawable(context, R.drawable.arrow_down_white_48dp);
+		} else {
+			return ContextCompat.getDrawable(context, R.drawable.arrow_up_white_48dp);
+		}
+	}
 
-    private void setFooterOpen(boolean footerOpen) {
-        this.footerOpen = footerOpen;
-        notifyPropertyChanged(BR.footerArrow);
-    }
+	private void setFooterOpen(boolean footerOpen) {
+		this.footerOpen = footerOpen;
+		notifyPropertyChanged(BR.footerArrow);
+	}
+
+	public void optionsItemSelected(MenuItem menuItem, final HomeListItem homeListItem, ViewDataBinding binding) {
+
+		HashMap<String, Object> hashMap = null;
+
+		if (menuItem.getItemId() == R.id.move_Up) {
+			hashMap = trackDataList.moveItemUp(homeListItem.getTrackData());
+		} else if (menuItem.getItemId() == R.id.move_Down) {
+			hashMap = trackDataList.moveItemDown(homeListItem.getTrackData());
+		} else if (menuItem.getItemId() == R.id.edit_item) {
 
-    public void optionsItemSelected(MenuItem menuItem, final HomeListItem homeListItem, ViewDataBinding binding) {
+			if (hasViewCallback()) {
+				getViewCallback().onEditItem(homeListItem.getTrackData(), binding);
+			}
 
-        HashMap<String, Object> hashMap = null;
+		} else {
 
-        if (menuItem.getItemId() == R.id.move_Up) {
-            hashMap = trackDataList.moveItemUp(homeListItem.getTrackData());
-        } else if (menuItem.getItemId() == R.id.move_Down) {
-            hashMap = trackDataList.moveItemDown(homeListItem.getTrackData());
-        } else if (menuItem.getItemId() == R.id.edit_item) {
+			fireBaseManager.deleteTrack(homeListItem.getTrackData().getKey());
 
-            if (hasViewCallback()) {
-                getViewCallback().onEditItem(homeListItem.getTrackData(), binding);
-            }
+			if (trackDataList.size() == 1) {
+				trackDataList.clear();
+			}
 
-        } else {
+			hashMap = trackDataList.reorderItems(homeListItem.getTrackData());
+		}
 
-            fireBaseManager.deleteTrack(homeListItem.getTrackData().getKey());
+		if (hashMap != null) {
+			fireBaseManager.updateChildren(fireBaseManager.getUserKeyAndTracksDB(), hashMap);
+		}
 
-            if (trackDataList.size() == 1) {
-                trackDataList.clear();
-            }
+		refreshData();
+	}
 
-            hashMap = trackDataList.reorderItems(homeListItem.getTrackData());
-        }
+	private void hideTrackImage() {
 
-        if (hashMap != null) {
-            fireBaseManager.updateChildren(fireBaseManager.getUserKeyAndTracksDB(), hashMap);
-        }
+		if (!userManager.getPrefHasSeenAddTrackImage()) {
+			userManager.setSeenAddTrackImage(true);
+		}
 
-        refreshData();
-    }
+		notifyPropertyChanged(BR.hideAddToTrackImage);
+	}
 
-    private void hideTrackImage() {
+	@Bindable
+	public int getHideAddToTrackImage() {
+		return userManager.getPrefHasSeenAddTrackImage() ? View.GONE : View.VISIBLE;
+	}
 
-        if (!userManager.getPrefHasSeenAddTrackImage()) {
-            userManager.setSeenAddTrackImage(true);
-        }
+	@Override
+	public void onOptionsClicked(View view, HomeListItem listItem, ViewDataBinding binding) {
 
-        notifyPropertyChanged(BR.hideAddToTrackImage);
-    }
+		if (musicService != null) {
 
-    @Bindable
-    public int getHideAddToTrackImage() {
-        return userManager.getPrefHasSeenAddTrackImage() ? View.GONE : View.VISIBLE;
-    }
-
-    @Override
-    public void onOptionsClicked(View view, HomeListItem listItem, ViewDataBinding binding) {
-        if (hasViewCallback() && musicService != null && !musicService.isPlaying()) {
-            getViewCallback().onOptionsClicked(view, listItem, binding);
-        }
-
-        if (musicService != null) {
-
-            if (musicService.isPlaying()) {
-                Toast toast = Toast.makeText(context, "Please pause music to edit", Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER, 0, 0);
-                toast.show();
-            }
-        }
-    }
-
-    public void onBrowseClicked() {
-        if (hasViewCallback()) {
-            getViewCallback().onBrowseClicked();
-        }
-    }
-
-    public void onFabMenuClicked() {
-        if (hasViewCallback()) {
-            hideTrackImage();
-            getViewCallback().onFabMenuClicked();
-        }
-    }
-
-    public void onFooterArrowClicked() {
-
-        if (hasViewCallback()) {
-            getViewCallback().onFooterArrowClicked(footerOpen);
-        }
-
-        if (footerOpen) {
-            setFooterOpen(false);
-        } else {
-            setFooterOpen(true);
-        }
-    }
-
-    public void onFooterClicked() {
-
-        getCurrentTrackSetCount(false);
-
-        if (hasViewCallback()) {
-            getViewCallback().onFooterClicked();
-        }
-    }
-
-    private void getCurrentTrackSetCount(boolean continuous) {
-
-        if (!continuous) {
-
-            userManager.setCurrentTrackContinuous(false);
-
-            currentTrackSetCount++;
-
-            if (currentTrackSetCount > 10) {
-                currentTrackSetCount = 1;
-            }
-
-            // Store as preference so the Music Service can loop the correct amount
-            userManager.setCurrentTrackCount(currentTrackSetCount);
-
-        } else {
-            userManager.setCurrentTrackContinuous(true);
-        }
-
-        notifyPropertyChanged(BR.currentTrackCount);
-    }
-
-    @Override
-    public boolean onLongClick(View v) {
-
-        if (userManager.getCurrentTrackContinuous()) {
-            getCurrentTrackSetCount(false);
-        } else {
-            getCurrentTrackSetCount(true);
-        }
-
-        if (hasViewCallback()) {
-            getViewCallback().onFooterLongPress();
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public void onItemClicked(HomeListItem listItem) {
-        if (hasViewCallback()) {
-            getViewCallback().onItemClicked(listItem);
-        }
-    }
-
-    @Override
-    public void onPlay() {
-        if (hasViewCallback()) {
-            getViewCallback().onPlay();
-        }
-    }
-
-    @Override
-    public void onNext() {
-        if (hasViewCallback()) {
-            getViewCallback().onNext();
-        }
-    }
-
-    @Override
-    public void onPrev() {
-        if (hasViewCallback()) {
-            getViewCallback().onPrev();
-        }
-    }
+			if (musicService.isPlaying()) {
+				Toast toast = Toast.makeText(context, "Please pause music to edit", Toast.LENGTH_LONG);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
+			} else {
+
+				if (hasViewCallback()) {
+					getViewCallback().onOptionsClicked(view, listItem, binding);
+				}
+			}
+		}
+	}
+
+	public void onBrowseClicked() {
+
+		if (musicService != null) {
+
+			if (musicService.isPlaying()) {
+				Toast toast = Toast.makeText(context, "Please pause music to add new track", Toast.LENGTH_LONG);
+				toast.setGravity(Gravity.CENTER, 0, 0);
+				toast.show();
+			} else {
+				if (hasViewCallback()) {
+					getViewCallback().onBrowseClicked();
+				}
+			}
+		}
+	}
+
+	public void onFabMenuClicked() {
+		if (hasViewCallback()) {
+			hideTrackImage();
+			getViewCallback().onFabMenuClicked();
+		}
+	}
+
+	public void onFooterArrowClicked() {
+
+		if (hasViewCallback()) {
+			getViewCallback().onFooterArrowClicked(footerOpen);
+		}
+
+		if (footerOpen) {
+			setFooterOpen(false);
+		} else {
+			setFooterOpen(true);
+		}
+	}
+
+	public void onFooterClicked() {
+		getCurrentTrackSetCount(false);
+	}
+
+	private void getCurrentTrackSetCount(boolean continuous) {
+
+		if (!continuous) {
+
+			userManager.setCurrentTrackContinuous(false);
+
+			currentTrackSetCount++;
+
+			if (currentTrackSetCount > 10) {
+				currentTrackSetCount = 1;
+			}
+
+			// Store as preference so the Music Service can loop the correct amount
+			userManager.setCurrentTrackCount(currentTrackSetCount);
+
+		} else {
+			userManager.setCurrentTrackContinuous(true);
+		}
+
+		notifyPropertyChanged(BR.currentTrackCount);
+	}
+
+	@Override
+	public boolean onLongClick(View v) {
+
+		if (userManager.getCurrentTrackContinuous()) {
+			getCurrentTrackSetCount(false);
+		} else {
+			getCurrentTrackSetCount(true);
+		}
+
+		return hasViewCallback();
+	}
+
+	@Override
+	public void onItemClicked(HomeListItem listItem) {
+		if (hasViewCallback()) {
+			getViewCallback().onItemClicked(listItem);
+		}
+	}
+
+	@Override
+	public void onPlay() {
+		if (hasViewCallback()) {
+			getViewCallback().onPlay();
+		}
+	}
+
+	@Override
+	public void onNext() {
+		if (hasViewCallback()) {
+			getViewCallback().onNext();
+		}
+	}
+
+	@Override
+	public void onPrev() {
+		if (hasViewCallback()) {
+			getViewCallback().onPrev();
+		}
+	}
 }

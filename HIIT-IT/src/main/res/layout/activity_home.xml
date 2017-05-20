@@ -59,7 +59,7 @@
         <android.support.constraint.ConstraintLayout
             android:id="@+id/replay_footer"
             android:layout_width="0dp"
-            android:layout_height="62dp"
+            android:layout_height="66dp"
             android:background="@color/footer_background"
             android:longClickable="true"
             android:onClick="@{() -> item.onFooterClicked()}"

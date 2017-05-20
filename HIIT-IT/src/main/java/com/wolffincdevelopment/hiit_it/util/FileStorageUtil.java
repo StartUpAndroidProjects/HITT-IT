@@ -48,11 +48,11 @@ public class FileStorageUtil {
 					String stream = cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.DATA));
 					long mediaId = cur.getLong(cur.getColumnIndex(MediaStore.Audio.Media._ID));
 
-					if (StringUtils.isEmptyOrNull(album)) {
+					if (StringUtils.isEmptyOrNull(album) || album.equalsIgnoreCase("null")) {
 						album = "Unknown";
 					}
 
-					if (artist.contains("unknown") || StringUtils.isEmptyOrNull(artist)) {
+					if (artist.contains("unknown") || StringUtils.isEmptyOrNull(artist) || artist.equalsIgnoreCase("null")) {
 						artist = "Unknown";
 					}
 

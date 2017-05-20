@@ -14,7 +14,6 @@ import com.wolffincdevelopment.hiit_it.FireBaseManager;
 import com.wolffincdevelopment.hiit_it.RxJavaBus;
 import com.wolffincdevelopment.hiit_it.TrackDataList;
 import com.wolffincdevelopment.hiit_it.manager.UserManager;
-import com.wolffincdevelopment.hiit_it.service.HomeMusicService;
 import com.wolffincdevelopment.hiit_it.service.model.TrackData;
 import com.wolffincdevelopment.hiit_it.util.FileStorageUtil;
 import com.wolffincdevelopment.hiit_it.util.PermissionUtil;
@@ -34,7 +33,6 @@ public class HiitItActivity extends AppCompatActivity {
 	private final String USER_MANAGER_PREF = "user_manager_pref";
 
 	private SharedPreferences sharedPreferences;
-	private HomeMusicService homeMusicService;
 	private TrackDataList trackDataList;
 	protected PermissionUtil permissionUtil;
 

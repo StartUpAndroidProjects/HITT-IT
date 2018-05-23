@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">HIIT IT!</string>
+    <string name="browse_title">Browse</string>
+    <string name="add_track">Add Track</string>
+    <string name="playbutton">playButton</string>
+    <string name="playPreviousButton">playPreviousButton</string>
+    <string name="playNextButton">playNextButton</string>
+    <string name="song">Song</string>
+    <string name="tap_to_browse">Tap to Browse…</string>
+    <string name="start_text">Start:</string>
+    <string name="stop_text">Stop:</string>
+    <string name="zero_time">00:00</string>
+    <string name="move_up">Move Up</string>
+    <string name="move_down">Move Down</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="firstTimeFabPressed">firstTimeFabPress</string>
+    <string name="replay">Replay:</string>
+    <string name="tap_to_toggle_on_off">Tap to Toggle ON/OFF</string>
+    <string name="updatePlayControls">updatePlayControls</string>
+    <string name="no_media_found">NO MEDIA FOUND</string>
+    <string name="please_verify_your_permissions">Tap here to verify your permissions</string>
+    <string name="cannot_access_media">Cannot access media content without permission</string>
+
+    <string name="off">OFF</string>
+    <string name="on">ON</string>
+
+    <string name="timer">00:00:00</string>
+
+    <string name="start_with_colon">Start:</string>
+    <string name="stop_with_colon">Stop:</string>
+    <string name="track_with_colon">Track:</string>
+
+    <string name="currently_set_to_play">Currently set to play</string>
+    <string name="tap_to_add_a_set_nhold_for_continuous_play">Tap to add a set\nHold for continuous play</string>
+
+</resources>

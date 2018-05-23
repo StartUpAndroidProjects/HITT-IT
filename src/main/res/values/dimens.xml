@@ -1,0 +1,13 @@
+<resources>
+    <dimen name="fab_margin_bottom">50dp</dimen>
+    <dimen name="fab_margin_right">16dp</dimen>
+    <dimen name="fab_mini_margin_bottom">50dp</dimen>
+    <dimen name="fab_mini_margin_right">16dp</dimen>
+    <dimen name="base_activity_textSize">15sp</dimen>
+    <dimen name="notification_margin_top">10dp</dimen>
+
+    <dimen name="fab_marginBottom_Spotify_animation">112dp</dimen>
+    <dimen name="fab_marginBottom_Browse_animation">62dp</dimen>
+
+    <dimen name="spacing">8dp</dimen>
+</resources>

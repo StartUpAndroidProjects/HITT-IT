@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".activity.HomeActivity">
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <include layout="@layout/tool_bar" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_spotify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/ic_spotify_icon"
+        android:visibility="gone"
+        app:backgroundTint="#1ED760"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_browse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/fab_mini_margin_bottom"
+        android:layout_marginRight="@dimen/fab_mini_margin_right"
+        android:layout_gravity="bottom|end"
+        android:src="@drawable/ic_library_music"
+        android:transitionName="browse_transition"
+        app:backgroundTint="@color/fab_tint" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="@dimen/fab_margin_bottom"
+        android:layout_marginRight="@dimen/fab_margin_right"
+        android:src="@drawable/ic_add_white_48dp" />
+
+    <include layout="@layout/content_base" />
+
+</android.support.design.widget.CoordinatorLayout>

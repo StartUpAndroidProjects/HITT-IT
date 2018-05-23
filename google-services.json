@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "344244202771",
+    "firebase_url": "https://hiit-it.firebaseio.com",
+    "project_id": "hiit-it",
+    "storage_bucket": "hiit-it.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344244202771:android:26c5a96794147f56",
+        "android_client_info": {
+          "package_name": "com.wolffincdevelopment.hiit_it"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344244202771-r3h3o9qvsq76h695u9rnm8lrkm1ta02e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsu0hUx11XjtcuSMTdL0rSVSipBhWK1o4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344244202771-r3h3o9qvsq76h695u9rnm8lrkm1ta02e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
